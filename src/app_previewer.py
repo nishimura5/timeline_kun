@@ -1,0 +1,558 @@
+import os
+import shutil
+import subprocess
+import sys
+import tkinter as tk
+from datetime import datetime
+from tkinter import filedialog, ttk
+
+import ttkthemes
+
+import csv_to_timetable
+import gui_tree
+import icon_data
+import svg_writer
+
+
+class App(ttk.Frame):
+    fonts = {
+        "tiny": {
+            "font": ("Helvetica", 8),
+            "spacing": 60,
+            "height": 8,
+        },
+        "small": {
+            "font": ("Helvetica", 10),
+            "spacing": 70,
+            "height": 10,
+        },
+        "normal": {
+            "font": ("Helvetica", 12),
+            "spacing": 80,
+            "height": 12,
+        },
+    }
+
+    def __init__(self, master):
+        super().__init__(master)
+        master.title("Timeline-kun")
+
+        head_frame = ttk.Frame(master)
+        head_frame.pack(padx=10, pady=(15, 5), fill=tk.X)
+        create_file_btn = ttk.Button(
+            head_frame, text="Create CSV", width=13, command=self.create_file
+        )
+        create_file_btn.pack(padx=5, side=tk.LEFT)
+        load_file_btn = ttk.Button(
+            head_frame, text="Load CSV", width=13, command=self.select_file
+        )
+        load_file_btn.pack(padx=5, side=tk.LEFT)
+        self.file_path_label = ttk.Label(head_frame, text="No file selected")
+        self.file_path_label.pack(padx=5, side=tk.LEFT)
+
+        timer_button = ttk.Button(
+            head_frame, text="Send to timer", command=self.open_timer
+        )
+        timer_button.pack(padx=5, side=tk.RIGHT)
+
+        self.timer_color_Combobox = ttk.Combobox(head_frame, state="readonly", width=12)
+        self.timer_color_Combobox["values"] = ["orange", "cyan", "lightgreen"]
+        self.timer_color_Combobox.current(0)
+        self.timer_color_Combobox.pack(padx=5, side=tk.RIGHT)
+
+        send_timer_frame = ttk.Frame(master)
+        send_timer_frame.pack(padx=10, pady=(5, 10), fill=tk.X)
+
+        excel_btn = ttk.Button(
+            send_timer_frame, text="Send to Excel", width=13, command=self.open_excel
+        )
+        excel_btn.pack(padx=5, side=tk.LEFT)
+        reload_btn = ttk.Button(send_timer_frame, text="Reload", command=self.load_file)
+        reload_btn.pack(padx=5, side=tk.LEFT)
+
+        self.time_format_combobox = ttk.Combobox(
+            send_timer_frame, state="readonly", width=10
+        )
+        self.time_format_combobox["values"] = ["h:mm:ss", "mm:ss"]
+        self.time_format_combobox.current(0)
+        self.time_format_combobox.pack(padx=(70, 5), side=tk.LEFT)
+        self.time_format_combobox.bind(
+            "<<ComboboxSelected>>", lambda e: self.draw_stages()
+        )
+
+        self.font_size_combobox = ttk.Combobox(
+            send_timer_frame, state="readonly", width=10
+        )
+        self.font_size_combobox["values"] = ["tiny", "small", "normal"]
+        self.font_size_combobox.current(1)
+        self.font_size_combobox.pack(padx=5, side=tk.LEFT, anchor=tk.E)
+        self.font_size_combobox.bind(
+            "<<ComboboxSelected>>", lambda e: self.draw_stages()
+        )
+
+        export_svg_button = ttk.Button(
+            send_timer_frame, text="Export SVG", command=self.export_svg
+        )
+        export_svg_button.pack(padx=5, side=tk.LEFT)
+
+        # body frame
+        body_frame = ttk.Frame(master)
+        body_frame.pack(fill=tk.BOTH, expand=True)
+        # tree
+        tree_frame = ttk.Frame(body_frame)
+        tree_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        cols = [
+            {"name": "title", "width": 200},
+            {"name": "member", "width": 100},
+            {"name": "start", "width": 50},
+            {"name": "end", "width": 50},
+            {"name": "duration", "width": 50},
+            {"name": "fixed", "width": 60},
+            {"name": "instruction", "width": 200},
+        ]
+        self.tree = gui_tree.Tree(tree_frame, columns=cols, height=800)
+        self.tree.pack()
+        self.tree.tree.bind("<<TreeviewSelect>>", lambda e: self.select_row())
+        self.tree.add_menu("Set start poinot", self.draw_start_line)
+        self.tree.add_menu("Edit", self.edit_row)
+        self.tree.add_menu("Remove", self.remove_row)
+        # canvas
+        canvas_frame = ttk.Frame(body_frame)
+        canvas_frame.pack(fill=tk.BOTH, expand=True)
+        self.canvas = tk.Canvas(canvas_frame, bg="white", width=700)
+        self.canvas.pack(fill=tk.BOTH, expand=True)
+
+        # ctrl+z shortcut control
+        master.bind("<Control-z>", self.undo)
+
+        self.csv_path = None
+        self.start_index = 0
+        self.prev_end_time_sec = None
+        self.next_start_time_sec = None
+
+    def edit_row(self):
+        if self._check_csv_file_locked(self.csv_path) is True:
+            return
+
+        is_ok = self.tree.edit(
+            self.prev_end_time_sec,
+            self.next_start_time_sec,
+            self.no_next_start,
+            self.no_prev_end,
+        )
+        if is_ok:
+            self.tree.tree_to_csv_file(self.csv_path)
+            self.load_file()
+
+    def remove_row(self):
+        if self._check_csv_file_locked(self.csv_path) is True:
+            return
+        # confirm remove
+        is_ok = tk.messagebox.askyesno(
+            "Confirm",
+            "Do you want to remove the event?\nRemoving the row will shift the time of the rows below it upward.",
+        )
+        if is_ok is False:
+            return
+        is_ok = self.tree.remove()
+
+        if is_ok:
+            self.tree.tree_to_csv_file(self.csv_path)
+            self.load_file()
+
+    def _check_csv_file_locked(self, file_path):
+        if self.tree.check_csv_file_locked(self.csv_path) is True:
+            tk.messagebox.showinfo(
+                "Info",
+                f"The file is currently locked by another application, such as Excel.\n{self.csv_path}",
+            )
+            return True
+        return False
+
+    def select_row(self):
+        idx = self.tree.get_selected_index()
+        if idx is None:
+            return
+        prev_fixed_code, next_fixed_code = self._get_prev_next_fixed_code(idx)
+        self.no_prev_end = False
+        self.no_next_start = False
+
+        # preview event
+        if prev_fixed_code is None:
+            self.prev_end_time_sec = self._get_prev_start_time(idx)
+            self.no_prev_end = True
+        elif prev_fixed_code == "start":
+            prev_end_sec = self.stage_list[idx - 1]["end_sec"]
+            prev_duration_sec = self.stage_list[idx - 1]["duration_sec"]
+            # end_sec and duration_sec are 0 -> prevprev
+            if prev_end_sec == "0" and prev_duration_sec == "0":
+                self.prev_end_time_sec = self._get_prev_start_time(idx) + 1
+                self.no_prev_end = True
+            else:
+                self.prev_end_time_sec = self._get_prev_end_time(idx)
+        elif prev_fixed_code == "duration":
+            self.prev_end_time_sec = self._get_prev_end_time(idx)
+
+        # next event
+        if next_fixed_code == "start":
+            self.next_start_time_sec = self._get_next_start_time(idx)
+        elif next_fixed_code == "duration":
+            self.next_start_time_sec = self._get_next_end_time(idx) - 1
+            self.no_next_start = True
+        elif next_fixed_code is None:
+            self.next_start_time_sec = self._get_next_end_time(idx)
+            self.no_next_start = True
+
+        self.highlight_selected_row()
+
+    def draw_start_line(self):
+        self.start_index = self.tree.get_selected_index()
+        if self.start_index is None:
+            self.start_index = 0
+
+        self.canvas.delete("start_line")
+        self.canvas.delete("highlight")
+        stage = self.stage_list[self.start_index]
+        total_duration = self.stage_list[-1]["end_dt"].total_seconds()
+        height = self.canvas.winfo_height()
+        scale = (height - 30) / total_duration
+        start_sec = stage["start_dt"].total_seconds()
+        y_start = start_sec * scale + 20
+        self._draw_triangle(84, y_start, 10, "red")
+        self.canvas.tag_lower("start_line")
+
+        self.canvas.delete("time")
+        for i, s in enumerate(self.stage_list):
+            time_caption = self._minus_timedelta(
+                s["start_dt"], self.stage_list[self.start_index]["start_dt"]
+            )
+            start_sec = s["start_dt"].total_seconds()
+            y_start = start_sec * scale + 20
+            if y_start < 10:
+                continue
+            self.canvas.create_text(
+                70,
+                y_start,
+                text=time_caption,
+                anchor="e",
+                font=self.fonts[self.font_size_combobox.get()]["font"],
+                tag="time",
+            )
+
+        self.canvas.delete("prev_end_fixed")
+        self.canvas.delete("next_start_fixed")
+
+    def highlight_selected_row(self):
+        idx = self.tree.get_selected_index()
+        if idx is None:
+            return
+        self.canvas.delete("highlight")
+        total_duration = self.stage_list[-1]["end_dt"].total_seconds()
+        height = self.canvas.winfo_height()
+        scale = (height - 30) / total_duration
+        start_sec = self.stage_list[idx]["start_dt"].total_seconds()
+        y_start = start_sec * scale + 20
+        rect_width = 200
+        y_end = y_start + self.stage_list[idx]["duration"].total_seconds() * scale
+        self.canvas.create_rectangle(
+            84,
+            y_start,
+            rect_width,
+            y_end,
+            fill="#dd7777",
+            outline="#101010",
+            tag="highlight",
+        )
+
+    def _get_prev_next_fixed_code(self, index):
+        if index == 0:
+            prev_fixed_code = None
+        else:
+            prev_fixed_code = self.stage_list[index - 1]["fixed"]
+        if index == len(self.stage_list) - 1:
+            next_fixed_code = None
+        else:
+            next_fixed_code = self.stage_list[index + 1]["fixed"]
+        return prev_fixed_code, next_fixed_code
+
+    def _get_prev_end_time(self, index):
+        if index <= 0:
+            return 0
+        else:
+            return self.stage_list[index - 1]["end_dt"].total_seconds()
+
+    def _get_prev_start_time(self, index):
+        if index <= 0:
+            return 0
+        else:
+            return self.stage_list[index - 1]["start_dt"].total_seconds()
+
+    def _get_next_start_time(self, index):
+        if index >= len(self.stage_list) - 1:
+            return 1000000
+        else:
+            return self.stage_list[index + 1]["start_dt"].total_seconds()
+
+    def _get_next_end_time(self, index):
+        if index >= len(self.stage_list) - 1:
+            return 1000000
+        else:
+            return self.stage_list[index + 1]["end_dt"].total_seconds()
+
+    def _draw_triangle(self, x, y, size, color):
+        self.canvas.create_polygon(
+            x - size,
+            y - size / 2,
+            x,
+            y,
+            x - size,
+            y + size / 2,
+            fill=color,
+            tag="start_line",
+        )
+
+    def _minus_timedelta(self, td_1, td_2):
+        include_hour = self.time_format_combobox.get() == "h:mm:ss"
+        if td_1 < td_2:
+            total_seconds = td_2 - td_1
+            return f"-{self._timedelta_to_str(total_seconds, include_hour)}"
+        else:
+            total_seconds = td_1 - td_2
+            return self._timedelta_to_str(total_seconds, include_hour)
+
+    def draw_stages(self):
+        self.canvas.delete("all")
+        total_duration = self.stage_list[-1]["end_dt"].total_seconds()
+        height = self.canvas.winfo_height()
+        scale = (height - 30) / total_duration
+
+        past_rect_height = 10000
+        include_hour = self.time_format_combobox.get() == "h:mm:ss"
+
+        text_font = self.fonts[self.font_size_combobox.get()]
+        for i, stage in enumerate(self.stage_list):
+            time_caption = stage["start_dt"]
+
+            start_sec = stage["start_dt"].total_seconds()
+            duration_sec = stage["duration"].total_seconds()
+            rect_height = duration_sec * scale
+            rect_width = 200
+            y_start = start_sec * scale + 20
+            y_end = y_start + rect_height
+            self.canvas.create_rectangle(
+                84,
+                y_start,
+                rect_width,
+                y_end,
+                fill=stage["color"],
+                outline="#101010",
+            )
+            self.canvas.create_text(
+                rect_width + 10,
+                (y_start + y_end) / 2,
+                text=f"{stage["title"]} ({self._timedelta_to_str(stage['duration'], False)})",
+                anchor="w",
+                font=text_font["font"],
+            )
+            if past_rect_height > 10:
+                self.canvas.create_text(
+                    70,
+                    y_start,
+                    text=self._timedelta_to_str(time_caption, include_hour),
+                    anchor="e",
+                    font=text_font["font"],
+                    tag="time",
+                )
+            past_rect_height = rect_height
+
+    def create_file(self):
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        dir_path = filedialog.askdirectory(initialdir=desktop_path)
+        if not dir_path:
+            return
+        today = datetime.now().strftime("%Y-%m-%d")
+        file_path = os.path.join(dir_path, f"{today}_new.csv")
+        if os.path.exists(file_path):
+            tk.messagebox.showinfo("Info", "File already exists.")
+            return
+        with open(file_path, "w") as f:
+            f.write("title,member,start,end,duration,fixed,instruction\n")
+            f.write("TASK A,MEMBER1,0:00,0:00,0:00,start,\n")
+            f.write("TASK B,MEMBER1,3:00,0:00,0:00,start,\n")
+            f.write("TASK C,MEMBER1,5:00,0:00,4:00,start,\n")
+
+        self.csv_path = file_path
+        self.load_file()
+
+    def select_file(self):
+        csv_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
+        if not csv_path:
+            return
+        self.csv_path = csv_path
+        self.load_file()
+
+    def load_file(self):
+        self.file_path_label.config(text=self.csv_path)
+        timetable_csv_str = self.read_file(self.csv_path)
+        timetable = csv_to_timetable.TimeTable()
+        timetable.load_csv_str(timetable_csv_str)
+
+        self.stage_list = []
+        for row in timetable.get_timetable():
+            self.stage_list.append(
+                {
+                    "title": row["title"],
+                    "member": row["member"],
+                    "start_dt": row["start"],
+                    "end_dt": row["end"],
+                    "duration": row["end"] - row["start"],
+                    "start_sec": row["start_sec"],
+                    "end_sec": row["end_sec"],
+                    "duration_sec": row["duration_sec"],
+                    "fixed": row["fixed"],
+                    "instruction": row["instruction"],
+                }
+            )
+        self.asign_rect_color()
+        self.tree.set_stages(self.stage_list)
+        self.draw_stages()
+
+    def read_file(self, tar_path):
+        try:
+            with open(tar_path, "r", encoding="utf-8") as f:
+                return f.read()
+        except UnicodeDecodeError:
+            print("try shift-jis")
+            with open(tar_path, "r", encoding="shift-jis") as f:
+                return f.read()
+
+    def asign_rect_color(self):
+        colors = [
+            "#a9a9af",
+            "#7c7c83",
+            "#d5d5e0",
+            "#6a607d",
+            "#b0c0d6",
+            "#8f8e9e",
+            "#a3a3bc",
+            "#e0e0fb",
+            "#85859f",
+            "#c1c1d0",
+            "#b0b0ce",
+            "#ebebfa",
+            "#9b9ba6",
+            "#d8d8ef",
+        ]
+        title_list = list(set([s["title"] for s in self.stage_list]))
+        title_list.sort()
+        for i, title in enumerate(title_list):
+            for stage in self.stage_list:
+                if stage["title"] == title:
+                    if i >= len(colors):
+                        stage["color"] = "#aaaaaa"
+                    else:
+                        stage["color"] = colors[i]
+
+    def _timedelta_to_str(self, td, include_hour=True):
+        # mm:ss
+        if include_hour is False:
+            minutes, seconds = divmod(td.seconds, 60)
+            return f"{minutes:01}:{seconds:02}"
+        # hh:mm:ss
+        elif include_hour is True:
+            hours, remainder = divmod(td.seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            if include_hour is True:
+                return f"{hours:01}:{minutes:02}:{seconds:02}"
+
+    def open_timer(self):
+        if self.time_format_combobox.get() == "h:mm:ss":
+            hmmss = "hmmss"
+        else:
+            hmmss = "mmss"
+
+        # frozen exe
+        if getattr(sys, "frozen", False):
+            current_dir = os.path.dirname(sys.executable)
+            tar_path = os.path.join(current_dir, "app_timer.exe")
+            color = self.timer_color_Combobox.get()
+
+            subprocess.Popen(
+                [
+                    tar_path,
+                    "--file_path",
+                    self.csv_path,
+                    "--text_color",
+                    color,
+                    "--start_index",
+                    str(self.start_index),
+                    "--hmmss",
+                    hmmss,
+                ]
+            )
+        else:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            tar_path = os.path.join(current_dir, "app_timer.py")
+            color = self.timer_color_Combobox.get()
+            subprocess.Popen(
+                [
+                    "python",
+                    tar_path,
+                    "--file_path",
+                    self.csv_path,
+                    "--text_color",
+                    color,
+                    "--start_index",
+                    str(self.start_index),
+                    "--hmmss",
+                    hmmss,
+                ]
+            )
+
+    def open_excel(self):
+        os.system(f"start excel {self.csv_path}")
+
+    def export_svg(self):
+        init_file_name = os.path.basename(self.csv_path).split(".")[0]
+        file_path = filedialog.asksaveasfilename(
+            filetypes=[("SVG files", "*.svg")],
+            defaultextension=".svg",
+            initialfile=init_file_name,
+        )
+        if not file_path:
+            return
+
+        svg_writer.save_as_svg(self.canvas, file_path)
+
+    def undo(self, event):
+        backup_dir = "backup"
+        # move file backup to tar_path
+        backup_file = os.path.join(backup_dir, os.path.basename(self.csv_path))
+        if os.path.exists(backup_file):
+            shutil.move(backup_file, self.csv_path)
+            self.load_file()
+
+
+def quit(root):
+    root.quit()
+    root.destroy()
+
+
+def main():
+    bg_color = "#e8e8e8"
+    root = ttkthemes.ThemedTk(theme="breeze")
+    root.geometry("1300x900+100+100")
+    root.configure(background=bg_color)
+    root.option_add("*background", bg_color)
+    root.option_add("*Canvas.background", bg_color)
+    root.option_add("*Text.background", "#fcfcfc")
+    root.tk.call("wm", "iconphoto", root._w, tk.PhotoImage(data=icon_data.icon_data))
+    s = ttk.Style(root)
+    s.configure(".", background=bg_color)
+    app = App(root)
+    root.protocol("WM_DELETE_WINDOW", lambda: quit(root))
+    app.mainloop()
+
+
+if __name__ == "__main__":
+    main()
