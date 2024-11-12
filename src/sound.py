@@ -2,8 +2,6 @@ import os
 import subprocess
 import sys
 
-# https://otologic.jp/free/se/countdown01.html
-
 
 def play_sound(sound_name):
     if getattr(sys, "frozen", False):

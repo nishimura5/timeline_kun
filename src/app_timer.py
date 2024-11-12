@@ -324,9 +324,9 @@ def quit(root):
 def main(file_path=None, fg_color="orange", start_index=0, hmmss="hmmss"):
     bg_color = "#202020"
     color_and_sound = {
-        "orange": "countdown3_1.wav",
-        "cyan": "countdown3_2.wav",
-        "lightgreen": "countdown3_3.wav",
+        "orange": "countdown3_orange.wav",
+        "cyan": "countdown3_cyan.wav",
+        "lightgreen": "countdown3_lightgreen.wav",
     }
 
     root = tk.Tk()
