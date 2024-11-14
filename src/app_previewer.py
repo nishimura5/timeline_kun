@@ -95,6 +95,12 @@ class App(ttk.Frame):
         )
         export_svg_button.pack(padx=5, side=tk.LEFT)
 
+        # error message frame
+        msg_frame = ttk.Frame(send_timer_frame)
+        msg_frame.pack(padx=10,fill=tk.X, side=tk.LEFT)
+        self.msg_label = ttk.Label(msg_frame, text="")
+        self.msg_label.pack()
+
         # body frame
         body_frame = ttk.Frame(master)
         body_frame.pack(fill=tk.BOTH, expand=True)
@@ -385,6 +391,7 @@ class App(ttk.Frame):
         self.load_file()
 
     def select_file(self):
+        self.msg_label.config(text="")
         csv_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
         if not csv_path:
             return
@@ -395,7 +402,11 @@ class App(ttk.Frame):
         self.file_path_label.config(text=self.csv_path)
         timetable_csv_str = self.read_file(self.csv_path)
         timetable = csv_to_timetable.TimeTable()
-        timetable.load_csv_str(timetable_csv_str)
+        try:
+            timetable.load_csv_str(timetable_csv_str)
+        except Exception as e:
+            self.msg_label.config(text=f"ERROR: {e}")
+            return
 
         self.stage_list = []
         for row in timetable.get_timetable():
@@ -416,6 +427,8 @@ class App(ttk.Frame):
         self.asign_rect_color()
         self.tree.set_stages(self.stage_list)
         self.draw_stages()
+
+        self.msg_label.config(text="Successfully loaded.")
 
     def read_file(self, tar_path):
         try:
