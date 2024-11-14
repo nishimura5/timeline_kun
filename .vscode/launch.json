@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+       {
+            "name": "launcher",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceRoot}/src/app_previewer.py",
+            "console": "integratedTerminal",
+            "redirectOutput": true
+        }
+    ]
+}
+ 
