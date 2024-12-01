@@ -1,9 +1,12 @@
 import re
+import sys
 import tkinter as tk
 from tkinter import ttk
 
 import time_format
 import timetable_to_csv
+
+IS_DARWIN = sys.platform.startswith("darwin")
 
 
 class Tree(ttk.Frame):
@@ -17,7 +20,11 @@ class Tree(ttk.Frame):
             self.tree.heading(column["name"], text=column["name"])
             self.tree.column(column["name"], width=column["width"])
         self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.tree.bind("<Button-3>", self._right_click_tree)
+        if not IS_DARWIN:
+            self.tree.bind("<Button-3>", self._right_click_tree)
+        else:
+            self.tree.bind("<Button-2>", self._right_click_tree)
+
         self.menu = tk.Menu(self, tearoff=0)
         self.stage_list = []
 

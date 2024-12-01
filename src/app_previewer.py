@@ -97,7 +97,7 @@ class App(ttk.Frame):
 
         # error message frame
         msg_frame = ttk.Frame(send_timer_frame)
-        msg_frame.pack(padx=10,fill=tk.X, side=tk.LEFT)
+        msg_frame.pack(padx=10, fill=tk.X, side=tk.LEFT)
         self.msg_label = ttk.Label(msg_frame, text="")
         self.msg_label.pack()
 
@@ -119,7 +119,7 @@ class App(ttk.Frame):
         self.tree = gui_tree.Tree(tree_frame, columns=cols, height=800)
         self.tree.pack()
         self.tree.tree.bind("<<TreeviewSelect>>", lambda e: self.select_row())
-        self.tree.add_menu("Set start poinot", self.draw_start_line)
+        self.tree.add_menu("Set start point", self.draw_start_line)
         self.tree.add_menu("Edit", self.edit_row)
         self.tree.add_menu("Remove", self.remove_row)
         # canvas
@@ -356,7 +356,7 @@ class App(ttk.Frame):
             self.canvas.create_text(
                 rect_width + 10,
                 (y_start + y_end) / 2,
-                text=f"{stage["title"]} ({self._timedelta_to_str(stage['duration'], False)})",
+                text=f"{stage['title']} ({self._timedelta_to_str(stage['duration'], False)})",
                 anchor="w",
                 font=text_font["font"],
             )
