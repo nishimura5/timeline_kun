@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# mac
+.DS_Store
+
 # Distribution / packaging
 .Python
 build/
@@ -130,6 +133,7 @@ ENV/
 env.bak/
 venv.bak/
 *.lock
+.python-version
 
 # Spyder project settings
 .spyderproject
