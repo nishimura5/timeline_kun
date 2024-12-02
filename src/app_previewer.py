@@ -13,6 +13,8 @@ import gui_tree
 import icon_data
 import svg_writer
 
+IS_DARWIN = sys.platform.startswith("darwin")
+
 
 class App(ttk.Frame):
     fonts = {
@@ -523,7 +525,10 @@ class App(ttk.Frame):
             )
 
     def open_excel(self):
-        os.system(f"start excel {self.csv_path}")
+        if IS_DARWIN:
+            os.system(f"open -a /Applications/Microsoft\ Excel.app {self.csv_path}")
+        else:
+            os.system(f"start excel {self.csv_path}")
 
     def export_svg(self):
         init_file_name = os.path.basename(self.csv_path).split(".")[0]
