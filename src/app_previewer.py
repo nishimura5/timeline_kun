@@ -12,6 +12,7 @@ import csv_to_timetable
 import gui_tree
 import icon_data
 import svg_writer
+from gui_parts import Combobox
 
 IS_DARWIN = sys.platform.startswith("darwin")
 
@@ -41,61 +42,40 @@ class App(ttk.Frame):
 
         head_frame = ttk.Frame(master)
         head_frame.pack(padx=10, pady=(15, 5), fill=tk.X)
-        create_file_btn = ttk.Button(
-            head_frame, text="Create CSV", width=13, command=self.create_file
-        )
+        create_file_btn = ttk.Button(head_frame, text="Create CSV", width=13, command=self.create_file)
         create_file_btn.pack(padx=5, side=tk.LEFT)
-        load_file_btn = ttk.Button(
-            head_frame, text="Load CSV", width=13, command=self.select_file
-        )
+        load_file_btn = ttk.Button(head_frame, text="Load CSV", width=13, command=self.select_file)
         load_file_btn.pack(padx=5, side=tk.LEFT)
         self.file_path_label = ttk.Label(head_frame, text="No file selected")
         self.file_path_label.pack(padx=5, side=tk.LEFT)
 
-        timer_button = ttk.Button(
-            head_frame, text="Send to timer", command=self.open_timer
-        )
-        timer_button.pack(padx=5, side=tk.RIGHT)
+        timer_btn = ttk.Button(head_frame, text="Send to timer", command=self.open_timer)
+        timer_btn.pack(padx=5, side=tk.RIGHT)
 
-        self.timer_color_Combobox = ttk.Combobox(head_frame, state="readonly", width=12)
-        self.timer_color_Combobox["values"] = ["orange", "cyan", "lightgreen"]
-        self.timer_color_Combobox.current(0)
-        self.timer_color_Combobox.pack(padx=5, side=tk.RIGHT)
+        values = ["orange", "cyan", "lightgreen"]
+        self.timer_color_combobox = Combobox(head_frame, "Color:", values, width=12)
+        self.timer_color_combobox.pack_horizontal(padx=5, side=tk.RIGHT)
 
         send_timer_frame = ttk.Frame(master)
         send_timer_frame.pack(padx=10, pady=(5, 10), fill=tk.X)
 
-        excel_btn = ttk.Button(
-            send_timer_frame, text="Send to Excel", width=13, command=self.open_excel
-        )
+        excel_btn = ttk.Button(send_timer_frame, text="Send to Excel", width=13, command=self.open_excel)
         excel_btn.pack(padx=5, side=tk.LEFT)
         reload_btn = ttk.Button(send_timer_frame, text="Reload", command=self.load_file)
         reload_btn.pack(padx=5, side=tk.LEFT)
 
-        self.time_format_combobox = ttk.Combobox(
-            send_timer_frame, state="readonly", width=10
-        )
-        self.time_format_combobox["values"] = ["h:mm:ss", "mm:ss"]
-        self.time_format_combobox.current(0)
-        self.time_format_combobox.pack(padx=(70, 5), side=tk.LEFT)
-        self.time_format_combobox.bind(
-            "<<ComboboxSelected>>", lambda e: self.draw_stages()
-        )
+        values = ["mm:ss", "h:mm:ss"]
+        self.time_format_combobox = Combobox(send_timer_frame, "Format", values, width=10)
+        self.time_format_combobox.pack_horizontal(padx=(70, 5), side=tk.LEFT)
+        self.time_format_combobox.set_selected_bind(lambda e: self.draw_stages())
 
-        self.font_size_combobox = ttk.Combobox(
-            send_timer_frame, state="readonly", width=10
-        )
-        self.font_size_combobox["values"] = ["tiny", "small", "normal"]
-        self.font_size_combobox.current(1)
-        self.font_size_combobox.pack(padx=5, side=tk.LEFT, anchor=tk.E)
-        self.font_size_combobox.bind(
-            "<<ComboboxSelected>>", lambda e: self.draw_stages()
-        )
+        values = ["tiny", "small", "normal"]
+        self.font_size_combobox = Combobox(send_timer_frame, "Font size", values, width=10, current=1)
+        self.font_size_combobox.pack_horizontal(padx=5, side=tk.LEFT, anchor=tk.E)
+        self.font_size_combobox.set_selected_bind(lambda e: self.draw_stages())
 
-        export_svg_button = ttk.Button(
-            send_timer_frame, text="Export SVG", command=self.export_svg
-        )
-        export_svg_button.pack(padx=5, side=tk.LEFT)
+        export_svg_btn = ttk.Button(send_timer_frame, text="Export SVG", command=self.export_svg)
+        export_svg_btn.pack(padx=5, side=tk.LEFT)
 
         # error message frame
         msg_frame = ttk.Frame(send_timer_frame)
@@ -490,7 +470,7 @@ class App(ttk.Frame):
         if getattr(sys, "frozen", False):
             current_dir = os.path.dirname(sys.executable)
             tar_path = os.path.join(current_dir, "app_timer.exe")
-            color = self.timer_color_Combobox.get()
+            color = self.timer_color_combobox.get()
 
             subprocess.Popen(
                 [
@@ -508,7 +488,7 @@ class App(ttk.Frame):
         else:
             current_dir = os.path.dirname(os.path.abspath(__file__))
             tar_path = os.path.join(current_dir, "app_timer.py")
-            color = self.timer_color_Combobox.get()
+            color = self.timer_color_combobox.get()
             subprocess.Popen(
                 [
                     "python",

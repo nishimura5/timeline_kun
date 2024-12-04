@@ -21,6 +21,8 @@ def timedelta_to_str_mm_ss(td):
 
 def seconds_to_time_str(src):
     if isinstance(src, str):
+        if src == "":
+            return ""
         colons = src.count(":")
         if colons == 2:
             return src
@@ -41,6 +43,8 @@ def seconds_to_time_str(src):
 
 
 def time_str_to_seconds(time_str):
+    if time_str == "":
+        time_str = "0"
     colons = time_str.count(":")
     if colons == 2:
         hours, minutes, seconds = time_str.split(":")
