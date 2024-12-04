@@ -9,6 +9,7 @@ from tkinter import filedialog, ttk
 import ttkthemes
 
 import csv_to_timetable
+import gui_canvas
 import gui_tree
 import icon_data
 import svg_writer
@@ -42,14 +43,20 @@ class App(ttk.Frame):
 
         head_frame = ttk.Frame(master)
         head_frame.pack(padx=10, pady=(15, 5), fill=tk.X)
-        create_file_btn = ttk.Button(head_frame, text="Create CSV", width=13, command=self.create_file)
+        create_file_btn = ttk.Button(
+            head_frame, text="Create CSV", width=13, command=self.create_file
+        )
         create_file_btn.pack(padx=5, side=tk.LEFT)
-        load_file_btn = ttk.Button(head_frame, text="Load CSV", width=13, command=self.select_file)
+        load_file_btn = ttk.Button(
+            head_frame, text="Load CSV", width=13, command=self.select_file
+        )
         load_file_btn.pack(padx=5, side=tk.LEFT)
         self.file_path_label = ttk.Label(head_frame, text="No file selected")
         self.file_path_label.pack(padx=5, side=tk.LEFT)
 
-        timer_btn = ttk.Button(head_frame, text="Send to timer", command=self.open_timer)
+        timer_btn = ttk.Button(
+            head_frame, text="Send to timer", command=self.open_timer
+        )
         timer_btn.pack(padx=5, side=tk.RIGHT)
 
         values = ["orange", "cyan", "lightgreen"]
@@ -59,22 +66,30 @@ class App(ttk.Frame):
         send_timer_frame = ttk.Frame(master)
         send_timer_frame.pack(padx=10, pady=(5, 10), fill=tk.X)
 
-        excel_btn = ttk.Button(send_timer_frame, text="Send to Excel", width=13, command=self.open_excel)
+        excel_btn = ttk.Button(
+            send_timer_frame, text="Send to Excel", width=13, command=self.open_excel
+        )
         excel_btn.pack(padx=5, side=tk.LEFT)
         reload_btn = ttk.Button(send_timer_frame, text="Reload", command=self.load_file)
         reload_btn.pack(padx=5, side=tk.LEFT)
 
         values = ["mm:ss", "h:mm:ss"]
-        self.time_format_combobox = Combobox(send_timer_frame, "Format", values, width=10)
+        self.time_format_combobox = Combobox(
+            send_timer_frame, "Format", values, width=10
+        )
         self.time_format_combobox.pack_horizontal(padx=(70, 5), side=tk.LEFT)
         self.time_format_combobox.set_selected_bind(lambda e: self.draw_stages())
 
         values = ["tiny", "small", "normal"]
-        self.font_size_combobox = Combobox(send_timer_frame, "Font size", values, width=10, current=1)
+        self.font_size_combobox = Combobox(
+            send_timer_frame, "Font size", values, width=10, current=1
+        )
         self.font_size_combobox.pack_horizontal(padx=5, side=tk.LEFT, anchor=tk.E)
         self.font_size_combobox.set_selected_bind(lambda e: self.draw_stages())
 
-        export_svg_btn = ttk.Button(send_timer_frame, text="Export SVG", command=self.export_svg)
+        export_svg_btn = ttk.Button(
+            send_timer_frame, text="Export SVG", command=self.export_svg
+        )
         export_svg_btn.pack(padx=5, side=tk.LEFT)
 
         # error message frame
@@ -107,7 +122,7 @@ class App(ttk.Frame):
         # canvas
         canvas_frame = ttk.Frame(body_frame)
         canvas_frame.pack(fill=tk.BOTH, expand=True)
-        self.canvas = tk.Canvas(canvas_frame, bg="white", width=700)
+        self.canvas = gui_canvas.Canvas(canvas_frame, bg="white", width=700)
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
         # ctrl+z shortcut control
@@ -198,59 +213,24 @@ class App(ttk.Frame):
         if self.start_index is None:
             self.start_index = 0
 
-        self.canvas.delete("start_line")
-        self.canvas.delete("highlight")
         stage = self.stage_list[self.start_index]
         total_duration = self.stage_list[-1]["end_dt"].total_seconds()
-        height = self.canvas.winfo_height()
-        scale = (height - 30) / total_duration
-        start_sec = stage["start_dt"].total_seconds()
-        y_start = start_sec * scale + 20
-        self._draw_triangle(84, y_start, 10, "red")
-        self.canvas.tag_lower("start_line")
+        self.canvas.draw_start_line(stage["start_dt"], total_duration)
 
-        self.canvas.delete("time")
         for i, s in enumerate(self.stage_list):
             time_caption = self._minus_timedelta(
                 s["start_dt"], self.stage_list[self.start_index]["start_dt"]
             )
-            start_sec = s["start_dt"].total_seconds()
-            y_start = start_sec * scale + 20
-            if y_start < 10:
-                continue
-            self.canvas.create_text(
-                70,
-                y_start,
-                text=time_caption,
-                anchor="e",
-                font=self.fonts[self.font_size_combobox.get()]["font"],
-                tag="time",
-            )
-
-        self.canvas.delete("prev_end_fixed")
-        self.canvas.delete("next_start_fixed")
+            self.canvas.create_time(s["start_dt"], text=time_caption)
 
     def highlight_selected_row(self):
         idx = self.tree.get_selected_index()
         if idx is None:
             return
         self.canvas.delete("highlight")
-        total_duration = self.stage_list[-1]["end_dt"].total_seconds()
-        height = self.canvas.winfo_height()
-        scale = (height - 30) / total_duration
-        start_sec = self.stage_list[idx]["start_dt"].total_seconds()
-        y_start = start_sec * scale + 20
-        rect_width = 200
-        y_end = y_start + self.stage_list[idx]["duration"].total_seconds() * scale
-        self.canvas.create_rectangle(
-            84,
-            y_start,
-            rect_width,
-            y_end,
-            fill="#dd7777",
-            outline="#101010",
-            tag="highlight",
-        )
+        start = self.stage_list[idx]["start_dt"]
+        duration = self.stage_list[idx]["duration"]
+        self.canvas.create_rect(start, duration, "#dd7777", tag="highlight")
 
     def _get_prev_next_fixed_code(self, index):
         if index == 0:
@@ -287,18 +267,6 @@ class App(ttk.Frame):
         else:
             return self.stage_list[index + 1]["end_dt"].total_seconds()
 
-    def _draw_triangle(self, x, y, size, color):
-        self.canvas.create_polygon(
-            x - size,
-            y - size / 2,
-            x,
-            y,
-            x - size,
-            y + size / 2,
-            fill=color,
-            tag="start_line",
-        )
-
     def _minus_timedelta(self, td_1, td_2):
         include_hour = self.time_format_combobox.get() == "h:mm:ss"
         if td_1 < td_2:
@@ -310,47 +278,24 @@ class App(ttk.Frame):
 
     def draw_stages(self):
         self.canvas.delete("all")
-        total_duration = self.stage_list[-1]["end_dt"].total_seconds()
-        height = self.canvas.winfo_height()
-        scale = (height - 30) / total_duration
+        self.canvas.set_font(self.fonts[self.font_size_combobox.get()]["font"])
 
         past_rect_height = 10000
         include_hour = self.time_format_combobox.get() == "h:mm:ss"
 
-        text_font = self.fonts[self.font_size_combobox.get()]
         for i, stage in enumerate(self.stage_list):
-            time_caption = stage["start_dt"]
-
-            start_sec = stage["start_dt"].total_seconds()
-            duration_sec = stage["duration"].total_seconds()
-            rect_height = duration_sec * scale
-            rect_width = 200
-            y_start = start_sec * scale + 20
-            y_end = y_start + rect_height
-            self.canvas.create_rectangle(
-                84,
-                y_start,
-                rect_width,
-                y_end,
-                fill=stage["color"],
-                outline="#101010",
+            rect_height = self.canvas.create_rect(
+                stage["start_dt"], stage["duration"], stage["color"]
             )
-            self.canvas.create_text(
-                rect_width + 10,
-                (y_start + y_end) / 2,
-                text=f"{stage['title']} ({self._timedelta_to_str(stage['duration'], False)})",
-                anchor="w",
-                font=text_font["font"],
+            label_caption = (
+                f"{stage['title']} ({self._timedelta_to_str(stage['duration'], False)})"
+            )
+            self.canvas.create_label(
+                stage["start_dt"], stage["duration"], label_caption
             )
             if past_rect_height > 10:
-                self.canvas.create_text(
-                    70,
-                    y_start,
-                    text=self._timedelta_to_str(time_caption, include_hour),
-                    anchor="e",
-                    font=text_font["font"],
-                    tag="time",
-                )
+                time_caption = self._timedelta_to_str(stage["start_dt"], include_hour)
+                self.canvas.create_time(stage["start_dt"], text=time_caption)
             past_rect_height = rect_height
 
     def create_file(self):
@@ -365,9 +310,9 @@ class App(ttk.Frame):
             return
         with open(file_path, "w") as f:
             f.write("title,member,start,end,duration,fixed,instruction\n")
-            f.write("TASK A,MEMBER1,0:00,0:00,0:00,start,\n")
-            f.write("TASK B,MEMBER1,3:00,0:00,0:00,start,\n")
-            f.write("TASK C,MEMBER1,5:00,0:00,4:00,start,\n")
+            f.write("TASK A,MEMBER1,0:00,,,start,\n")
+            f.write("TASK B,MEMBER1,3:00,,,start,\n")
+            f.write("TASK C,MEMBER1,5:00,,4:00,start,\n")
 
         self.csv_path = file_path
         self.load_file()
@@ -406,6 +351,8 @@ class App(ttk.Frame):
                     "instruction": row["instruction"],
                 }
             )
+        total_duration = self.stage_list[-1]["end_dt"].total_seconds()
+        self.canvas.set_scale((self.canvas.winfo_height() - 30) / total_duration)
         self.asign_rect_color()
         self.tree.set_stages(self.stage_list)
         self.draw_stages()
