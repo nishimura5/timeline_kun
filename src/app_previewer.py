@@ -13,30 +13,13 @@ import gui_canvas
 import gui_tree
 import icon_data
 import svg_writer
+import time_format
 from gui_parts import Combobox
 
 IS_DARWIN = sys.platform.startswith("darwin")
 
 
 class App(ttk.Frame):
-    fonts = {
-        "tiny": {
-            "font": ("Helvetica", 8),
-            "spacing": 60,
-            "height": 8,
-        },
-        "small": {
-            "font": ("Helvetica", 10),
-            "spacing": 70,
-            "height": 10,
-        },
-        "normal": {
-            "font": ("Helvetica", 12),
-            "spacing": 80,
-            "height": 12,
-        },
-    }
-
     def __init__(self, master):
         super().__init__(master)
         master.title("Timeline-kun")
@@ -217,19 +200,17 @@ class App(ttk.Frame):
         total_duration = self.stage_list[-1]["end_dt"].total_seconds()
         self.canvas.draw_start_line(stage["start_dt"], total_duration)
 
-        for i, s in enumerate(self.stage_list):
-            time_caption = self._minus_timedelta(
-                s["start_dt"], self.stage_list[self.start_index]["start_dt"]
-            )
-            self.canvas.create_time(s["start_dt"], text=time_caption)
+        for s in self.stage_list:
+            caption = self._minus_timedelta(s["start_dt"], stage["start_dt"])
+            self.canvas.create_time(s["start_dt"], text=caption)
 
     def highlight_selected_row(self):
         idx = self.tree.get_selected_index()
         if idx is None:
             return
-        self.canvas.delete("highlight")
         start = self.stage_list[idx]["start_dt"]
         duration = self.stage_list[idx]["duration"]
+        self.canvas.delete("highlight")
         self.canvas.create_rect(start, duration, "#dd7777", tag="highlight")
 
     def _get_prev_next_fixed_code(self, index):
@@ -271,30 +252,30 @@ class App(ttk.Frame):
         include_hour = self.time_format_combobox.get() == "h:mm:ss"
         if td_1 < td_2:
             total_seconds = td_2 - td_1
-            return f"-{self._timedelta_to_str(total_seconds, include_hour)}"
+            return f"-{time_format.timedelta_to_str(total_seconds, include_hour)}"
         else:
             total_seconds = td_1 - td_2
-            return self._timedelta_to_str(total_seconds, include_hour)
+            return time_format.timedelta_to_str(total_seconds, include_hour)
 
     def draw_stages(self):
         self.canvas.delete("all")
-        self.canvas.set_font(self.fonts[self.font_size_combobox.get()]["font"])
+        self.canvas.set_font(self.font_size_combobox.get())
 
         past_rect_height = 10000
         include_hour = self.time_format_combobox.get() == "h:mm:ss"
 
-        for i, stage in enumerate(self.stage_list):
+        for stage in self.stage_list:
             rect_height = self.canvas.create_rect(
                 stage["start_dt"], stage["duration"], stage["color"]
             )
-            label_caption = (
-                f"{stage['title']} ({self._timedelta_to_str(stage['duration'], False)})"
-            )
+            label_caption = f"{stage['title']} ({time_format.timedelta_to_str(stage['duration'], include_hour)})"
             self.canvas.create_label(
                 stage["start_dt"], stage["duration"], label_caption
             )
             if past_rect_height > 10:
-                time_caption = self._timedelta_to_str(stage["start_dt"], include_hour)
+                time_caption = time_format.timedelta_to_str(
+                    stage["start_dt"], include_hour
+                )
                 self.canvas.create_time(stage["start_dt"], text=time_caption)
             past_rect_height = rect_height
 
@@ -369,43 +350,15 @@ class App(ttk.Frame):
                 return f.read()
 
     def asign_rect_color(self):
-        colors = [
-            "#a9a9af",
-            "#7c7c83",
-            "#d5d5e0",
-            "#6a607d",
-            "#b0c0d6",
-            "#8f8e9e",
-            "#a3a3bc",
-            "#e0e0fb",
-            "#85859f",
-            "#c1c1d0",
-            "#b0b0ce",
-            "#ebebfa",
-            "#9b9ba6",
-            "#d8d8ef",
-        ]
         title_list = list(set([s["title"] for s in self.stage_list]))
         title_list.sort()
         for i, title in enumerate(title_list):
             for stage in self.stage_list:
                 if stage["title"] == title:
-                    if i >= len(colors):
+                    if i >= len(gui_canvas.rect_colors):
                         stage["color"] = "#aaaaaa"
                     else:
-                        stage["color"] = colors[i]
-
-    def _timedelta_to_str(self, td, include_hour=True):
-        # mm:ss
-        if include_hour is False:
-            minutes, seconds = divmod(td.seconds, 60)
-            return f"{minutes:01}:{seconds:02}"
-        # hh:mm:ss
-        elif include_hour is True:
-            hours, remainder = divmod(td.seconds, 3600)
-            minutes, seconds = divmod(remainder, 60)
-            if include_hour is True:
-                return f"{hours:01}:{minutes:02}:{seconds:02}"
+                        stage["color"] = gui_canvas.rect_colors[i]
 
     def open_timer(self):
         if self.time_format_combobox.get() == "h:mm:ss":
