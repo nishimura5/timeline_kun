@@ -14,11 +14,12 @@ class Tree(ttk.Frame):
     End column is not displayed in the tree.
     If you set the end time, csv file will have the end column.
     """
-    def __init__(self, master, columns: list, height: int):
+
+    def __init__(self, master, columns: list):
         super().__init__(master)
         cols = [col["name"] for col in columns]
         self.tree = ttk.Treeview(
-            self, columns=cols, height=height, show="headings", selectmode="browse"
+            self, columns=cols, show="headings", selectmode="browse"
         )
         for column in columns:
             self.tree.heading(column["name"], text=column["name"])

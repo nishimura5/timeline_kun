@@ -96,8 +96,8 @@ class App(ttk.Frame):
             {"name": "fixed", "width": 60},
             {"name": "instruction", "width": 200},
         ]
-        self.tree = gui_tree.Tree(tree_frame, columns=cols, height=800)
-        self.tree.pack()
+        self.tree = gui_tree.Tree(tree_frame, columns=cols)
+        self.tree.pack(fill=tk.BOTH, expand=True)
         self.tree.tree.bind("<<TreeviewSelect>>", lambda e: self.select_row())
         self.tree.add_menu("Set start point", self.draw_start_line)
         self.tree.add_menu("Edit", self.edit_row)
@@ -440,7 +440,7 @@ def quit(root):
 def main():
     bg_color = "#e8e8e8"
     root = ttkthemes.ThemedTk(theme="breeze")
-    root.geometry("1300x900+100+100")
+    root.geometry("1400x700+100+100")
     root.configure(background=bg_color)
     root.option_add("*background", bg_color)
     root.option_add("*Canvas.background", bg_color)

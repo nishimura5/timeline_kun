@@ -39,7 +39,7 @@ class Canvas(tk.Canvas):
 
     def __init__(self, master, bg="white", width=700):
         super().__init__(master, bg=bg, width=width)
-        self.rect_width = 200
+        self.rect_width = 100
 
     def set_font(self, font):
         self.font = self.fonts[font]["font"]
