@@ -24,14 +24,12 @@ class TimeTable:
         header_dict = {header[i]: i for i in range(len(header))}
 
         # Process each row
-        print(header_dict)
         if "end" not in header_dict.keys():
             is_no_end = True
             header_dict["end"] = -1
         else:
             is_no_end = False
         for i, line in enumerate(lines[1:]):
-            print(line)
             (
                 title,
                 member,

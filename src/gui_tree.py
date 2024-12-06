@@ -18,7 +18,7 @@ class Tree(ttk.Frame):
         super().__init__(master)
         cols = [col["name"] for col in columns]
         self.tree = ttk.Treeview(
-            self, columns=cols, height=height, show="headings", selectmode="extended"
+            self, columns=cols, height=height, show="headings", selectmode="browse"
         )
         for column in columns:
             self.tree.heading(column["name"], text=column["name"])
@@ -80,13 +80,11 @@ class Tree(ttk.Frame):
         return False
 
     def edit(self, prev_end_sec, next_start_sec, no_next_start, no_prev_end):
+        """Only one row can be edited at once"""
         selected = self.tree.selection()
-        if len(selected) == 0:
+        if len(selected) == 0 or len(selected) > 1:
             return False
-        if len(selected) > 1:
-            default_row = ["", "", "", "", "", "", ""]
-        elif len(selected) == 1:
-            default_row = self.tree.item(selected)["values"]
+        default_row = self.tree.item(selected)["values"]
 
         x = self.winfo_rootx()
         y = self.winfo_rooty()
