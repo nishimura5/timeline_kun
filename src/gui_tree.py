@@ -10,6 +10,10 @@ IS_DARWIN = sys.platform.startswith("darwin")
 
 
 class Tree(ttk.Frame):
+    """
+    End column is not displayed in the tree.
+    If you set the end time, csv file will have the end column.
+    """
     def __init__(self, master, columns: list, height: int):
         super().__init__(master)
         cols = [col["name"] for col in columns]
@@ -155,8 +159,12 @@ class Tree(ttk.Frame):
         return True
 
     def tree_to_csv_file(self, file_path):
+        end_col_num = 3
         timetable_to_csv.move_to_backup_folder(file_path)
-        ends = [self.tree.item(item)["values"][3] for item in self.tree.get_children()]
+        ends = [
+            self.tree.item(item)["values"][end_col_num]
+            for item in self.tree.get_children()
+        ]
 
         if ends.count("") == len(ends):
             header = "title,member,start,duration,fixed,instruction"
@@ -170,7 +178,7 @@ class Tree(ttk.Frame):
             for item in self.tree.get_children():
                 values = self.tree.item(item)["values"]
                 if no_end:
-                    values.pop(3)
+                    values.pop(end_col_num)
                 line = ",".join(str(val) for val in values)
                 f.write(line + "\n")
 
