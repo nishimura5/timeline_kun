@@ -24,7 +24,14 @@ class TimeTable:
         header_dict = {header[i]: i for i in range(len(header))}
 
         # Process each row
+        print(header_dict)
+        if "end" not in header_dict.keys():
+            is_no_end = True
+            header_dict["end"] = -1
+        else:
+            is_no_end = False
         for i, line in enumerate(lines[1:]):
+            print(line)
             (
                 title,
                 member,
@@ -33,7 +40,7 @@ class TimeTable:
                 end_sec_str,
                 fixed,
                 instruction,
-            ) = self._asign(line, header_dict)
+            ) = self._asign(line, header_dict, is_no_end)
 
             duration_sec = time_format.time_str_to_seconds(duration_sec_str)
             start_sec = time_format.time_str_to_seconds(start_sec_str)
@@ -98,13 +105,16 @@ class TimeTable:
                     f"Invalid timetable: {self.time_table[i]['title']} {self.time_table[i+1]['title']}"
                 )
 
-    def _asign(self, line_str, header_dict):
+    def _asign(self, line_str, header_dict, is_no_end=False):
         splited_line = line_str.strip().split(",")
         title = splited_line[header_dict["title"]]
         member = splited_line[header_dict["member"]]
         duration_sec_str = splited_line[header_dict["duration"]]
         start_sec_str = splited_line[header_dict["start"]]
-        end_sec_str = splited_line[header_dict["end"]]
+        if is_no_end:
+            end_sec_str = ""
+        else:
+            end_sec_str = splited_line[header_dict["end"]]
         fixed = splited_line[header_dict["fixed"]]
         if "instruction" in header_dict.keys():
             instruction = splited_line[header_dict["instruction"]]

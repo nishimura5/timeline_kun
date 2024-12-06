@@ -290,10 +290,11 @@ class App(ttk.Frame):
             tk.messagebox.showinfo("Info", "File already exists.")
             return
         with open(file_path, "w") as f:
-            f.write("title,member,start,end,duration,fixed,instruction\n")
-            f.write("TASK A,MEMBER1,0:00,,,start,\n")
-            f.write("TASK B,MEMBER1,3:00,,,start,\n")
-            f.write("TASK C,MEMBER1,5:00,,4:00,start,\n")
+            f.write("title,member,start,duration,fixed,instruction\n")
+            f.write("TASK A,MEMBER1,0:00,,start,The first task.\n")
+            f.write("TASK B,MEMBER1,3:00,,start,The second task.\n")
+            f.write("TASK C,MEMBER1,4:00,,start,The third task.\n")
+            f.write("TASK D,MEMBER1,5:00,2:00,start,The final task.\n")
 
         self.csv_path = file_path
         self.load_file()

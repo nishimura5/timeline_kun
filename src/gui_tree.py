@@ -20,6 +20,14 @@ class Tree(ttk.Frame):
             self.tree.heading(column["name"], text=column["name"])
             self.tree.column(column["name"], width=column["width"])
         self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.tree["displaycolumns"] = (
+            "title",
+            "member",
+            "start",
+            "duration",
+            "fixed",
+            "instruction",
+        )
         if not IS_DARWIN:
             self.tree.bind("<Button-3>", self._right_click_tree)
         else:
@@ -101,12 +109,9 @@ class Tree(ttk.Frame):
                 values[1] = new_member
             if dialog.selected_fixed != "":
                 values[5] = dialog.selected_fixed
-            if dialog.selected_start != "":
-                values[2] = dialog.selected_start
-            if dialog.selected_end != "":
-                values[3] = dialog.selected_end
-            if dialog.selected_duration != "":
-                values[4] = dialog.selected_duration
+            values[2] = dialog.selected_start
+            values[3] = dialog.selected_end
+            values[4] = dialog.selected_duration
             if dialog.selected_instruction != "":
                 values[6] = dialog.selected_instruction
             elif dialog.selected_instruction == " ":
@@ -151,12 +156,21 @@ class Tree(ttk.Frame):
 
     def tree_to_csv_file(self, file_path):
         timetable_to_csv.move_to_backup_folder(file_path)
+        ends = [self.tree.item(item)["values"][3] for item in self.tree.get_children()]
+
+        if ends.count("") == len(ends):
+            header = "title,member,start,duration,fixed,instruction"
+            no_end = True
+        else:
+            header = "title,member,start,end,duration,fixed,instruction"
+            no_end = False
 
         with open(file_path, "w", encoding="shift-jis") as f:
-            header = "title,member,start,end,duration,fixed,instruction"
             f.write(header + "\n")
             for item in self.tree.get_children():
                 values = self.tree.item(item)["values"]
+                if no_end:
+                    values.pop(3)
                 line = ",".join(str(val) for val in values)
                 f.write(line + "\n")
 
@@ -272,8 +286,8 @@ class TimelineTreeDialog(tk.Frame):
     def _update(self):
         fixed_code = self.fixed_combobox.get()
         if fixed_code == "duration":
-            self.start_entry.set_seconds(0)
-            self.end_entry.set_seconds(0)
+            self.start_entry.set_seconds("")
+            self.end_entry.set_seconds("")
             self.duration_entry.enabled()
             self.start_entry.disabled()
             self.end_entry.disabled()
@@ -317,7 +331,7 @@ class TimelineTreeDialog(tk.Frame):
         ]
         if all(time_entry_combination):
             print("no time entry")
-            return True
+            return False
 
         duration = self.duration_entry.get_seconds()
         start = self.start_entry.get_seconds()
