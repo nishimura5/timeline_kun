@@ -318,13 +318,10 @@ class TimelineTreeDialog(tk.Frame):
         if all(time_entry_combination):
             print("no time entry")
             return True
-        elif any(time_entry_combination):
-            print("all time entry should be blank or filled")
-            return False
 
-        duration = int(self.duration_entry.get_seconds())
-        start = int(self.start_entry.get_seconds())
-        end = int(self.end_entry.get_seconds())
+        duration = self.duration_entry.get_seconds()
+        start = self.start_entry.get_seconds()
+        end = self.end_entry.get_seconds()
 
         validate_result = True
         # basic validation
@@ -428,7 +425,7 @@ class TimeEntry(ttk.Frame):
     def get_seconds(self):
         time_str = self.time_entry.get()
         if time_str == "":
-            return ""
+            return 0
         return time_format.time_str_to_seconds(time_str)
 
     def get_status(self):
