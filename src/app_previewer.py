@@ -458,7 +458,7 @@ def quit(root):
 def main():
     bg_color = "#e8e8e8"
     root = ttkthemes.ThemedTk(theme="breeze")
-    root.geometry("1400x700+100+100")
+    root.geometry("1400x700+50+50")
     root.configure(background=bg_color)
     root.option_add("*background", bg_color)
     root.option_add("*Canvas.background", bg_color)
