@@ -70,6 +70,13 @@ class App(ttk.Frame):
         self.font_size_combobox.pack_horizontal(padx=5, side=tk.LEFT, anchor=tk.E)
         self.font_size_combobox.set_selected_bind(lambda e: self.draw_stages())
 
+        values = ["vertical", "horizontal"]
+        self.direction_combobox = Combobox(
+            send_timer_frame, "Direction", values, width=10
+        )
+        self.direction_combobox.pack_horizontal(padx=5, side=tk.LEFT, anchor=tk.E)
+        self.direction_combobox.set_selected_bind(lambda e: self.draw_stages())
+
         export_svg_btn = ttk.Button(
             send_timer_frame, text="Export SVG", command=self.export_svg
         )
@@ -203,6 +210,9 @@ class App(ttk.Frame):
         for s in self.stage_list:
             caption = self._minus_timedelta(s["start_dt"], stage["start_dt"])
             self.canvas.create_time(s["start_dt"], text=caption)
+        total_end_dt = self.stage_list[-1]["end_dt"]
+        time_caption = self._minus_timedelta(total_end_dt, stage["start_dt"])
+        self.canvas.create_time(total_end_dt, text=time_caption)
 
     def highlight_selected_row(self):
         idx = self.tree.get_selected_index()
@@ -260,6 +270,7 @@ class App(ttk.Frame):
     def draw_stages(self):
         self.canvas.delete("all")
         self.canvas.set_font(self.font_size_combobox.get())
+        self.canvas.set_direction(self.direction_combobox.get())
 
         past_rect_height = 10000
         include_hour = self.time_format_combobox.get() == "h:mm:ss"
@@ -268,9 +279,12 @@ class App(ttk.Frame):
             rect_height = self.canvas.create_rect(
                 stage["start_dt"], stage["duration"], stage["color"]
             )
-            label_caption = f"{stage['title']} ({time_format.timedelta_to_str(stage['duration'], include_hour)})"
+            label_title = f"{stage['title']}"
+            label_time = (
+                f"{time_format.timedelta_to_str(stage['duration'], include_hour)}"
+            )
             self.canvas.create_label(
-                stage["start_dt"], stage["duration"], label_caption
+                stage["start_dt"], stage["duration"], label_title, label_time
             )
             if past_rect_height > 10:
                 time_caption = time_format.timedelta_to_str(
@@ -278,6 +292,10 @@ class App(ttk.Frame):
                 )
                 self.canvas.create_time(stage["start_dt"], text=time_caption)
             past_rect_height = rect_height
+        time_caption = time_format.timedelta_to_str(
+            self.stage_list[-1]["end_dt"], include_hour
+        )
+        self.canvas.create_time(self.stage_list[-1]["end_dt"], text=time_caption)
 
     def create_file(self):
         desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")

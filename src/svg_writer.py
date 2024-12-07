@@ -18,11 +18,16 @@ def save_as_svg(tk_canvas, filename):
 
             if anchor == "e":
                 anchor = "end"
-            else:
+            elif anchor == "w":
                 anchor = "start"
+            elif anchor == "n":
+                anchor = "middle"
 
             y += font_size / 2 - 2
             svg += f"<text x='{x}' y='{y}' font-family='Helvetica' font-size='{font_size}' text-anchor='{anchor}'>{text}</text>\n"
+        elif tk_canvas.type(item) == "line":
+            x1, y1, x2, y2 = tk_canvas.coords(item)
+            svg += f"<line x1='{x1}' y1='{y1}' x2='{x2}' y2='{y2}' stroke='black' />\n"
 
     svg += "</svg>"
     with open(filename, "w", encoding="utf-8") as f:
