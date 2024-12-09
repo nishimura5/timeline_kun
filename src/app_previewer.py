@@ -347,10 +347,9 @@ class App(ttk.Frame):
         timetable_csv_str = self.read_file(self.csv_path)
         timetable = csv_to_timetable.TimeTable()
         try:
-            timetable.load_csv_str(timetable_csv_str)
+            warn_msg = timetable.load_csv_str(timetable_csv_str)
         except Exception as e:
-            print(e)
-            self.msg_label.config(text=f"ERROR: {e}")
+            self.msg_label.config(text=f"[ERROR]{e}")
             return
 
         self.stage_list = []
@@ -373,7 +372,10 @@ class App(ttk.Frame):
         self.tree.set_stages(self.stage_list)
         self.draw_stages()
 
-        self.msg_label.config(text="Successfully loaded.")
+        if warn_msg != "":
+            self.msg_label.config(text=f"[ERROR]{warn_msg}")
+        else:
+            self.msg_label.config(text="Successfully loaded.")
 
     def read_file(self, tar_path):
         try:

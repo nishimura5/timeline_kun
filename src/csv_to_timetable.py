@@ -11,6 +11,7 @@ class TimeTable:
         self.current_time = 0
 
     def load_csv_str(self, csv_str):
+        warn_msg = ""
         # UTF-8 BOM removal
         if csv_str.startswith(self.BOM):
             bom_len = len(self.BOM)
@@ -29,6 +30,8 @@ class TimeTable:
             header_dict["end"] = -1
         else:
             is_no_end = False
+        # For checking if the previous row has an end time by "end_sec_str" or "duration_sec_str"
+        has_end_time = True
         for i, line in enumerate(lines[1:]):
             (
                 title,
@@ -44,14 +47,16 @@ class TimeTable:
             start_sec = time_format.time_str_to_seconds(start_sec_str)
             end_sec = time_format.time_str_to_seconds(end_sec_str)
             if fixed not in ["start", "duration", "none"]:
-                raise ValueError(f"Invalid fixed: {fixed}")
+                raise ValueError(f"[line {i+1}] Invalid fixed code: {fixed}")
 
             if fixed == "start":
                 if start_sec < self.current_time:
-                    print(f"WARN: start_sec < past_end_sec {title}")
+                    warn_msg = f"[line {i+1}] {title} Conflict with the previous line"
 
                 if start_sec == 0 and i != 0:
-                    raise ValueError(f"start_sec must be set in fixed==start: {line}")
+                    raise ValueError(
+                        f"[line {i+1}] start_sec must be set in fixed==start"
+                    )
                 if duration_sec > 0:
                     end_sec = start_sec + duration_sec
                 elif end_sec > 0:
@@ -63,11 +68,11 @@ class TimeTable:
                     if end_sec == 0:
                         end_sec = start_sec
                 else:
-                    raise ValueError(f"no next line: {line}")
+                    raise ValueError(f"[line {i+1}] No next line")
             elif fixed == "duration":
                 if duration_sec == 0:
                     raise ValueError(
-                        f"duration_sec must be set in fixed==duration: {line}"
+                        f"[line {i+1}] duration_sec must be set in fixed==duration"
                     )
                 if start_sec == 0 and end_sec == 0:
                     start_sec = self.current_time
@@ -78,6 +83,8 @@ class TimeTable:
                 elif end_sec > 0:
                     end_sec = end_sec
                     start_sec = end_sec - duration_sec
+                if (i > 0) and (has_end_time is False):
+                    warn_msg = f"[line {i+1}] No Duration (or End) in the previous line"
 
             start_td = datetime.timedelta(seconds=start_sec)
             end_td = datetime.timedelta(seconds=end_sec)
@@ -99,6 +106,8 @@ class TimeTable:
 
             # Update current time
             self.current_time = end_sec
+            has_end_time = end_sec_str != "" or duration_sec_str != ""
+        return warn_msg
 
     def _asign(self, line_str, header_dict, is_no_end=False):
         splited_line = line_str.strip().split(",")
