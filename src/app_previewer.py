@@ -92,8 +92,8 @@ class App(ttk.Frame):
         body_frame = ttk.Frame(master)
         body_frame.pack(fill=tk.BOTH, expand=True)
         # tree
-        tree_frame = ttk.Frame(body_frame)
-        tree_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        tree_frame = ttk.Frame(body_frame, width=400)
+        tree_frame.pack(side=tk.LEFT, fill=tk.Y)
         cols = [
             {"name": "title", "width": 200},
             {"name": "member", "width": 100},
@@ -112,7 +112,7 @@ class App(ttk.Frame):
         # canvas
         canvas_frame = ttk.Frame(body_frame)
         canvas_frame.pack(fill=tk.BOTH, expand=True)
-        self.canvas = gui_canvas.Canvas(canvas_frame, bg="white", width=700)
+        self.canvas = gui_canvas.Canvas(canvas_frame, bg="white")
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
         # ctrl+z shortcut control
@@ -271,6 +271,8 @@ class App(ttk.Frame):
         self.canvas.delete("all")
         self.canvas.set_font(self.font_size_combobox.get())
         self.canvas.set_direction(self.direction_combobox.get())
+        total_duration = self.stage_list[-1]["end_dt"].total_seconds()
+        self.canvas.set_scale(total_duration)
 
         past_rect_height = 10000
         include_hour = self.time_format_combobox.get() == "h:mm:ss"
@@ -351,8 +353,6 @@ class App(ttk.Frame):
                     "instruction": row["instruction"],
                 }
             )
-        total_duration = self.stage_list[-1]["end_dt"].total_seconds()
-        self.canvas.set_scale((self.canvas.winfo_height() - 30) / total_duration)
         self.asign_rect_color()
         self.tree.set_stages(self.stage_list)
         self.draw_stages()

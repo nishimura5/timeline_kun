@@ -37,21 +37,26 @@ class Canvas(tk.Canvas):
         },
     }
 
-    def __init__(self, master, bg="white", width=700):
-        super().__init__(master, bg=bg, width=width)
+    def __init__(self, master, bg="white"):
+        super().__init__(master, bg=bg)
         self.mode = "vertical"
         self.rect_width = 15
+        self.left_padding = 30
 
     def set_font(self, font):
         self.font = self.fonts[font]["font"]
 
-    def set_scale(self, scale):
-        self.scale = scale
+    def set_scale(self, total_duration):
+        self.scale = self.window_size / total_duration
 
     def set_direction(self, mode):
         if mode not in ["horizontal", "vertical"]:
             raise ValueError("mode must be 'horizontal' or 'vertical'")
         self.mode = mode
+        if self.mode == "vertical":
+            self.window_size = self.winfo_height() - 40
+        else:
+            self.window_size = self.winfo_width() - 60
 
     def draw_start_line(self, start, total_duration):
         self.delete("start_line")
@@ -61,7 +66,7 @@ class Canvas(tk.Canvas):
             y_start = start_sec * self.scale + 20
             self._create_start_mark_right(84, y_start, 10, "red")
         else:
-            x_start = start_sec * self.scale + 50
+            x_start = start_sec * self.scale + self.left_padding
             self._create_start_mark_up(x_start, 200 + self.rect_width, 10, "red")
         self.tag_lower("start_line")
         self.delete("time")
@@ -107,7 +112,7 @@ class Canvas(tk.Canvas):
                 tag=tag,
             )
         else:
-            x_start = start_sec * self.scale + 50
+            x_start = start_sec * self.scale + self.left_padding
             x_end = x_start + rect_length
             self.create_rectangle(
                 x_start,
@@ -135,7 +140,7 @@ class Canvas(tk.Canvas):
                 tag="time",
             )
         else:
-            x_start = start_sec * self.scale + 50
+            x_start = start_sec * self.scale + self.left_padding
             self.create_text(
                 x_start,
                 210 + self.rect_width,
@@ -168,7 +173,7 @@ class Canvas(tk.Canvas):
                 font=self.font,
             )
         else:
-            x_start = start_sec * self.scale + 50
+            x_start = start_sec * self.scale + self.left_padding
             x_end = x_start + rect_length
             self.create_text(
                 (x_start + x_end) / 2,
@@ -179,7 +184,7 @@ class Canvas(tk.Canvas):
             )
             self.create_line(
                 (x_start + x_end) / 2,
-                175,
+                185,
                 (x_start + x_end) / 2,
                 200,
                 fill="#101010",
