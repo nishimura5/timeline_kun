@@ -47,7 +47,9 @@ class TimeTable:
                 raise ValueError(f"Invalid fixed: {fixed}")
 
             if fixed == "start":
-                start_sec = start_sec
+                if start_sec < self.current_time:
+                    print(f"WARN: start_sec < past_end_sec {title}")
+
                 if start_sec == 0 and i != 0:
                     raise ValueError(f"start_sec must be set in fixed==start: {line}")
                 if duration_sec > 0:
@@ -58,6 +60,8 @@ class TimeTable:
                 elif i < len(lines) - 2:
                     next_line = lines[i + 2]
                     end_sec = self.get_next_start(line, next_line, header_dict)
+                    if end_sec == 0:
+                        end_sec = start_sec
                 else:
                     raise ValueError(f"no next line: {line}")
             elif fixed == "duration":
@@ -96,13 +100,6 @@ class TimeTable:
             # Update current time
             self.current_time = end_sec
 
-        # Validate the timetable
-        for i in range(len(self.time_table) - 1):
-            if self.time_table[i]["end"] > self.time_table[i + 1]["start"]:
-                raise ValueError(
-                    f"Invalid timetable: {self.time_table[i]['title']} {self.time_table[i+1]['title']}"
-                )
-
     def _asign(self, line_str, header_dict, is_no_end=False):
         splited_line = line_str.strip().split(",")
         title = splited_line[header_dict["title"]]
@@ -127,23 +124,6 @@ class TimeTable:
             fixed,
             instruction,
         )
-
-    def insert_task(self, title, member, current_time, duration_sec):
-        # Calculate the end time
-        end_time = current_time + duration_sec
-
-        # Add task start and end times to the timetable
-        self.time_table.append(
-            {
-                "title": title,
-                "start": current_time,
-                "end": end_time,
-                "member": member,
-            }
-        )
-
-        # Update current time
-        self.current_time = end_time
 
     def get_timetable(self):
         return self.time_table

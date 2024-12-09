@@ -1,3 +1,4 @@
+import datetime
 import re
 import sys
 import tkinter as tk
@@ -123,6 +124,36 @@ class Tree(ttk.Frame):
             self.tree.item(item, values=values)
         return True
 
+    def insert(self):
+        selected = self.tree.selection()
+        if len(selected) != 1:
+            return False
+
+        item = selected[0]
+        idx = self.tree.index(item)
+        if idx == 0:
+            start_dt = datetime.timedelta(seconds=0)
+        else:
+            start_dt = self.stage_list[idx - 1]["end_dt"]
+
+        new_row = {
+            "title": "New event",
+            "member": "",
+            "start_dt": start_dt,
+            "end_dt": start_dt,
+            "duration": datetime.timedelta(seconds=60),
+            "start_sec": "",
+            "end_sec": "",
+            "duration_sec": "1:00",
+            "fixed": "duration",
+            "instruction": "",
+        }
+        item = selected[0]
+        idx = self.tree.index(item)
+        self.stage_list.insert(idx, new_row)
+        self.set_stages(self.stage_list)
+        return True
+
     def remove(self):
         """Only one row can be removed at once"""
         selected = self.tree.selection()
@@ -133,26 +164,6 @@ class Tree(ttk.Frame):
 
         # update start and end time below all removed item
         idx = self.tree.index(item)
-        # offset value by selected index (end_time - start_time)
-        offset = self.stage_list[idx]["end_dt"] - self.stage_list[idx]["start_dt"]
-        offset_sec = offset.total_seconds()
-        for i in range(idx + 1, len(self.stage_list)):
-            if self.stage_list[i]["fixed"] == "duration":
-                continue
-            new_start_sec = (
-                time_format.time_str_to_seconds(self.stage_list[i]["start_sec"])
-                - offset_sec
-            )
-            self.stage_list[i]["start_sec"] = str(int(new_start_sec))
-            current_end_sec = time_format.time_str_to_seconds(
-                self.stage_list[i]["end_sec"]
-            )
-            if current_end_sec != 0:
-                new_end_sec = (
-                    time_format.time_str_to_seconds(self.stage_list[i]["end_sec"])
-                    - offset_sec
-                )
-                self.stage_list[i]["end_sec"] = str(int(new_end_sec))
         self.stage_list.pop(idx)
         self.set_stages(self.stage_list)
         return True
@@ -407,9 +418,6 @@ class TimelineTreeDialog(tk.Frame):
             return False
         elif start_sec > self.next_start_sec:
             self.valid_time_range_label.turn_red_start(True)
-            return False
-        elif end_sec > self.next_start_sec:
-            self.valid_time_range_label.turn_red_end(True)
             return False
         else:
             self.valid_time_range_label.turn_red_start(False)

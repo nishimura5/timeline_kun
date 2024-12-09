@@ -3,7 +3,7 @@ import shutil
 import subprocess
 import sys
 import tkinter as tk
-from datetime import datetime
+from datetime import datetime, timedelta
 from tkinter import filedialog, ttk
 
 import ttkthemes
@@ -107,6 +107,7 @@ class App(ttk.Frame):
         self.tree.pack(fill=tk.BOTH, expand=True)
         self.tree.tree.bind("<<TreeviewSelect>>", lambda e: self.select_row())
         self.tree.add_menu("Set start point", self.draw_start_line)
+        self.tree.add_menu("Insert", self.insert_row)
         self.tree.add_menu("Edit", self.edit_row)
         self.tree.add_menu("Remove", self.remove_row)
         # canvas
@@ -137,13 +138,23 @@ class App(ttk.Frame):
             self.tree.tree_to_csv_file(self.csv_path)
             self.load_file()
 
+    def insert_row(self):
+        if self._check_csv_file_locked(self.csv_path) is True:
+            return
+        is_ok = self.tree.insert()
+        if is_ok:
+            self.tree.tree_to_csv_file(self.csv_path)
+            self.load_file()
+
     def remove_row(self):
         if self._check_csv_file_locked(self.csv_path) is True:
             return
         # confirm remove
+        current_row = self.tree.get_selected_index()
+        current_title = self.stage_list[current_row]["title"]
         is_ok = tk.messagebox.askyesno(
             "Confirm",
-            "Do you want to remove the event?\nRemoving the row will shift the time of the rows below it upward.",
+            f"Do you want to remove the row ({current_title})?.",
         )
         if is_ok is False:
             return
@@ -277,22 +288,26 @@ class App(ttk.Frame):
         past_rect_height = 10000
         include_hour = self.time_format_combobox.get() == "h:mm:ss"
 
+        past_start_dt = timedelta(seconds=0)
         for stage in self.stage_list:
+            if stage["start_dt"].total_seconds() == 0:
+                start_dt = past_start_dt
+            else:
+                start_dt = stage["start_dt"]
             rect_height = self.canvas.create_rect(
-                stage["start_dt"], stage["duration"], stage["color"]
+                start_dt, stage["duration"], stage["color"]
             )
             label_title = f"{stage['title']}"
             label_time = (
                 f"{time_format.timedelta_to_str(stage['duration'], include_hour)}"
             )
             self.canvas.create_label(
-                stage["start_dt"], stage["duration"], label_title, label_time
+                start_dt, stage["duration"], label_title, label_time
             )
             if past_rect_height > 10:
-                time_caption = time_format.timedelta_to_str(
-                    stage["start_dt"], include_hour
-                )
+                time_caption = time_format.timedelta_to_str(start_dt, include_hour)
                 self.canvas.create_time(stage["start_dt"], text=time_caption)
+            past_start_dt = stage["start_dt"]
             past_rect_height = rect_height
         time_caption = time_format.timedelta_to_str(
             self.stage_list[-1]["end_dt"], include_hour
@@ -334,6 +349,7 @@ class App(ttk.Frame):
         try:
             timetable.load_csv_str(timetable_csv_str)
         except Exception as e:
+            print(e)
             self.msg_label.config(text=f"ERROR: {e}")
             return
 
