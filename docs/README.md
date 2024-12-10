@@ -14,8 +14,22 @@ Timeline-kun is an application that generates timers from experimental timelines
 
 Clicking the "Create CSV" button will create a CSV file template in the appropriate format.
 
- - Encoding: UTF-8 (or Shift-JIS)
- - The first line: header
+ - Encoding: UTF-8 (or Shift-JIS, as needed)
+ - Header: The first line must contain column headers.
+ - Delimiter: Comma-separated (,).
+ - Blank cell: Leave cells blank (,,).
+
+| Column name | member                                                                |
+| ----------- | --------------------------------------------------------------------- |
+| title       | The name or identifier of the task.                                   |
+| member      | The participant or team responsible for the task.                     |
+| start       | The start time of the task (formatted as H:MM:SS).                    |
+| duration    | The duration of the task (formatted as H:MM:SS).                      |
+| end         | Optional. The end time of the task (formatted as H:MM:SS)             |
+| fixed       | Specifies if the start time or duration is fixed (start or duration). |
+| instruction | Additional instructions or comments related to the task.              |
+
+Example is below.
 
 | title  | member  | start   | duration | fixed    | instruction |
 | ------ | ------- | ------- | -------- | -------- | ----------- |
