@@ -4,8 +4,11 @@ Timeline-kun is an application that generates timers from experimental timelines
 ## Screen shot
 
 <p align="center">
-<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline_kun_cap.png" width="80%">
-<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline_kun_cap2.png" width="80%">  
+<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline_kun_020.png" width="80%">
+<br>
+<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline_kun_020_2.png" width="80%">
+<br>
+<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline_kun_020_3.png" width="80%">
 </p>
 
 ## Interface
