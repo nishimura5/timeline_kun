@@ -97,8 +97,7 @@ class Tree(ttk.Frame):
         start = time_format.timedelta_to_str(self.stage_list[idx]["start_dt"])
         end = time_format.timedelta_to_str(self.stage_list[idx]["end_dt"])
         dialog.set_current_time_range(start, end)
-        dialog.set_valid_time_range(prev_end_sec, next_start_sec)
-        dialog.set_prev_next_limt(no_prev_end, no_next_start)
+        dialog.set_prev_next(prev_end_sec, next_start_sec, no_prev_end, no_next_start)
         self.wait_window(dialog.dialog)
 
         new_title = dialog.selected_title
@@ -226,8 +225,6 @@ class TimelineTreeDialog(tk.Frame):
 
         self.current_time_range_label = TimeRangeLabel(tar_frame, "Current time range:")
         self.current_time_range_label.pack(pady=5, side=tk.TOP, anchor=tk.W)
-        self.valid_time_range_label = TimeRangeLabel(tar_frame, "Valid time range:")
-        self.valid_time_range_label.pack(pady=5, side=tk.TOP, anchor=tk.W)
 
         time_frame = ttk.Frame(tar_frame)
         time_frame.pack(pady=5, side=tk.TOP, anchor=tk.W)
@@ -283,14 +280,9 @@ class TimelineTreeDialog(tk.Frame):
     def set_current_time_range(self, start, end):
         self.current_time_range_label.set_range(start, end)
 
-    def set_valid_time_range(self, prev_end_sec, next_start_sec):
-        self.prev_end_sec = 0 if prev_end_sec is None else prev_end_sec
-        self.next_start_sec = 1000000 if next_start_sec is None else next_start_sec
-        prev_end_str = time_format.seconds_to_time_str(self.prev_end_sec)
-        next_start_str = time_format.seconds_to_time_str(self.next_start_sec)
-        self.valid_time_range_label.set_range(prev_end_str, next_start_str)
-
-    def set_prev_next_limt(self, no_prev_end, no_next_start):
+    def set_prev_next(self, prev_end_sec, next_start_sec, no_prev_end, no_next_start):
+        self.prev_end_sec = prev_end_sec
+        self.next_start_sec = next_start_sec
         self.no_prev_end = no_prev_end
         self.no_next_start = no_next_start
 
@@ -409,19 +401,10 @@ class TimelineTreeDialog(tk.Frame):
             else:
                 end_sec = end
 
-        # calculate end time
-        if start_sec < self.prev_end_sec:
-            self.valid_time_range_label.turn_red_start(True)
+        if start_sec > end_sec:
+            print("start > end")
             return False
-        elif end_sec < self.prev_end_sec:
-            self.valid_time_range_label.turn_red_end(True)
-            return False
-        elif start_sec > self.next_start_sec:
-            self.valid_time_range_label.turn_red_start(True)
-            return False
-        else:
-            self.valid_time_range_label.turn_red_start(False)
-            self.valid_time_range_label.turn_red_end(False)
+        return True
 
 
 class TimeEntry(ttk.Frame):
@@ -497,15 +480,3 @@ class TimeRangeLabel(ttk.Frame):
     def set_range(self, start, end):
         self.start_label.config(text=start)
         self.end_label.config(text=end)
-
-    def turn_red_start(self, is_red):
-        if is_red:
-            self.start_label.config(foreground="red")
-        else:
-            self.start_label.config(foreground="black")
-
-    def turn_red_end(self, is_red):
-        if is_red:
-            self.end_label.config(foreground="red")
-        else:
-            self.end_label.config(foreground="black")

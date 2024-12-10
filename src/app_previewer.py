@@ -399,6 +399,12 @@ class App(ttk.Frame):
                         stage["color"] = gui_canvas.rect_colors[i]
 
     def open_timer(self):
+        # has_error check
+        has_error_list = [s["has_error"] for s in self.stage_list]
+        if True in has_error_list:
+            tk.messagebox.showinfo("Error", "Timer can't start because of error.")
+            return
+
         if self.time_format_combobox.get() == "h:mm:ss":
             hmmss = "hmmss"
         else:
