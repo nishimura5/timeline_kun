@@ -11,7 +11,7 @@ import timer_log
 
 
 class App(ttk.Frame):
-    INTERMISSION = "インターバル"
+    INTERMISSION = "Intermission"
 
     def __init__(
         self,
@@ -19,7 +19,7 @@ class App(ttk.Frame):
         file_path,
         start_index=0,
         hmmss=True,
-        sound_file_name="countdown1.wav",
+        sound_file_name="countdown3_orange.wav",
     ):
         super().__init__(master)
         master.title("Timer")
@@ -375,7 +375,7 @@ def main(file_path=None, fg_color="orange", start_index=0, hmmss="hmmss"):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--file_path", type=str, required=True)
-    parser.add_argument("--text_color", type=str)
+    parser.add_argument("--text_color", type=str, default="orange")
     parser.add_argument("--start_index", type=int)
     parser.add_argument("--hmmss", type=str)
     # arg check
