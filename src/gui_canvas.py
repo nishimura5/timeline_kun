@@ -158,10 +158,16 @@ class Canvas(tk.Canvas):
                 tag="time",
             )
 
-    def create_label(self, start, duration, title_str, time_str):
+    def create_label(self, start, duration, title_str, time_str, has_error=False):
         start_sec = start.total_seconds()
         duration_sec = duration.total_seconds()
         rect_length = duration_sec * self.scale
+        if has_error:
+            color = "red"
+        elif time_str in ["0:00", "00:00", "0:00:00"]:
+            color = "orange"
+        else:
+            color = "black"
         if self.mode == "vertical":
             y_start = start_sec * self.scale + 20
             y_end = y_start + rect_length
@@ -171,6 +177,7 @@ class Canvas(tk.Canvas):
                 text=f"{title_str} ({time_str})",
                 anchor="w",
                 font=self.font,
+                fill=color,
             )
         else:
             x_start = start_sec * self.scale + self.left_padding

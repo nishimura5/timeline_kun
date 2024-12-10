@@ -302,7 +302,7 @@ class App(ttk.Frame):
                 f"{time_format.timedelta_to_str(stage['duration'], include_hour)}"
             )
             self.canvas.create_label(
-                start_dt, stage["duration"], label_title, label_time
+                start_dt, stage["duration"], label_title, label_time, stage["has_error"]
             )
             if past_rect_height > 10:
                 time_caption = time_format.timedelta_to_str(start_dt, include_hour)
@@ -366,6 +366,7 @@ class App(ttk.Frame):
                     "duration_sec": row["duration_sec"],
                     "fixed": row["fixed"],
                     "instruction": row["instruction"],
+                    "has_error": row["has_error"],
                 }
             )
         self.asign_rect_color()

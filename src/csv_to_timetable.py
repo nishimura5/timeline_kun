@@ -49,9 +49,11 @@ class TimeTable:
             if fixed not in ["start", "duration", "none"]:
                 raise ValueError(f"[line {i+1}] Invalid fixed code: {fixed}")
 
+            has_error = False
             if fixed == "start":
                 if start_sec < self.current_time:
                     warn_msg = f"[line {i+1}] {title} Conflict with the previous line"
+                    has_error = True
 
                 if start_sec == 0 and i != 0:
                     raise ValueError(
@@ -85,6 +87,7 @@ class TimeTable:
                     start_sec = end_sec - duration_sec
                 if (i > 0) and (has_end_time is False):
                     warn_msg = f"[line {i+1}] No Duration (or End) in the previous line"
+                    has_error = True
 
             start_td = datetime.timedelta(seconds=start_sec)
             end_td = datetime.timedelta(seconds=end_sec)
@@ -101,6 +104,7 @@ class TimeTable:
                     "end_sec": end_sec_str,
                     "fixed": fixed,
                     "instruction": instruction,
+                    "has_error": has_error,
                 }
             )
 
