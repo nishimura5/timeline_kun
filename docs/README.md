@@ -12,6 +12,11 @@ Timeline-kun is an application that generates timers from experimental timelines
 
 ### CSV file
 
+Clicking the "Create CSV" button will create a CSV file template in the appropriate format.
+
+ - Encoding: UTF-8 (or Shift-JIS)
+ - The first line: header
+
 | title  | member  | start   | duration | fixed    | instruction |
 | ------ | ------- | ------- | -------- | -------- | ----------- |
 | TASK A | MEMBER1 | 0:00:00 |          | start    |             |
