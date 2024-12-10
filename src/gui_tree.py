@@ -81,7 +81,7 @@ class Tree(ttk.Frame):
             return True
         return False
 
-    def edit(self, prev_end_sec, next_start_sec, no_next_start, no_prev_end):
+    def edit(self, prev_end_sec):
         """Only one row can be edited at once"""
         selected = self.tree.selection()
         if len(selected) == 0 or len(selected) > 1:
@@ -97,7 +97,7 @@ class Tree(ttk.Frame):
         start = time_format.timedelta_to_str(self.stage_list[idx]["start_dt"])
         end = time_format.timedelta_to_str(self.stage_list[idx]["end_dt"])
         dialog.set_current_time_range(start, end)
-        dialog.set_prev_next(prev_end_sec, next_start_sec, no_prev_end, no_next_start)
+        dialog.set_prev_sec(prev_end_sec)
         self.wait_window(dialog.dialog)
 
         new_title = dialog.selected_title
@@ -225,6 +225,8 @@ class TimelineTreeDialog(tk.Frame):
 
         self.current_time_range_label = TimeRangeLabel(tar_frame, "Current time range:")
         self.current_time_range_label.pack(pady=5, side=tk.TOP, anchor=tk.W)
+        self.msg_label = ttk.Label(tar_frame, text="")
+        self.msg_label.pack(pady=5, side=tk.TOP, anchor=tk.W)
 
         time_frame = ttk.Frame(tar_frame)
         time_frame.pack(pady=5, side=tk.TOP, anchor=tk.W)
@@ -280,11 +282,8 @@ class TimelineTreeDialog(tk.Frame):
     def set_current_time_range(self, start, end):
         self.current_time_range_label.set_range(start, end)
 
-    def set_prev_next(self, prev_end_sec, next_start_sec, no_prev_end, no_next_start):
+    def set_prev_sec(self, prev_end_sec):
         self.prev_end_sec = prev_end_sec
-        self.next_start_sec = next_start_sec
-        self.no_prev_end = no_prev_end
-        self.no_next_start = no_next_start
 
     def on_fixed_selected(self, event=None):
         self._update()
@@ -340,7 +339,7 @@ class TimelineTreeDialog(tk.Frame):
             self.end_entry.is_blank(),
         ]
         if all(time_entry_combination):
-            print("no time entry")
+            self.msg_label.config(text="No time entry", foreground="red")
             return False
 
         duration = self.duration_entry.get_seconds()
@@ -350,44 +349,29 @@ class TimelineTreeDialog(tk.Frame):
         validate_result = True
         # basic validation
         if fixed == "start":
-            if start > 0 and (duration > 0 or end > 0):
-                error_msg = "OK (0)"
-                validate_result = True
-            elif self.no_next_start and duration == 0 and end == 0:
-                error_msg = "In case of no next start, duration or end should be set."
-            elif start > 0 and duration == 0 and end == 0:
-                error_msg = "OK (1)"
-                validate_result = True
-            elif start == 0 and self.prev_end_sec == 0:
-                error_msg = "OK (first stage)"
-                validate_result = True
-            elif start == 0:
-                error_msg = "In case of fixed start, start should be set."
+            if start == 0 and self.prev_end_sec != 0:
+                error_msg = '"Start" should be set.'
                 validate_result = False
             elif duration > 0 and end > 0:
-                error_msg = (
-                    "In case of fixed start, both duration and end should not be set."
-                )
+                error_msg = '"Duration" or "End" (or both) should be blank.'
                 validate_result = False
-            elif start >= end and end != 0:
-                error_msg = "In case of fixed start, start should be smaller than end."
+            elif start >= end and end > 0:
+                error_msg = '"Start" should be smaller than "End".'
                 validate_result = False
             else:
-                error_msg = "Invalid time entry(1)"
-                validate_result = False
-        elif fixed == "duration":
-            if self.no_prev_end:
-                error_msg = "In case of no prev end, start or end should be set."
-                validate_result = False
-            elif duration > 0:
                 error_msg = "OK"
                 validate_result = True
-            else:
-                error_msg = "In case of fixed duration, duration should be set."
+        elif fixed == "duration":
+            if duration == 0:
+                error_msg = '"Duration" should be set.'
                 validate_result = False
+            else:
+                error_msg = "OK"
+                validate_result = True
 
+        print(error_msg)
         if validate_result is False:
-            print(error_msg)
+            self.msg_label.config(text=error_msg, foreground="red")
             return False
         else:
             if start == 0:

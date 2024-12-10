@@ -128,12 +128,7 @@ class App(ttk.Frame):
         if self._check_csv_file_locked(self.csv_path) is True:
             return
 
-        is_ok = self.tree.edit(
-            self.prev_end_time_sec,
-            self.next_start_time_sec,
-            self.no_next_start,
-            self.no_prev_end,
-        )
+        is_ok = self.tree.edit(self.prev_end_time_sec)
         if is_ok:
             self.tree.tree_to_csv_file(self.csv_path)
             self.load_file()
@@ -178,20 +173,16 @@ class App(ttk.Frame):
         if idx is None:
             return
         prev_fixed_code, next_fixed_code = self._get_prev_next_fixed_code(idx)
-        self.no_prev_end = False
-        self.no_next_start = False
 
         # preview event
         if prev_fixed_code is None:
             self.prev_end_time_sec = self._get_prev_start_time(idx)
-            self.no_prev_end = True
         elif prev_fixed_code == "start":
             prev_end_sec = self.stage_list[idx - 1]["end_sec"]
             prev_duration_sec = self.stage_list[idx - 1]["duration_sec"]
             # end_sec and duration_sec are 0 -> prevprev
             if prev_end_sec == "0" and prev_duration_sec == "0":
                 self.prev_end_time_sec = self._get_prev_start_time(idx) + 1
-                self.no_prev_end = True
             else:
                 self.prev_end_time_sec = self._get_prev_end_time(idx)
         elif prev_fixed_code == "duration":
@@ -202,10 +193,8 @@ class App(ttk.Frame):
             self.next_start_time_sec = self._get_next_start_time(idx)
         elif next_fixed_code == "duration":
             self.next_start_time_sec = self._get_next_end_time(idx) - 1
-            self.no_next_start = True
         elif next_fixed_code is None:
             self.next_start_time_sec = self._get_next_end_time(idx)
-            self.no_next_start = True
 
         self.highlight_selected_row()
 
