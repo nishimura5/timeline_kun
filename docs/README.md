@@ -42,3 +42,19 @@ Example is below.
 | ...    | ...     | ...     | ...      | ...      | ...         |
 
 日本語環境にも対応しています。
+
+### Log file
+
+The timer application outputs a log file in CSV format.
+
+- File name: "log_{date}_{source csv file name}.csv"
+- Delimiter: Comma-separated (,).
+
+Example is below.
+
+| datetime  | start  | member | title |
+| ------ | ------- | ------- | -------- |
+| 2024-10-24 17:26:32 | 0:00:00 | MEMBER1 | TASK A |
+| 2024-10-24 17:30:32 | 0:04:00 | MEMBER1 | TASK B |
+| 2024-10-24 17:35:32 | 0:09:00 | MEMBER1 | TASK C |
+| ...    | ...     | ...     | ...      |
