@@ -1,14 +1,14 @@
-# Timeline-kun 0.2
+# Timeline-kun 0.2.0
 Timeline-kun is an application that generates timers from experimental timelines created in CSV format. It automates complex experiment schedule management, helping to reduce the burden on both experimenters and participants.
 
 ## Screen shot
 
 <p align="center">
-<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline_kun_020.png" width="80%">
+<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline_kun_020.png" width="70%">
 <br>
-<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline_kun_020_2.png" width="80%">
+<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline_kun_020_2.png" width="70%">
 <br>
-<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline_kun_020_3.png" width="80%">
+<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline_kun_020_3.png" width="70%">
 </p>
 
 ## Interface
@@ -40,3 +40,5 @@ Example is below.
 | TASK B | MEMBER1 | 0:04:00 | 0:05:00  | start    |             |
 | TASK C | MEMBER1 |         | 0:05:00  | duration |             |
 | ...    | ...     | ...     | ...      | ...      | ...         |
+
+日本語環境にも対応しています。
