@@ -59,7 +59,7 @@ Example is below.
 | 2024-10-24 17:35:32 | 0:09:00 | MEMBER1 | TASK C |
 | ...    | ...     | ...     | ...      |
 
-Sound file
+### Sound file
 The timer application will load a 3-second wav file and play it as an alarm. The wav file will be stored in the “sound” folder with the following file name.
 
  - countdown3_orange.wav
