@@ -1,4 +1,4 @@
-# Timeline-kun 0.2.0
+# Timeline-kun 0.3.0
 Timeline-kun is an application that generates timers from experimental timelines created in CSV format. It automates complex experiment schedule management, helping to reduce the burden on both experimenters and participants.
 
 ## Screen shot
