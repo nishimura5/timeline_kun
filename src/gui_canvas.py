@@ -42,6 +42,7 @@ class Canvas(tk.Canvas):
         self.mode = "vertical"
         self.rect_width = 15
         self.left_padding = 30
+        self.top_padding = 100
 
     def set_font(self, font):
         self.font = self.fonts[font]["font"]
@@ -116,9 +117,9 @@ class Canvas(tk.Canvas):
             x_end = x_start + rect_length
             self.create_rectangle(
                 x_start,
-                200,
+                self.top_padding,
                 x_end,
-                200 + self.rect_width,
+                self.top_padding + self.rect_width,
                 fill=color,
                 outline="#101010",
                 tag=tag,
@@ -143,7 +144,7 @@ class Canvas(tk.Canvas):
             x_start = start_sec * self.scale + self.left_padding
             self.create_text(
                 x_start,
-                210 + self.rect_width,
+                self.top_padding + 10 + self.rect_width,
                 text=text,
                 anchor="n",
                 font=self.font,
@@ -151,9 +152,9 @@ class Canvas(tk.Canvas):
             )
             self.create_line(
                 x_start,
-                200,
+                self.top_padding,
                 x_start,
-                208 + self.rect_width,
+                self.top_padding + 8 + self.rect_width,
                 fill="#101010",
                 tag="time",
             )
@@ -184,15 +185,15 @@ class Canvas(tk.Canvas):
             x_end = x_start + rect_length
             self.create_text(
                 (x_start + x_end) / 2,
-                150,
+                self.top_padding - 50,
                 text=f"{title_str}\n{time_str}",
                 anchor="n",
                 font=self.font,
             )
             self.create_line(
                 (x_start + x_end) / 2,
-                185,
+                self.top_padding-15,
                 (x_start + x_end) / 2,
-                200,
+                self.top_padding,
                 fill="#101010",
             )

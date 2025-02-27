@@ -419,11 +419,14 @@ class App(ttk.Frame):
                 ]
             )
         else:
+            print("not frozen")
             current_dir = os.path.dirname(os.path.abspath(__file__))
             tar_path = os.path.join(current_dir, "app_timer.py")
             color = self.timer_color_combobox.get()
             subprocess.Popen(
                 [
+                    "uv",
+                    "run",
                     "python",
                     tar_path,
                     "--file_path",

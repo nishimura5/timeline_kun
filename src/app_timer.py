@@ -26,6 +26,9 @@ class App(ttk.Frame):
         self.sound_file_name = sound_file_name
         self.hmmss = hmmss
 
+        self.ap = sound.AudioPlayer()
+        self.ap.load_audio(sound_file_name)
+
         # header
         head_frame = ttk.Frame(master)
         head_frame.pack(fill=tk.X, pady=10, padx=10)
@@ -85,7 +88,7 @@ class App(ttk.Frame):
         self.sound_test_btn = ttk.Button(
             buttons_frame,
             text="Sound test",
-            command=lambda: sound.play_sound(self.sound_file_name),
+            command=lambda: self.ap.play_sound(self.sound_file_name),
         )
         self.sound_test_btn.pack(padx=10, side=tk.LEFT)
 
@@ -223,7 +226,7 @@ class App(ttk.Frame):
 
     def _update_remaining(self, remaining_dt):
         if remaining_dt.seconds == 3 and not self.ring_done:
-            sound.play_sound(self.sound_file_name)
+            self.ap.play_sound(self.sound_file_name)
             self.ring_done = True
         if remaining_dt.seconds < 3:
             self.ring_done = False
