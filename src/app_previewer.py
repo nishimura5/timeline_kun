@@ -315,10 +315,11 @@ class App(ttk.Frame):
             return
         with open(file_path, "w") as f:
             f.write("title,member,start,duration,fixed,instruction\n")
-            f.write("TASK A,MEMBER1,0:00,,start,The first task.\n")
-            f.write("TASK B,MEMBER1,3:00,,start,The second task.\n")
-            f.write("TASK C,MEMBER1,4:00,,start,The third task.\n")
-            f.write("TASK D,MEMBER1,5:00,2:00,start,The final task.\n")
+            f.write("TASK A,MEMBER1,,0:01:00,duration,The first task.\n")
+            f.write("TASK B,MEMBER1,0:01:10,0:01:30,start,The second task.\n")
+            f.write("TASK C,MEMBER1,,0:01:00,duration,The third task.\n")
+            f.write("TASK D,MEMBER1,,0:01:00,duration,The 4th task.\n")
+            f.write("TASK E,MEMBER1,0:05:00,0:01:00,start,The final task.\n")
 
         self.csv_path = file_path
         self.load_file()
