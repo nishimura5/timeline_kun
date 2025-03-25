@@ -99,11 +99,15 @@ class App(ttk.Frame):
         )
         switch_label_size_button.pack(padx=10, side=tk.LEFT)
 
+        skip_btn = ttk.Button(buttons_frame, text="Skip", command=self.skip)
+        skip_btn.pack(padx=10, side=tk.LEFT)
+
         self.stage_list = []
         self.now_stage = 0
         self.is_running = False
         self.update_clock()
         self.ring_done = False
+        self.is_skip = False
 
         print(file_path)
         self.csv_path = file_path
@@ -124,10 +128,12 @@ class App(ttk.Frame):
             self.now_stage = 0
             self.progress_bar.config(value=0)
             self.reset_time = datetime.datetime.now()
+            self.total_skip_time = datetime.timedelta(seconds=0)
+            self.is_skip = False
             return
         cnt_up = now - self.reset_time
         self.count_up_label.config(
-            text=time_format.timedelta_to_str(cnt_up, self.hmmss)
+            text=time_format.timedelta_to_str(cnt_up - self.total_skip_time, self.hmmss)
         )
 
         current_stage = self.stage_list[self.now_stage]
@@ -206,8 +212,18 @@ class App(ttk.Frame):
         else:
             self.next_stage_label["text"] = "End"
 
-        self.update_remaining_time_next(cnt_up, current_end_dt)
+        remaining = self.update_remaining_time_next(cnt_up, current_end_dt)
         self.update_progress_next(cnt_up, current_end_dt)
+
+        # skip offset (intermission cannot be skipped because it is not a stage)
+        if self.is_skip:
+            # prevent over skip
+            if remaining > datetime.timedelta(seconds=4):
+                skip_time = remaining - datetime.timedelta(seconds=4)
+                self.reset_time -= skip_time
+                self.total_skip_time += skip_time
+                self.timer_log.skip_log()
+            self.is_skip = False
 
     def update_remaining_time_intermission(self, cnt_up):
         remaining = (
@@ -223,6 +239,7 @@ class App(ttk.Frame):
         else:
             remaining = next_dt - cnt_up + datetime.timedelta(seconds=1)
         self._update_remaining(remaining)
+        return remaining
 
     def _update_remaining(self, remaining_dt):
         if remaining_dt.seconds == 3 and not self.ring_done:
@@ -266,6 +283,9 @@ class App(ttk.Frame):
         self.sound_test_btn.config(state="disabled")
         self.timer_log = timer_log.TimerLog(self.csv_path)
         self.is_running = True
+
+    def skip(self):
+        self.is_skip = True
 
     def switch_label_size(self):
         if self.current_stage_label["style"] == "Small.TLabel":

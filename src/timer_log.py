@@ -24,3 +24,9 @@ class TimerLog:
         with open(self.file_path, "a") as f:
             f.write(f"{now_str},{dt_str},{member},{title}\n")
         self.log_ok = False
+
+    def skip_log(self):
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open(self.file_path, "a") as f:
+            f.write(f"{now_str},0:00:00,---,skip\n")
+        self.log_ok = False
