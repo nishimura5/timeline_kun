@@ -5,8 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "file>=0.3.0",
-    "sound>=0.1.0",
+    "soundfile>=0.13.1",
     "sounddevice>=0.5.1",
     "ttkthemes>=3.2.2",
 ]
