@@ -92,8 +92,10 @@ class App(ttk.Frame):
         )
         self.sound_test_btn.pack(padx=10, side=tk.LEFT)
 
-        reset_btn = ttk.Button(buttons_frame, text="Reset", command=self.reset_all)
-        reset_btn.pack(padx=10, side=tk.LEFT)
+        self.reset_btn = ttk.Button(buttons_frame, text="Reset", command=self.reset_all)
+        self.reset_btn.pack(padx=10, side=tk.LEFT)
+        self.reset_btn["state"] = "disabled"
+
         switch_label_size_button = ttk.Button(
             buttons_frame, text="Label size", command=self.switch_label_size
         )
@@ -109,8 +111,9 @@ class App(ttk.Frame):
         self.ring_done = False
         self.is_skip = False
 
-        print(file_path)
+        print(f"log file path: {file_path}")
         self.csv_path = file_path
+        self.timer_log = timer_log.TimerLog(self.csv_path)
 
         self.load_file(start_index)
 
@@ -131,9 +134,12 @@ class App(ttk.Frame):
             self.total_skip_time = datetime.timedelta(seconds=0)
             self.is_skip = False
             return
+        # cnt_up: internal time counter
+        # self.show_time: time used for display and log
         cnt_up = now - self.reset_time
+        self.show_time = cnt_up - self.total_skip_time
         self.count_up_label.config(
-            text=time_format.timedelta_to_str(cnt_up - self.total_skip_time, self.hmmss)
+            text=time_format.timedelta_to_str(self.show_time, self.hmmss)
         )
 
         current_stage = self.stage_list[self.now_stage]
@@ -149,9 +155,7 @@ class App(ttk.Frame):
 
         # Initial log
         if self.timer_log.log_ok is True:
-            self.timer_log.add_log(
-                now, current_start_dt, current_stage["title"], current_stage["member"]
-            )
+            self.timer_log.add_log(now, self.show_time, current_stage["title"])
 
         if self.now_stage == 0:
             prev_end_dt = datetime.timedelta(seconds=0)
@@ -167,7 +171,7 @@ class App(ttk.Frame):
             self.next_stage_label.config(text="---")
             self.remaining_time_label.config(text="")
             self.is_running = False
-            self.timer_log.add_log(now, current_end_dt, "End", "---")
+            self.timer_log.add_log(now, self.show_time, "End")
             return
 
         if cnt_up < current_start_dt:
@@ -182,7 +186,7 @@ class App(ttk.Frame):
             self.next_stage_label.config(text=current_stage["title"])
             self.update_remaining_time_intermission(cnt_up)
             self.update_progress_intermission(cnt_up)
-            self.timer_log.add_log(now, current_start_dt, "Intermission", "---")
+            self.timer_log.add_log(now, self.show_time, "Intermission")
             return
         else:
             self.current_stage_label.config(text=current_stage["title"])
@@ -198,9 +202,7 @@ class App(ttk.Frame):
                 self.current_instruction_label.config(
                     text=f"{current_start} - {current_end}"
                 )
-            self.timer_log.add_log(
-                now, current_start_dt, current_stage["title"], current_stage["member"]
-            )
+            self.timer_log.add_log(now, self.show_time, current_stage["title"])
 
         if self.now_stage + 1 < len(self.stage_list):
             # next is intermission
@@ -222,7 +224,7 @@ class App(ttk.Frame):
                 skip_time = remaining - datetime.timedelta(seconds=4)
                 self.reset_time -= skip_time
                 self.total_skip_time += skip_time
-                self.timer_log.skip_log()
+                self.timer_log.skip_log(self.show_time)
             self.is_skip = False
 
     def update_remaining_time_intermission(self, cnt_up):
@@ -271,17 +273,20 @@ class App(ttk.Frame):
 
     def reset_all(self):
         self.is_running = False
+        self.timer_log.reset_log(self.show_time)
         self.start_btn.config(state="normal")
         self.sound_test_btn.config(state="normal")
+        self.reset_btn.config(state="disabled")
         self.current_stage_label.config(text="")
         self.current_instruction_label.config(text="")
         self.next_stage_label.config(text=self.stage_list[0]["title"])
         self.remaining_time_label.config(text="")
 
     def start(self):
+        self.timer_log.start_log()
         self.start_btn.config(state="disabled")
         self.sound_test_btn.config(state="disabled")
-        self.timer_log = timer_log.TimerLog(self.csv_path)
+        self.reset_btn.config(state="normal")
         self.is_running = True
 
     def skip(self):
