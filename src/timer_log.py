@@ -26,18 +26,26 @@ class TimerLog:
         self.log_ok = False
 
     def start_log(self):
-        self._write_log("0:00:00", "start")
+        print("start")
+        self._write_log("0:00:00", "====== start ======")
         self.log_ok = True
 
     def skip_log(self, display_time):
+        print("skip")
         dt_str = time_format.timedelta_to_str(display_time)
         self._write_log(dt_str, "skip")
         self.log_ok = False
 
     def reset_log(self, display_time):
+        print("reset")
         dt_str = time_format.timedelta_to_str(display_time)
         self._write_log(dt_str, "reset")
         self.log_ok = False
+
+    def close_log(self, display_time):
+        print("close")
+        dt_str = time_format.timedelta_to_str(display_time)
+        self._write_log(dt_str, "close")
 
     def _write_log(self, display_time, message):
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

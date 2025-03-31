@@ -25,12 +25,13 @@ class App(ttk.Frame):
         master.title("Timer")
         self.sound_file_name = sound_file_name
         self.hmmss = hmmss
+        self.master = master
 
         self.ap = sound.AudioPlayer()
         self.ap.load_audio(sound_file_name)
 
         # header
-        head_frame = ttk.Frame(master)
+        head_frame = ttk.Frame(self.master)
         head_frame.pack(fill=tk.X, pady=10, padx=10)
 
         title_frame = ttk.Frame(head_frame)
@@ -47,7 +48,7 @@ class App(ttk.Frame):
         self.count_up_label.pack(anchor=tk.E)
 
         # stage
-        center_frame = ttk.Frame(master)
+        center_frame = ttk.Frame(self.master)
         center_frame.pack(fill=tk.BOTH, expand=True)
         self.current_stage_label = ttk.Label(center_frame, style="Small.TLabel")
         self.current_stage_label.grid(row=0, column=0, sticky=tk.S)
@@ -58,7 +59,7 @@ class App(ttk.Frame):
         center_frame.rowconfigure(1, weight=1)
 
         # footer
-        buttons_frame = ttk.Frame(master)
+        buttons_frame = ttk.Frame(self.master)
         buttons_frame.pack(pady=(10, 5), side=tk.BOTTOM, fill=tk.BOTH, anchor=tk.S)
 
         # progress
@@ -104,16 +105,20 @@ class App(ttk.Frame):
         skip_btn = ttk.Button(buttons_frame, text="Skip", command=self.skip)
         skip_btn.pack(padx=10, side=tk.LEFT)
 
+        # close event
+        self.master.protocol("WM_DELETE_WINDOW", self._on_closing)
+
         self.stage_list = []
         self.now_stage = 0
         self.is_running = False
         self.update_clock()
         self.ring_done = False
         self.is_skip = False
+        self.disp_time = datetime.timedelta(seconds=0)
 
-        print(f"log file path: {file_path}")
+        print(f"CSV file path: {file_path}")
         self.csv_path = file_path
-        self.timer_log = timer_log.TimerLog(self.csv_path)
+        self.tlog = timer_log.TimerLog(self.csv_path)
 
         self.load_file(start_index)
 
@@ -135,11 +140,11 @@ class App(ttk.Frame):
             self.is_skip = False
             return
         # cnt_up: internal time counter
-        # self.show_time: time used for display and log
+        # self.disp_time: time used for display and log
         cnt_up = now - self.reset_time
-        self.show_time = cnt_up - self.total_skip_time
+        self.disp_time = cnt_up - self.total_skip_time
         self.count_up_label.config(
-            text=time_format.timedelta_to_str(self.show_time, self.hmmss)
+            text=time_format.timedelta_to_str(self.disp_time, self.hmmss)
         )
 
         current_stage = self.stage_list[self.now_stage]
@@ -147,15 +152,16 @@ class App(ttk.Frame):
         current_end_dt = current_stage["end_dt"]
         if cnt_up > current_end_dt:
             self.now_stage += 1
-            self.timer_log.log_ok = True
+            self.tlog.log_ok = True
             if self.now_stage + 1 < len(self.stage_list):
                 current_stage = self.stage_list[self.now_stage]
                 current_start_dt = current_stage["start_dt"]
                 current_end_dt = current_stage["end_dt"]
 
         # Initial log
-        if self.timer_log.log_ok is True:
-            self.timer_log.add_log(now, self.show_time, current_stage["title"])
+        if self.tlog.log_ok is True:
+            msg = f"{current_stage['title']}({current_stage['start_dt']}-{current_stage['end_dt']})"
+            self.tlog.add_log(now, self.disp_time, msg)
 
         if self.now_stage == 0:
             prev_end_dt = datetime.timedelta(seconds=0)
@@ -171,7 +177,7 @@ class App(ttk.Frame):
             self.next_stage_label.config(text="---")
             self.remaining_time_label.config(text="")
             self.is_running = False
-            self.timer_log.add_log(now, self.show_time, "End")
+            self.tlog.add_log(now, self.disp_time, "End")
             return
 
         if cnt_up < current_start_dt:
@@ -186,7 +192,7 @@ class App(ttk.Frame):
             self.next_stage_label.config(text=current_stage["title"])
             self.update_remaining_time_intermission(cnt_up)
             self.update_progress_intermission(cnt_up)
-            self.timer_log.add_log(now, self.show_time, "Intermission")
+            self.tlog.add_log(now, self.disp_time, "Intermission")
             return
         else:
             self.current_stage_label.config(text=current_stage["title"])
@@ -202,7 +208,7 @@ class App(ttk.Frame):
                 self.current_instruction_label.config(
                     text=f"{current_start} - {current_end}"
                 )
-            self.timer_log.add_log(now, self.show_time, current_stage["title"])
+            self.tlog.add_log(now, self.disp_time, current_stage["title"])
 
         if self.now_stage + 1 < len(self.stage_list):
             # next is intermission
@@ -224,7 +230,7 @@ class App(ttk.Frame):
                 skip_time = remaining - datetime.timedelta(seconds=4)
                 self.reset_time -= skip_time
                 self.total_skip_time += skip_time
-                self.timer_log.skip_log(self.show_time)
+                self.tlog.skip_log(self.disp_time)
             self.is_skip = False
 
     def update_remaining_time_intermission(self, cnt_up):
@@ -252,7 +258,9 @@ class App(ttk.Frame):
         if remaining_dt <= datetime.timedelta(seconds=0):
             self.remaining_time_label.config(text="")
         else:
-            self.remaining_time_label.config(text=self._timedelta_to_str(remaining_dt))
+            self.remaining_time_label.config(
+                text=time_format.timedelta_to_str(remaining_dt, self.hmmss)
+            )
 
     def update_progress_intermission(self, cnt_up):
         duration_dt = (
@@ -273,7 +281,7 @@ class App(ttk.Frame):
 
     def reset_all(self):
         self.is_running = False
-        self.timer_log.reset_log(self.show_time)
+        self.tlog.reset_log(self.disp_time)
         self.start_btn.config(state="normal")
         self.sound_test_btn.config(state="normal")
         self.reset_btn.config(state="disabled")
@@ -281,9 +289,11 @@ class App(ttk.Frame):
         self.current_instruction_label.config(text="")
         self.next_stage_label.config(text=self.stage_list[0]["title"])
         self.remaining_time_label.config(text="")
+        # for close log
+        self.disp_time = datetime.timedelta(seconds=0)
 
     def start(self):
-        self.timer_log.start_log()
+        self.tlog.start_log()
         self.start_btn.config(state="disabled")
         self.sound_test_btn.config(state="disabled")
         self.reset_btn.config(state="normal")
@@ -335,18 +345,10 @@ class App(ttk.Frame):
         self.is_running = False
         self.start_btn["state"] = "normal"
 
-    def _timedelta_to_str(self, td, include_hour=False):
-        hours, remainder = divmod(td.seconds, 3600)
-        minutes, seconds = divmod(remainder, 60)
-        if include_hour is True:
-            return f"{hours:02}:{minutes:02}:{seconds:02}"
-        else:
-            return f"{minutes:02}:{seconds:02}"
-
-
-def quit(root):
-    root.quit()
-    root.destroy()
+    def _on_closing(self):
+        self.tlog.close_log(self.disp_time)
+        self.master.quit()
+        self.master.destroy()
 
 
 def main(file_path=None, fg_color="orange", start_index=0, hmmss="hmmss"):
@@ -393,10 +395,10 @@ def main(file_path=None, fg_color="orange", start_index=0, hmmss="hmmss"):
         hmmss = True
     else:
         hmmss = False
+    print(hmmss)
     app = App(
         root, file_path, start_index, hmmss, sound_file_name=color_and_sound[fg_color]
     )
-    root.protocol("WM_DELETE_WINDOW", lambda: quit(root))
     app.mainloop()
 
 
