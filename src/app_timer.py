@@ -83,7 +83,7 @@ class App(ttk.Frame):
         self.remaining_time_label.pack(padx=(15, 0), side=tk.LEFT, anchor=tk.E)
 
         self.start_btn = ttk.Button(buttons_frame, text="Start", command=self.start)
-        self.start_btn.pack(padx=10, side=tk.LEFT)
+        self.start_btn.pack(padx=12, side=tk.LEFT)
         self.start_btn["state"] = "disabled"
 
         self.sound_test_btn = ttk.Button(
@@ -91,19 +91,19 @@ class App(ttk.Frame):
             text="Sound test",
             command=lambda: self.ap.play_sound(self.sound_file_name),
         )
-        self.sound_test_btn.pack(padx=10, side=tk.LEFT)
+        self.sound_test_btn.pack(padx=12, side=tk.LEFT)
 
         self.reset_btn = ttk.Button(buttons_frame, text="Reset", command=self.reset_all)
-        self.reset_btn.pack(padx=10, side=tk.LEFT)
+        self.reset_btn.pack(padx=12, side=tk.LEFT)
         self.reset_btn["state"] = "disabled"
 
         switch_label_size_button = ttk.Button(
             buttons_frame, text="Label size", command=self.switch_label_size
         )
-        switch_label_size_button.pack(padx=10, side=tk.LEFT)
+        switch_label_size_button.pack(padx=12, side=tk.LEFT)
 
         skip_btn = ttk.Button(buttons_frame, text="Skip", command=self.skip)
-        skip_btn.pack(padx=10, side=tk.LEFT)
+        skip_btn.pack(padx=12, side=tk.LEFT)
 
         # close event
         self.master.protocol("WM_DELETE_WINDOW", self._on_closing)
@@ -395,7 +395,6 @@ def main(file_path=None, fg_color="orange", start_index=0, hmmss="hmmss"):
         hmmss = True
     else:
         hmmss = False
-    print(hmmss)
     app = App(
         root, file_path, start_index, hmmss, sound_file_name=color_and_sound[fg_color]
     )
@@ -406,8 +405,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--file_path", type=str, required=True)
     parser.add_argument("--text_color", type=str, default="orange")
-    parser.add_argument("--start_index", type=int)
-    parser.add_argument("--hmmss", type=str)
+    parser.add_argument("--start_index", type=int, default=0)
+    parser.add_argument("--hmmss", type=str, default="hmmss")
     # arg check
     if not parser.parse_args().file_path:
         parser.error("file_path is required")

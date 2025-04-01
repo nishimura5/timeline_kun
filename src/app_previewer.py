@@ -37,10 +37,11 @@ class App(ttk.Frame):
         self.file_path_label = ttk.Label(head_frame, text="No file selected")
         self.file_path_label.pack(padx=5, side=tk.LEFT)
 
-        timer_btn = ttk.Button(
+        self.timer_btn = ttk.Button(
             head_frame, text="Send to timer", command=self.open_timer
         )
-        timer_btn.pack(padx=5, side=tk.RIGHT)
+        self.timer_btn.pack(padx=5, side=tk.RIGHT)
+        self.timer_btn["state"] = "disabled"
 
         values = ["orange", "cyan", "lightgreen"]
         self.timer_color_combobox = Combobox(head_frame, "Color:", values, width=12)
@@ -339,6 +340,7 @@ class App(ttk.Frame):
         try:
             warn_msg = timetable.load_csv_str(timetable_csv_str)
         except Exception as e:
+            self.timer_btn["state"] = "disabled"
             self.msg_label.config(text=f"[ERROR]{e}")
             return
 
@@ -365,8 +367,10 @@ class App(ttk.Frame):
 
         if warn_msg != "":
             self.msg_label.config(text=f"[ERROR]{warn_msg}")
+            self.timer_btn["state"] = "disabled"
         else:
             self.msg_label.config(text="Successfully loaded.")
+            self.timer_btn["state"] = "normal"
 
     def read_file(self, tar_path):
         try:
