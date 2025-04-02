@@ -449,7 +449,7 @@ class App(ttk.Frame):
         if IS_DARWIN:
             os.system(f"open -a /Applications/Microsoft\ Excel.app {self.csv_path}")
         else:
-            os.system(f"start excel {self.csv_path}")
+            os.system(f'start excel "{self.csv_path}"')
 
     def export_svg(self):
         init_file_name = os.path.basename(self.csv_path).split(".")[0]
