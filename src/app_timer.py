@@ -153,19 +153,19 @@ class App(ttk.Frame):
         # stage change if end time is reached
         if cnt_up > current_end_dt:
             self.now_stage += 1
-            print(f"count up {cnt_up} > {current_end_dt} => stage={self.now_stage}")
             if self.now_stage < len(self.stage_list):
-                print(f"stage change {self.now_stage} > {len(self.stage_list)}")
+                print(
+                    f"stage change {self.now_stage} (/{len(self.stage_list)}) {cnt_up}"
+                )
                 current_stage = self.stage_list[self.now_stage]
                 current_start_dt = current_stage["start_dt"]
                 current_end_dt = current_stage["end_dt"]
-                msg = f"{current_stage['title']}({current_stage['start_dt']}-{current_stage['end_dt']})"
+                if cnt_up < current_start_dt:
+                    msg = f"{self.INTERMISSION}({current_stage['start_dt']}-{current_stage['end_dt']})"
+                else:
+                    msg = f"{current_stage['title']}({current_stage['start_dt']}-{current_stage['end_dt']})"
                 self.tlog.add_log(self.disp_time, msg)
 
-        if self.now_stage == 0:
-            prev_end_dt = datetime.timedelta(seconds=0)
-        else:
-            prev_end_dt = self.stage_list[self.now_stage - 1]["end_dt"]
         if self.now_stage + 1 < len(self.stage_list):
             next_title = self.stage_list[self.now_stage + 1]["title"]
 
@@ -179,49 +179,27 @@ class App(ttk.Frame):
             self.tlog.end_log(self.disp_time)
             return
 
-        if cnt_up < current_start_dt:
-            # Intermission
-            self.current_stage_label.config(text=self.INTERMISSION)
-            next_start_dt = current_start_dt
-            current_start = time_format.timedelta_to_str(prev_end_dt, self.hmmss)
-            current_end = time_format.timedelta_to_str(next_start_dt, self.hmmss)
+        self.current_stage_label.config(text=current_stage["title"])
+        self.title_label.config(text=current_stage["member"])
+        # Display instruction if it exists, otherwise display start and end time
+        if current_stage["instruction"]:
+            self.current_instruction_label.config(text=current_stage["instruction"])
+        else:
+            current_start = time_format.timedelta_to_str(current_start_dt, self.hmmss)
+            current_end = time_format.timedelta_to_str(current_end_dt, self.hmmss)
             self.current_instruction_label.config(
                 text=f"{current_start} - {current_end}"
             )
-            self.next_stage_label.config(text=current_stage["title"])
-            self.update_remaining_time_intermission(cnt_up)
-            self.update_progress_intermission(cnt_up)
-            self.tlog.add_log(self.disp_time, "Intermission")
-            return
-        else:
-            self.current_stage_label.config(text=current_stage["title"])
-            self.title_label.config(text=current_stage["member"])
-            # Display instruction if it exists, otherwise display start and end time
-            if current_stage["instruction"]:
-                self.current_instruction_label.config(text=current_stage["instruction"])
-            else:
-                current_start = time_format.timedelta_to_str(
-                    current_start_dt, self.hmmss
-                )
-                current_end = time_format.timedelta_to_str(current_end_dt, self.hmmss)
-                self.current_instruction_label.config(
-                    text=f"{current_start} - {current_end}"
-                )
 
         if self.now_stage + 1 < len(self.stage_list):
-            # next is intermission
-            next_start_dt = self.stage_list[self.now_stage + 1]["start_dt"]
-            next_stage_label = (
-                self.INTERMISSION if next_start_dt > current_end_dt else next_title
-            )
-            self.next_stage_label.config(text=next_stage_label)
+            self.next_stage_label["text"] = next_title
         else:
             self.next_stage_label["text"] = "End"
 
         remaining = self.update_remaining_time_next(cnt_up, current_end_dt)
         self.update_progress_next(cnt_up, current_end_dt)
 
-        # skip offset (intermission cannot be skipped because it is not a stage)
+        # skip offset
         if self.is_skip:
             # prevent over skip
             if remaining > datetime.timedelta(seconds=4):
@@ -230,14 +208,6 @@ class App(ttk.Frame):
                 self.total_skip_time += skip_time
                 self.tlog.skip_log(self.disp_time)
             self.is_skip = False
-
-    def update_remaining_time_intermission(self, cnt_up):
-        remaining = (
-            self.stage_list[self.now_stage]["start_dt"]
-            - cnt_up
-            + datetime.timedelta(seconds=1)
-        )
-        self._update_remaining(remaining)
 
     def update_remaining_time_next(self, cnt_up, next_dt):
         if next_dt < cnt_up:
@@ -259,14 +229,6 @@ class App(ttk.Frame):
             self.remaining_time_label.config(
                 text=time_format.timedelta_to_str(remaining_dt, self.hmmss)
             )
-
-    def update_progress_intermission(self, cnt_up):
-        duration_dt = (
-            self.stage_list[self.now_stage]["start_dt"]
-            - self.stage_list[self.now_stage - 1]["end_dt"]
-        )
-        start_dt = self.stage_list[self.now_stage]["start_dt"]
-        self._update_progress(cnt_up, start_dt, duration_dt)
 
     def update_progress_next(self, cnt_up, next_dt):
         duration_dt = self.stage_list[self.now_stage]["duration"]
@@ -348,7 +310,32 @@ class App(ttk.Frame):
         self.is_running = False
         self.start_btn["state"] = "normal"
 
-        # print all list for debug
+        # Intermission check
+        intermission_list = []
+        for i, stage in enumerate(self.stage_list):
+            # check if intermission space exists
+            current_end_dt = stage["end_dt"]
+            if i + 1 < len(self.stage_list):
+                next_start_dt = self.stage_list[i + 1]["start_dt"]
+                if current_end_dt != next_start_dt:
+                    intermission_list.append(
+                        {
+                            "title": self.INTERMISSION,
+                            "start_dt": current_end_dt,
+                            "end_dt": next_start_dt,
+                            "duration": next_start_dt - current_end_dt,
+                            "member": "",
+                            "instruction": "",
+                        }
+                    )
+                else:
+                    intermission_list.append(None)
+        # Insert intermission into stage list from the end
+        for i in range(len(intermission_list) - 1, -1, -1):
+            if intermission_list[i] is not None:
+                self.stage_list.insert(i + 1, intermission_list[i])
+
+        # print stage list
         for i, stage in enumerate(self.stage_list):
             print(
                 f"{i}: {stage['title']}({stage['start_dt']}-{stage['end_dt']}) {stage['instruction']}"
