@@ -334,6 +334,7 @@ class App(ttk.Frame):
         self.load_file()
 
     def load_file(self):
+        self.start_index = 0
         self.file_path_label.config(text=self.csv_path)
         timetable_csv_str = self.read_file(self.csv_path)
         timetable = csv_to_timetable.TimeTable()
