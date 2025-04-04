@@ -150,18 +150,17 @@ class App(ttk.Frame):
         current_stage = self.stage_list[self.now_stage]
         current_start_dt = current_stage["start_dt"]
         current_end_dt = current_stage["end_dt"]
+        # stage change if end time is reached
         if cnt_up > current_end_dt:
             self.now_stage += 1
-            self.tlog.log_ok = True
-            if self.now_stage + 1 < len(self.stage_list):
+            print(f"count up {cnt_up} > {current_end_dt} => stage={self.now_stage}")
+            if self.now_stage < len(self.stage_list):
+                print(f"stage change {self.now_stage} > {len(self.stage_list)}")
                 current_stage = self.stage_list[self.now_stage]
                 current_start_dt = current_stage["start_dt"]
                 current_end_dt = current_stage["end_dt"]
-
-        # Initial log
-        if self.tlog.log_ok is True:
-            msg = f"{current_stage['title']}({current_stage['start_dt']}-{current_stage['end_dt']})"
-            self.tlog.add_log(now, self.disp_time, msg)
+                msg = f"{current_stage['title']}({current_stage['start_dt']}-{current_stage['end_dt']})"
+                self.tlog.add_log(self.disp_time, msg)
 
         if self.now_stage == 0:
             prev_end_dt = datetime.timedelta(seconds=0)
@@ -177,7 +176,7 @@ class App(ttk.Frame):
             self.next_stage_label.config(text="---")
             self.remaining_time_label.config(text="")
             self.is_running = False
-            self.tlog.add_log(now, self.disp_time, "End")
+            self.tlog.end_log(self.disp_time)
             return
 
         if cnt_up < current_start_dt:
@@ -192,7 +191,7 @@ class App(ttk.Frame):
             self.next_stage_label.config(text=current_stage["title"])
             self.update_remaining_time_intermission(cnt_up)
             self.update_progress_intermission(cnt_up)
-            self.tlog.add_log(now, self.disp_time, "Intermission")
+            self.tlog.add_log(self.disp_time, "Intermission")
             return
         else:
             self.current_stage_label.config(text=current_stage["title"])
@@ -208,7 +207,6 @@ class App(ttk.Frame):
                 self.current_instruction_label.config(
                     text=f"{current_start} - {current_end}"
                 )
-            self.tlog.add_log(now, self.disp_time, current_stage["title"])
 
         if self.now_stage + 1 < len(self.stage_list):
             # next is intermission
@@ -299,6 +297,11 @@ class App(ttk.Frame):
         self.reset_btn.config(state="normal")
         self.is_running = True
 
+        # initial event log
+        current_stage = self.stage_list[0]
+        msg = f"{current_stage['title']}({current_stage['start_dt']}-{current_stage['end_dt']})"
+        self.tlog.add_log(self.disp_time, msg)
+
     def skip(self):
         self.is_skip = True
 
@@ -344,6 +347,12 @@ class App(ttk.Frame):
         self.now_stage = 0
         self.is_running = False
         self.start_btn["state"] = "normal"
+
+        # print all list for debug
+        for i, stage in enumerate(self.stage_list):
+            print(
+                f"{i}: {stage['title']}({stage['start_dt']}-{stage['end_dt']}) {stage['instruction']}"
+            )
 
     def _on_closing(self):
         self.tlog.close_log(self.disp_time)

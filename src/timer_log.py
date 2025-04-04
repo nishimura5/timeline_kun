@@ -13,42 +13,36 @@ class TimerLog:
         if os.path.exists(self.file_path) is False:
             with open(self.file_path, "w") as f:
                 f.write("datetime,displaytime,message\n")
-        self.log_ok = True
 
-    def add_log(self, now, display_time, message):
-        if self.log_ok is False:
-            return
-        now_str = now.strftime("%Y-%m-%d %H:%M:%S")
+    def add_log(self, display_time, message):
         dt_str = time_format.timedelta_to_str(display_time)
-
-        with open(self.file_path, "a") as f:
-            f.write(f"{now_str},{dt_str},{message}\n")
-        self.log_ok = False
+        self._write_log(dt_str, message)
 
     def start_log(self):
         print("start")
         self._write_log("0:00:00", "====== start ======")
-        self.log_ok = True
 
     def skip_log(self, display_time):
         print("skip")
         dt_str = time_format.timedelta_to_str(display_time)
         self._write_log(dt_str, "skip")
-        self.log_ok = False
 
     def reset_log(self, display_time):
         print("reset")
         dt_str = time_format.timedelta_to_str(display_time)
         self._write_log(dt_str, "reset")
-        self.log_ok = False
 
     def close_log(self, display_time):
         print("close")
         dt_str = time_format.timedelta_to_str(display_time)
         self._write_log(dt_str, "close")
 
+    def end_log(self, display_time):
+        print("end")
+        dt_str = time_format.timedelta_to_str(display_time)
+        self._write_log(dt_str, "end")
+
     def _write_log(self, display_time, message):
-        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         with open(self.file_path, "a") as f:
             f.write(f"{now_str},{display_time},{message}\n")
-        self.log_ok = False
