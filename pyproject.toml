@@ -1,7 +1,7 @@
 [project]
 name = "timeline-kun"
 version = "0.3.0"
-description = "Add your description here"
+description = "An integrated graphical interface tool for planning and executing experimental protocols."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
