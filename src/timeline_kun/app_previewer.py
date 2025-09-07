@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+import importlib.util
 import sys
 import tkinter as tk
 from datetime import datetime, timedelta
@@ -8,13 +9,8 @@ from tkinter import filedialog, ttk
 
 import ttkthemes
 
-import csv_to_timetable
-import gui_canvas
-import gui_tree
-import icon_data
-import svg_writer
-import time_format
-from gui_parts import Combobox
+from . import csv_to_timetable, gui_canvas, gui_tree, icon_data, svg_writer, time_format
+from .gui_parts import Combobox
 
 IS_DARWIN = sys.platform.startswith("darwin")
 
@@ -424,8 +420,22 @@ class App(ttk.Frame):
                     hmmss,
                 ]
             )
+        elif importlib.util.find_spec(f"{__package__}.app_timer" if __package__ else "app_timer") is not None:
+            color = self.timer_color_combobox.get()
+            module = f"{__package__}.app_timer" if __package__ else "app_timer"
+            subprocess.Popen(
+                [
+                    sys.executable,
+                    "-m",
+                    module,
+                    "--file_path", self.csv_path,
+                    "--text_color", color,
+                    "--start_index", str(self.start_index),
+                    "--hmmss", hmmss,
+                ]
+            )
         else:
-            print("not frozen")
+            print("local")
             current_dir = os.path.dirname(os.path.abspath(__file__))
             tar_path = os.path.join(current_dir, "app_timer.py")
             color = self.timer_color_combobox.get()

@@ -3,11 +3,7 @@ import datetime
 import tkinter as tk
 from tkinter import ttk
 
-import csv_to_timetable
-import icon_data
-import sound
-import time_format
-import timer_log
+from . import csv_to_timetable, icon_data, sound, time_format, timer_log
 
 
 class App(ttk.Frame):

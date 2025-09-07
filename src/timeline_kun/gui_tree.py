@@ -4,8 +4,7 @@ import sys
 import tkinter as tk
 from tkinter import ttk
 
-import time_format
-import timetable_to_csv
+from . import time_format, timetable_to_csv
 
 IS_DARWIN = sys.platform.startswith("darwin")
 
@@ -198,7 +197,7 @@ class TimelineTreeDialog(tk.Frame):
         dialog = tk.Toplevel(master)
         dialog.focus_set()
         dialog.title("Timeline row")
-        dialog.geometry(f"+{x+500}+{y}")
+        dialog.geometry(f"+{x + 500}+{y}")
         dialog.grab_set()
 
         tar_frame = ttk.Frame(dialog)

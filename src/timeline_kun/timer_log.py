@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 
-import time_format
+from . import time_format
 
 
 class TimerLog:

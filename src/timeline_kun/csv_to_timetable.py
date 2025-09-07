@@ -1,6 +1,6 @@
 import datetime
 
-import time_format
+from . import time_format
 
 
 class TimeTable:
