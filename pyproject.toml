@@ -7,7 +7,7 @@ name = "timeline-kun"
 dynamic = ["version"]
 description = "An integrated graphical interface tool for planning and executing experimental protocols."
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [{ name = "Eigo Nishimura" }]
 license = { file = "LICENSE" }
 keywords = ["experiment", "protocol", "timer", "GUI", "timeline"]
@@ -15,6 +15,11 @@ dependencies = [
     "soundfile>=0.13.1",
     "sounddevice>=0.5.1",
     "ttkthemes>=3.2.2",
+]
+
+[project.optional-dependencies]
+gopro = [
+  "open_gopro>=0.21",
 ]
 
 [tool.uv]
