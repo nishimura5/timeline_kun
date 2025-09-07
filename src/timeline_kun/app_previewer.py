@@ -434,31 +434,10 @@ class App(ttk.Frame):
                     "--hmmss", hmmss,
                 ]
             )
-        else:
-            print("local")
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            tar_path = os.path.join(current_dir, "app_timer.py")
-            color = self.timer_color_combobox.get()
-            subprocess.Popen(
-                [
-                    "uv",
-                    "run",
-                    "python",
-                    tar_path,
-                    "--file_path",
-                    self.csv_path,
-                    "--text_color",
-                    color,
-                    "--start_index",
-                    str(self.start_index),
-                    "--hmmss",
-                    hmmss,
-                ]
-            )
 
     def open_excel(self):
         if IS_DARWIN:
-            os.system(f"open -a /Applications/Microsoft\ Excel.app {self.csv_path}")
+            os.system(f"open -a /Applications/Microsoft/ Excel.app {self.csv_path}")
         else:
             os.system(f'start excel "{self.csv_path}"')
 
