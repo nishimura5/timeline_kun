@@ -15,11 +15,7 @@ dependencies = [
     "soundfile>=0.13.1",
     "sounddevice>=0.5.1",
     "ttkthemes>=3.2.2",
-]
-
-[project.optional-dependencies]
-gopro = [
-  "open_gopro>=0.21",
+    "bleak>=0.22.3",
 ]
 
 [tool.uv]

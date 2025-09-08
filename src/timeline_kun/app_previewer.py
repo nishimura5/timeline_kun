@@ -9,7 +9,7 @@ from tkinter import filedialog, ttk
 
 import ttkthemes
 
-from . import csv_to_timetable, gui_canvas, gui_tree, icon_data, svg_writer, time_format
+from . import gui_canvas, gui_tree, icon_data, svg_writer, time_format, file_loader
 from .gui_parts import Combobox
 
 IS_DARWIN = sys.platform.startswith("darwin")
@@ -334,10 +334,10 @@ class App(ttk.Frame):
     def load_file(self):
         self.start_index = 0
         self.file_path_label.config(text=self.csv_path)
-        timetable_csv_str = self.read_file(self.csv_path)
-        timetable = csv_to_timetable.TimeTable()
+
+        fl = file_loader.FileLoader()
         try:
-            warn_msg = timetable.load_csv_str(timetable_csv_str)
+            warn_msg, timetable = fl.load_file_for_preview(self.csv_path)
         except Exception as e:
             self.timer_btn["state"] = "disabled"
             self.msg_label.config(text=f"[ERROR]{e}")
@@ -370,15 +370,6 @@ class App(ttk.Frame):
         else:
             self.msg_label.config(text="Successfully loaded.")
             self.timer_btn["state"] = "normal"
-
-    def read_file(self, tar_path):
-        try:
-            with open(tar_path, "r", encoding="utf-8") as f:
-                return f.read()
-        except UnicodeDecodeError:
-            print("try shift-jis")
-            with open(tar_path, "r", encoding="shift-jis") as f:
-                return f.read()
 
     def asign_rect_color(self):
         title_list = list(set([s["title"] for s in self.stage_list]))

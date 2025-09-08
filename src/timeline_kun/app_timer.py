@@ -3,7 +3,7 @@ import datetime
 import tkinter as tk
 from tkinter import ttk
 
-from . import csv_to_timetable, icon_data, sound, time_format, timer_log
+from . import file_loader, icon_data, sound, time_format, timer_log, trigger
 
 
 class App(ttk.Frame):
@@ -25,6 +25,9 @@ class App(ttk.Frame):
 
         self.ap = sound.AudioPlayer()
         self.ap.load_audio(sound_file_name)
+
+        self.trigger_device = trigger.Trigger(offset_sec=5)
+        self.trigger_device.ble_connect()
 
         # header
         head_frame = ttk.Frame(self.master)
@@ -162,9 +165,6 @@ class App(ttk.Frame):
                     msg = f"{current_stage['title']}({current_stage['start_dt']}-{current_stage['end_dt']})"
                 self.tlog.add_log(self.disp_time, msg)
 
-        if self.now_stage + 1 < len(self.stage_list):
-            next_title = self.stage_list[self.now_stage + 1]["title"]
-
         # If the last stage is reached, stop the timer
         if self.now_stage >= len(self.stage_list):
             self.current_stage_label.config(text="End")
@@ -177,48 +177,69 @@ class App(ttk.Frame):
 
         self.current_stage_label.config(text=current_stage["title"])
         self.title_label.config(text=current_stage["member"])
+        self.update_next_stage_label(end_text="End")
+        self.update_instruction_label(current_stage, current_start_dt, current_end_dt)
+
+        remaining_dt = self.calc_remaining_time_next(cnt_up, current_end_dt)
+        self.sound(remaining_dt, offset_sec=3)
+        self.trigger(self.now_stage, remaining_dt)
+        self.update_remaining_time_label(remaining_dt)
+        self.update_progress_bar(cnt_up, current_end_dt)
+        self.update_skip(remaining_dt, offset_sec=4)
+
+    def update_instruction_label(self, current_stage, start_dt, end_dt):
         # Display instruction if it exists, otherwise display start and end time
         if current_stage["instruction"]:
             self.current_instruction_label.config(text=current_stage["instruction"])
         else:
-            current_start = time_format.timedelta_to_str(current_start_dt, self.hmmss)
-            current_end = time_format.timedelta_to_str(current_end_dt, self.hmmss)
-            self.current_instruction_label.config(
-                text=f"{current_start} - {current_end}"
-            )
+            start_str = time_format.timedelta_to_str(start_dt, self.hmmss)
+            end_str = time_format.timedelta_to_str(end_dt, self.hmmss)
+            self.current_instruction_label.config(text=f"{start_str} - {end_str}")
 
-        if self.now_stage + 1 < len(self.stage_list):
-            self.next_stage_label["text"] = next_title
-        else:
-            self.next_stage_label["text"] = "End"
-
-        remaining = self.update_remaining_time_next(cnt_up, current_end_dt)
-        self.update_progress_next(cnt_up, current_end_dt)
-
-        # skip offset
-        if self.is_skip:
-            # prevent over skip
-            if remaining > datetime.timedelta(seconds=4):
-                skip_time = remaining - datetime.timedelta(seconds=4)
-                self.reset_time -= skip_time
-                self.total_skip_time += skip_time
-                self.tlog.skip_log(self.disp_time)
-            self.is_skip = False
-
-    def update_remaining_time_next(self, cnt_up, next_dt):
+    def calc_remaining_time_next(self, cnt_up, next_dt):
         if next_dt < cnt_up:
-            remaining = datetime.timedelta(seconds=0)
+            remaining_dt = datetime.timedelta(seconds=0)
         else:
-            remaining = next_dt - cnt_up + datetime.timedelta(seconds=1)
-        self._update_remaining(remaining)
-        return remaining
+            remaining_dt = next_dt - cnt_up + datetime.timedelta(seconds=1)
+        return remaining_dt
 
-    def _update_remaining(self, remaining_dt):
-        if remaining_dt.seconds == 3 and not self.ring_done:
+    def sound(self, remaining_dt, offset_sec=3):
+        if remaining_dt.seconds == offset_sec and not self.ring_done:
             self.ap.play_sound(self.sound_file_name)
             self.ring_done = True
-        if remaining_dt.seconds < 3:
+        if remaining_dt.seconds < offset_sec:
             self.ring_done = False
+
+    def trigger(self, now_stage, remaining_dt):
+        next_stage = now_stage + 1
+        if next_stage >= len(self.stage_list):
+            return
+        next_stage_instruction = self.stage_list[next_stage]["instruction"]
+        current_stage_instruction = self.stage_list[now_stage]["instruction"]
+        # Trigger in before X seconds of next stage
+        if remaining_dt < datetime.timedelta(seconds=self.trigger_device.offset_sec):
+            self.trigger_device.trigger_in(next_stage_instruction)
+
+        # Trigger out
+        if remaining_dt > datetime.timedelta(seconds=self.trigger_device.offset_sec):
+            self.trigger_device.trigger_out(current_stage_instruction)
+    
+    def trigger_end(self):
+        self.trigger_device.trigger_end()
+
+    def update_progress_bar(self, cnt_up, next_dt):
+        duration_dt = self.stage_list[self.now_stage]["duration"]
+        progress = cnt_up - next_dt
+        val = 100 + progress / duration_dt * 100
+        self.progress_bar.config(value=val)
+
+    def update_next_stage_label(self, end_text="End"):
+        if self.now_stage + 1 < len(self.stage_list):
+            self.next_stage_label["text"] = self.stage_list[self.now_stage + 1]["title"]
+        else:
+            self.next_stage_label["text"] = end_text
+
+    def update_remaining_time_label(self, remaining_dt):
         if remaining_dt <= datetime.timedelta(seconds=0):
             self.remaining_time_label.config(text="")
         else:
@@ -226,14 +247,15 @@ class App(ttk.Frame):
                 text=time_format.timedelta_to_str(remaining_dt, self.hmmss)
             )
 
-    def update_progress_next(self, cnt_up, next_dt):
-        duration_dt = self.stage_list[self.now_stage]["duration"]
-        self._update_progress(cnt_up, next_dt, duration_dt)
-
-    def _update_progress(self, cnt_up, next_dt, duration_dt):
-        progress = cnt_up - next_dt
-        val = 100 + progress / duration_dt * 100
-        self.progress_bar.config(value=val)
+    def update_skip(self, remaining_dt, offset_sec=4):
+        if self.is_skip:
+            # prevent over skip
+            if remaining_dt > datetime.timedelta(seconds=offset_sec):
+                skip_time = remaining_dt - datetime.timedelta(seconds=offset_sec)
+                self.reset_time -= skip_time
+                self.total_skip_time += skip_time
+                self.tlog.skip_log(self.disp_time)
+            self.is_skip = False
 
     def reset_all(self):
         self.is_running = False
@@ -271,67 +293,18 @@ class App(ttk.Frame):
         else:
             self.current_stage_label["style"] = "Small.TLabel"
 
-    def read_file(self, tar_path):
-        try:
-            with open(tar_path, "r", encoding="utf-8") as f:
-                return f.read()
-        except UnicodeDecodeError:
-            print("try shift-jis")
-            with open(tar_path, "r", encoding="shift-jis") as f:
-                return f.read()
-
     def load_file(self, start_index):
-        timetable_csv_str = self.read_file(self.csv_path)
-        timetable = csv_to_timetable.TimeTable()
-        timetable.load_csv_str(timetable_csv_str)
+        fl = file_loader.FileLoader(self.INTERMISSION)
+        fl.load_file_for_timer(start_index, self.csv_path)
 
-        self.stage_list = []
-        start_row = timetable.get_timetable()[start_index]
-        for i, row in enumerate(timetable.get_timetable()):
-            if i < start_index:
-                continue
-            self.stage_list.append(
-                {
-                    "title": row["title"],
-                    "start_dt": row["start"] - start_row["start"],
-                    "end_dt": row["end"] - start_row["start"],
-                    "duration": row["end"] - row["start"],
-                    "member": row["member"],
-                    "instruction": row["instruction"],
-                }
-            )
-        self.title_label.config(text=timetable.time_table[0]["member"])
+        self.stage_list = fl.get_stage_list()
+
+        self.title_label.config(text=self.stage_list[0]["member"])
         self.next_stage_label.config(text=self.stage_list[0]["title"])
         self.now_stage = 0
         self.is_running = False
         self.start_btn["state"] = "normal"
 
-        # Intermission check
-        intermission_list = []
-        for i, stage in enumerate(self.stage_list):
-            # check if intermission space exists
-            current_end_dt = stage["end_dt"]
-            if i + 1 < len(self.stage_list):
-                next_start_dt = self.stage_list[i + 1]["start_dt"]
-                if current_end_dt != next_start_dt:
-                    intermission_list.append(
-                        {
-                            "title": self.INTERMISSION,
-                            "start_dt": current_end_dt,
-                            "end_dt": next_start_dt,
-                            "duration": next_start_dt - current_end_dt,
-                            "member": "",
-                            "instruction": "",
-                        }
-                    )
-                else:
-                    intermission_list.append(None)
-        # Insert intermission into stage list from the end
-        for i in range(len(intermission_list) - 1, -1, -1):
-            if intermission_list[i] is not None:
-                self.stage_list.insert(i + 1, intermission_list[i])
-
-        # print stage list
         for i, stage in enumerate(self.stage_list):
             print(
                 f"{i}: {stage['title']}({stage['start_dt']}-{stage['end_dt']}) {stage['instruction']}"
@@ -392,6 +365,7 @@ def main(file_path=None, fg_color="orange", start_index=0, hmmss="hmmss"):
     )
     app.mainloop()
 
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("--file_path", type=str, required=True)
@@ -400,10 +374,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--hmmss", type=str, default="hmmss")
     return parser
 
+
 def cli(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
     return main(args.file_path, args.text_color, args.start_index, args.hmmss)
+
 
 if __name__ == "__main__":
     cli()
