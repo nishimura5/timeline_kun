@@ -1,7 +1,7 @@
+import importlib.util
 import os
 import shutil
 import subprocess
-import importlib.util
 import sys
 import tkinter as tk
 from datetime import datetime, timedelta
@@ -143,6 +143,8 @@ class App(ttk.Frame):
             return
         # confirm remove
         current_row = self.tree.get_selected_index()
+        if current_row is None:
+            return
         current_title = self.stage_list[current_row]["title"]
         is_ok = tk.messagebox.askyesno(
             "Confirm",
@@ -404,7 +406,7 @@ class App(ttk.Frame):
         # frozen exe
         if getattr(sys, "frozen", False):
             current_dir = os.path.dirname(sys.executable)
-            tar_path = os.path.join(current_dir, "app_timer.exe")
+            tar_path = os.path.join(current_dir, "TimelinekunTimer.exe")
             color = self.timer_color_combobox.get()
 
             subprocess.Popen(
@@ -420,7 +422,12 @@ class App(ttk.Frame):
                     hmmss,
                 ]
             )
-        elif importlib.util.find_spec(f"{__package__}.app_timer" if __package__ else "app_timer") is not None:
+        elif (
+            importlib.util.find_spec(
+                f"{__package__}.app_timer" if __package__ else "app_timer"
+            )
+            is not None
+        ):
             color = self.timer_color_combobox.get()
             module = f"{__package__}.app_timer" if __package__ else "app_timer"
             subprocess.Popen(

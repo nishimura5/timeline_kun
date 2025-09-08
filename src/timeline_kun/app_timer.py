@@ -392,16 +392,18 @@ def main(file_path=None, fg_color="orange", start_index=0, hmmss="hmmss"):
     )
     app.mainloop()
 
-
-if __name__ == "__main__":
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("--file_path", type=str, required=True)
     parser.add_argument("--text_color", type=str, default="orange")
     parser.add_argument("--start_index", type=int, default=0)
     parser.add_argument("--hmmss", type=str, default="hmmss")
-    # arg check
-    if not parser.parse_args().file_path:
-        parser.error("file_path is required")
+    return parser
 
-    args = parser.parse_args()
-    main(args.file_path, args.text_color, args.start_index, args.hmmss)
+def cli(argv=None):
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    return main(args.file_path, args.text_color, args.start_index, args.hmmss)
+
+if __name__ == "__main__":
+    cli()
