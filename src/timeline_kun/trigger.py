@@ -1,3 +1,6 @@
+import threading
+import time
+
 from . import ble_control
 
 
@@ -17,7 +20,9 @@ class Trigger:
         if ok_count == len(self.target_device_names):
             self.connection_status = "Connected"
         else:
-            self.connection_status = f"Failed ({ok_count}/{len(self.target_device_names)})"
+            self.connection_status = (
+                f"Failed ({ok_count}/{len(self.target_device_names)})"
+            )
             print(f"BLE connect failed: {msg}")
 
     def set_device_names(self, names):
@@ -38,10 +43,18 @@ class Trigger:
     def trigger_out(self, title):
         if self.keyword not in title and self.triggered_in is True:
             self.triggered_in = False
-            result = self.ble_thread.execute_command("record_stop", None, timeout=3)
-            command, success, msg = result
-            if success:
-                self.connection_status = "Connected"
+            # UIを止めずに別スレッドで2秒待ってから停止コマンドを送る
+            threading.Thread(target=self._delayed_stop, daemon=True).start()
+
+    def _delayed_stop(self):
+        time.sleep(2)
+        command, success, msg = self.ble_thread.execute_command(
+            "record_stop", None, timeout=5
+        )
+        if success:
+            self.connection_status = "Connected"
+        else:
+            self.connection_status = f"Failed to stop"
 
     def get_triggered(self):
         return self.triggered_in

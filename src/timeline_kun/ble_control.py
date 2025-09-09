@@ -33,7 +33,7 @@ class BleThread:
         self.last_keep_alive = 0
         self.keep_alive_interval = 10.0
         self.target_device_names = [""]
-        
+
         # コマンドハンドラーマップ
         self._command_handlers = {
             "connect": self._handle_connect,
@@ -115,7 +115,6 @@ class BleThread:
         ok_count = await self.ble_control.stop_recording()
         return ("record_stop", ok_count, "success" if ok_count else "failed")
 
-
     async def _check_keep_alive(self):
         current_time = time.time()
         if (
@@ -130,6 +129,7 @@ class BleThread:
                     f"Keep-alive failed for {len(self.ble_control.client_list) - ok_count} devices"
                 )
             self.last_keep_alive = current_time
+
 
 class BleControl:
     def __init__(self, target_device_names):
@@ -165,6 +165,7 @@ class BleControl:
 
         for device in devices:
             if device.name and device.name in self.target_device_names:
+                print(f"Found target device: {device.name} ({device.address})")
                 self.device_list.append(device)
 
         return len(self.device_list)
