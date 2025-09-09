@@ -3,7 +3,15 @@ import datetime
 import tkinter as tk
 from tkinter import ttk
 
-from . import file_loader, icon_data, sound, time_format, timer_log, trigger
+from . import (
+    file_loader,
+    gui_ble_button,
+    icon_data,
+    sound,
+    time_format,
+    timer_log,
+    trigger,
+)
 
 
 class App(ttk.Frame):
@@ -16,6 +24,7 @@ class App(ttk.Frame):
         start_index=0,
         hmmss=True,
         sound_file_name="countdown3_orange.wav",
+        ble_file_name="ble_devices.txt",
     ):
         super().__init__(master)
         master.title("Timer")
@@ -103,13 +112,9 @@ class App(ttk.Frame):
         skip_btn = ttk.Button(buttons_frame, text="Skip", command=self.skip)
         skip_btn.pack(padx=12, side=tk.LEFT)
 
-        # BLE button
-        ble_frame = ttk.Frame(buttons_frame)
-        ble_frame.pack(side=tk.RIGHT)
-        ble_btn = ttk.Button(ble_frame, text="BLE Connect", command=self.connect_ble)
-        ble_btn.pack(padx=12, side=tk.LEFT)
-        self.ble_status_label = ttk.Label(ble_frame, text="Disconnected")
-        self.ble_status_label.pack(padx=12, side=tk.LEFT)
+        self.ble_manager = gui_ble_button.BleButtonManager(
+            buttons_frame, self.master, self.trigger_device, ble_file_name
+        )
 
         # close event
         self.master.protocol("WM_DELETE_WINDOW", self._on_closing)
@@ -128,19 +133,10 @@ class App(ttk.Frame):
 
         self.load_file(start_index)
 
-        self.trigger_device.set_device_names(["GoPro 2700", "GoPro 4256"])
-
-    def connect_ble(self):
-        self.trigger_device.ble_connect()
-        self.update_ble_status()
-
     def update_clock(self):
         now = datetime.datetime.now()
         self.main_clock_label.config(text=now.strftime("%Y-%m-%d %H:%M:%S"))
-        self.after(
-            200,
-            self.update_clock,
-        )
+        self.after(200, self.update_clock)
 
         # If the timer is stopped, reset the timer
         if self.is_running is False:
@@ -197,7 +193,7 @@ class App(ttk.Frame):
         self.sound(remaining_dt, offset_sec=3)
         # BLE
         self.trigger(self.now_stage, remaining_dt)
-        self.update_ble_status()
+        self.ble_manager.update_ble_status()
 
         self.update_remaining_time_label(remaining_dt)
         self.update_progress_bar(cnt_up, current_end_dt)
@@ -240,12 +236,6 @@ class App(ttk.Frame):
         if remaining_dt > datetime.timedelta(seconds=self.trigger_device.offset_sec):
             self.trigger_device.trigger_out(current_stage_instruction)
 
-    def trigger_end(self):
-        self.trigger_device.trigger_end()
-
-    def update_ble_status(self):
-        self.ble_status_label.config(text=self.trigger_device.get_status())
-
     def update_progress_bar(self, cnt_up, next_dt):
         duration_dt = self.stage_list[self.now_stage]["duration"]
         progress = cnt_up - next_dt
@@ -286,6 +276,12 @@ class App(ttk.Frame):
         self.current_instruction_label.config(text="")
         self.next_stage_label.config(text=self.stage_list[0]["title"])
         self.remaining_time_label.config(text="")
+
+        # BLE stop
+        self.trigger_device.trigger_out("(Recording)")
+        self.ble_manager.update_ble_status()
+        self.ble_manager.set_enabled()
+
         # for close log
         self.disp_time = datetime.timedelta(seconds=0)
 
@@ -294,6 +290,7 @@ class App(ttk.Frame):
         self.start_btn.config(state="disabled")
         self.sound_test_btn.config(state="disabled")
         self.reset_btn.config(state="normal")
+        self.ble_manager.set_disabled()
         self.is_running = True
 
         # initial event log
