@@ -29,6 +29,11 @@ class BleThread:
         self.ble_control = None
         self.last_keep_alive = 0
         self.keep_alive_interval = 10.0  # 10秒間隔
+        self.target_device_names = [""]
+        self.connection_status = "Disconnected"
+
+    def set_target_device_names(self, names):
+        self.target_device_names = names
 
     def start(self):
         if self.thread is None or not self.thread.is_alive():
@@ -47,7 +52,7 @@ class BleThread:
         try:
             self.loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.loop)
-            self.ble_control = BleControl()
+            self.ble_control = BleControl(self.target_device_names)
             self.loop.run_until_complete(self._command_loop())
         except Exception as e:
             print(f"BLE thread error: {e}")
@@ -95,7 +100,6 @@ class BleThread:
         """keep_aliveが必要かチェックして送信"""
         current_time = time.time()
 
-        # 接続されていて、前回のkeep_aliveから10秒以上経過している場合
         if (
             self.ble_control
             and self.ble_control.is_connected()
@@ -119,14 +123,16 @@ class BleThread:
 
 
 class BleControl:
-    def __init__(self):
+    def __init__(self, target_device_names):
         self.active = False
-        self.client = None
-        self.device = None
+        self.client_list = []
+        self.device_list = []
         self.is_recording = False
-        self.response_event = None
-        self.response_data = None
-        self.notifications_setup = False
+        self.target_device_names = target_device_names
+        # 各clientごとにnotification用のイベント・データ・状態を管理
+        self._notify_events = {}  # client.address: asyncio.Event
+        self._notify_data = {}    # client.address: bytes
+        self._notify_setup = {}   # client.address: bool
 
     def load_config(self, config_path):
         if not os.path.exists(config_path):
@@ -137,15 +143,16 @@ class BleControl:
 
     async def connect(self):
         print("Scanning for BLE devices...")
-        if not self.device:
-            await self.discover_device()
-        if not self.device:
+        await self.discover_device()
+        if len(self.device_list) == 0:
             print("No device to connect")
             return False
 
         try:
-            self.client = BleakClient(self.device.address)
-            await self.client.connect()
+            for device in self.device_list:
+                print(f"Attempting to connect to {device.name} ({device.address})")
+                self.client_list.append(BleakClient(device.address))
+                await self.client_list[-1].connect()
 
             # 接続後にnotificationをセットアップ
             await self._setup_notifications()
@@ -157,38 +164,43 @@ class BleControl:
             return False
 
     async def discover_device(self):
+        self.device_list = []
         devices = await BleakScanner.discover()
         for device in devices:
-            if device.name and "GoPro" in device.name:
-                self.device = device
+            if device.name and device.name in self.target_device_names:
+                self.device_list.append(device)
                 print(f"Found BLE device: {device.name}, {device.address}")
-                return device
-        print("BLE device not found")
-        return None
+        if len(self.device_list) == 0:
+            print(f"Target device '{self.target_device_names}' not found")
 
     def is_connected(self):
-        return self.client and self.client.is_connected
+        connected_count = 0
+        for client in self.client_list:
+            if client.is_connected:
+                connected_count += 1
+        return connected_count == len(self.client_list) and connected_count > 0
 
     async def disconnect(self):
-        if self.is_connected() and self.client:
+        if self.is_connected() and self.client_list:
             if self.is_recording:
                 await self.stop_recording()
 
             try:
-                # notificationを停止
-                if self.notifications_setup:
-                    await self.client.stop_notify(BleData.RESPONSE_UUID)
-                    self.notifications_setup = False
-
-                await self.client.disconnect()
+                for client in self.client_list:
+                    addr = client.address
+                    if self._notify_setup.get(addr, False):
+                        await client.stop_notify(BleData.RESPONSE_UUID)
+                        self._notify_setup[addr] = False
+                    await client.disconnect()
             except Exception as e:
                 print(f"Disconnect error: {e}")
 
-        self.client = None
-        self.device = None
+        self.client_list = []
+        self.device_list = []
         self.is_recording = False
-        self.response_event = None
-        self.response_data = None
+        self._notify_events.clear()
+        self._notify_data.clear()
+        self._notify_setup.clear()
         print("Disconnected")
 
     async def start_recording(self):
@@ -196,9 +208,10 @@ class BleControl:
             print("Not connected")
             return False
 
-        await self.client.write_gatt_char(
-            BleData.COMMAND_UUID, BleData.START_RECORDING, response=True
-        )
+        for client in self.client_list:
+            await client.write_gatt_char(
+                BleData.COMMAND_UUID, BleData.START_RECORDING, response=True
+            )
         self.is_recording = True
         print("Started recording")
         return True
@@ -207,10 +220,10 @@ class BleControl:
         if not self.is_connected():
             print("Not connected")
             return False
-
-        await self.client.write_gatt_char(
-            BleData.COMMAND_UUID, BleData.STOP_RECORDING, response=True
-        )
+        for client in self.client_list:
+            await client.write_gatt_char(
+                BleData.COMMAND_UUID, BleData.STOP_RECORDING, response=True
+            )
         self.is_recording = False
         print("Stopped recording")
         return True
@@ -221,27 +234,33 @@ class BleControl:
             return False
 
         try:
-            self.response_event = asyncio.Event()
-            self.response_data = None
+            # 各clientごとにイベント・データを初期化
+            for client in self.client_list:
+                addr = client.address
+                self._notify_events[addr] = asyncio.Event()
+                self._notify_data[addr] = None
 
-            await self.client.write_gatt_char(
-                BleData.SETTING_UUID, BleData.KEEP_ALIVE, response=True
-            )
-            print("Sent keep alive")
+            for client in self.client_list:
+                await client.write_gatt_char(
+                    BleData.SETTING_UUID, BleData.KEEP_ALIVE, response=True
+                )
+            print("Sent keep alive command...")
 
-            # receive response
-            try:
-                await asyncio.wait_for(self.response_event.wait(), timeout=3.0)
-                if self.response_data:
-                    print(f"Keep alive response: {self.response_data}")
-                    return True
-                else:
-                    print("No response data received")
-                    return False
-            except Exception as e:
-                print(f"Keep alive response timeout: {e}")
-                return False
-
+            # 各clientからの応答を待つ
+            all_ok = True
+            for client in self.client_list:
+                addr = client.address
+                try:
+                    await asyncio.wait_for(self._notify_events[addr].wait(), timeout=3.0)
+                    if self._notify_data[addr]:
+                        print(f"[{addr}] Keep alive response: {self._notify_data[addr]}")
+                    else:
+                        print(f"[{addr}] No response data received")
+                        all_ok = False
+                except Exception as e:
+                    print(f"[{addr}] Keep alive response timeout: {e}")
+                    all_ok = False
+            return all_ok
         except Exception as e:
             print(f"Failed to send keep alive: {e}")
             return False
@@ -251,18 +270,23 @@ class BleControl:
             return False
 
         try:
-            await self.client.start_notify(
-                BleData.RESPONSE_UUID, self._notification_handler
-            )
-            self.notifications_setup = True
+            for client in self.client_list:
+                addr = client.address
+                # clientごとにハンドラをラップ
+                async def handler(sender, data, addr=addr):
+                    self._notify_data[addr] = data
+                    if self._notify_events.get(addr):
+                        self._notify_events[addr].set()
+                await client.start_notify(
+                    BleData.RESPONSE_UUID, handler
+                )
+                self._notify_setup[addr] = True
             print("Notifications set up successfully")
             return True
         except Exception as e:
             print(f"Failed to set up notifications: {e}")
-            self.notifications_setup = False
+            for client in self.client_list:
+                addr = client.address
+                self._notify_setup[addr] = False
             return False
 
-    async def _notification_handler(self, sender, data):
-        self.response_data = data
-        if self.response_event:
-            self.response_event.set()
