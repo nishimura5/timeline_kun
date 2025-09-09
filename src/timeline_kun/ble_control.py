@@ -33,6 +33,13 @@ class BleThread:
         self.last_keep_alive = 0
         self.keep_alive_interval = 10.0
         self.target_device_names = [""]
+        
+        # コマンドハンドラーマップ
+        self._command_handlers = {
+            "connect": self._handle_connect,
+            "record_start": self._handle_record_start,
+            "record_stop": self._handle_record_stop,
+        }
 
     def set_target_device_names(self, names):
         self.target_device_names = names
@@ -49,6 +56,17 @@ class BleThread:
             self.command_queue.put(("stop", None))
             if self.thread and self.thread.is_alive():
                 self.thread.join()
+
+    def execute_command(self, command, data=None, timeout=30):
+        """同期的にコマンドを実行するためのパブリックインターフェース"""
+        if not self.running:
+            return (command, False, "Thread not running")
+
+        self.command_queue.put((command, data))
+        try:
+            return self.result_queue.get(timeout=timeout)
+        except queue.Empty:
+            return (command, False, "No response")
 
     def _run_thread(self):
         self.loop = asyncio.new_event_loop()
@@ -67,32 +85,36 @@ class BleThread:
                 await asyncio.sleep(0.1)
                 continue
 
-            result = await self._execute_command(command, data)
-            self.result_queue.put(result)
-
-            if command in ["disconnect", "stop"]:
+            if command == "stop":
                 break
 
-    async def _execute_command(self, command, data):
-        command_map = {
-            "connect": self.ble_control.connect,
-            "disconnect": self.ble_control.disconnect,
-            "record_start": self.ble_control.start_recording,
-            "record_stop": self.ble_control.stop_recording,
-        }
+            result = await self._process_command(command, data)
+            self.result_queue.put(result)
 
-        if command in command_map:
-            ok_count = await command_map[command]()
-            print(
-                f"Executed command: {command}, result: {ok_count}, time: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}, PID: {os.getpid()}"
-            )
-            if command == "connect" and ok_count:
-                self.last_keep_alive = time.time()
-            elif command == "disconnect":
-                self.last_keep_alive = 0
-            return (command, ok_count, "success" if ok_count else "failed")
+    async def _process_command(self, command, data):
+        """コマンドを処理し、適切なハンドラーを呼び出す"""
+        if command in self._command_handlers:
+            return await self._command_handlers[command](data)
+        else:
+            return (command, 0, "unknown command")
 
-        return (command, 0, "unknown command")
+    async def _handle_connect(self, data):
+        """接続コマンドを処理"""
+        ok_count = await self.ble_control.connect()
+        if ok_count:
+            self.last_keep_alive = time.time()
+        return ("connect", ok_count, "success" if ok_count else "failed")
+
+    async def _handle_record_start(self, data):
+        """録画開始コマンドを処理"""
+        ok_count = await self.ble_control.start_recording()
+        return ("record_start", ok_count, "success" if ok_count else "failed")
+
+    async def _handle_record_stop(self, data):
+        """録画停止コマンドを処理"""
+        ok_count = await self.ble_control.stop_recording()
+        return ("record_stop", ok_count, "success" if ok_count else "failed")
+
 
     async def _check_keep_alive(self):
         current_time = time.time()
@@ -108,17 +130,6 @@ class BleThread:
                     f"Keep-alive failed for {len(self.ble_control.client_list) - ok_count} devices"
                 )
             self.last_keep_alive = current_time
-
-    def execute_command(self, command, data=None, timeout=30):
-        if not self.running:
-            return (command, False, "Thread not running")
-
-        self.command_queue.put((command, data))
-        try:
-            return self.result_queue.get(timeout=timeout)
-        except queue.Empty:
-            return (command, False, "No response")
-
 
 class BleControl:
     def __init__(self, target_device_names):
@@ -162,29 +173,6 @@ class BleControl:
         return len(self.client_list) > 0 and all(
             client.is_connected for client in self.client_list
         )
-
-    async def disconnect(self):
-        success_code = len(self.client_list)
-        if not self.is_connected():
-            return success_code
-
-        if self.is_recording:
-            await self.stop_recording()
-
-        for client in self.client_list:
-            try:
-                await client.stop_notify(BleData.RESPONSE_UUID)
-                await client.disconnect()
-            except Exception:
-                print("Error during BLE disconnect")
-                pass
-
-        self.client_list.clear()
-        self.device_list.clear()
-        self.is_recording = False
-        self._notify_events.clear()
-        self._notify_data.clear()
-        return success_code
 
     async def start_recording(self):
         return await self._send_command_to_all(

@@ -17,7 +17,7 @@ class Trigger:
         if ok_count == len(self.target_device_names):
             self.connection_status = "Connected"
         else:
-            self.connection_status = f"Connect Failed ({ok_count}/{len(self.target_device_names)})"
+            self.connection_status = f"Failed ({ok_count}/{len(self.target_device_names)})"
             print(f"BLE connect failed: {msg}")
 
     def set_device_names(self, names):
