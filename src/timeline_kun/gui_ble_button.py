@@ -1,5 +1,3 @@
-import os
-import sys
 import threading
 import tkinter as tk
 from tkinter import ttk
@@ -8,7 +6,9 @@ from tkinter import ttk
 class BleButtonManager:
     """BLEボタンとステータス表示を管理するクラス"""
 
-    def __init__(self, parent_frame, master_window, trigger_device, ble_file_name):
+    def __init__(
+        self, parent_frame, master_window, trigger_device, ble_names, stop_delay_sec=1
+    ):
         """
         Args:
             parent_frame: ボタンとラベルを配置する親フレーム
@@ -17,6 +17,8 @@ class BleButtonManager:
         """
         self.master_window = master_window
         self.trigger_device = trigger_device
+        self.stop_delay_sec = stop_delay_sec
+        self.trigger_device.set_delay_sec(self.stop_delay_sec)
 
         # BLE UI要素を作成
         self.ble_frame = ttk.Frame(parent_frame)
@@ -25,30 +27,27 @@ class BleButtonManager:
         self.ble_btn = ttk.Button(
             self.ble_frame, text="BLE Connect", command=self.connect_ble
         )
-        self.ble_btn.pack(padx=12, side=tk.LEFT)
+        self.ble_btn.pack(padx=0, side=tk.LEFT)
 
         self.ble_status_label = ttk.Label(self.ble_frame, text="Disconnected")
         self.ble_status_label.pack(padx=12, side=tk.LEFT)
 
-        self.load_ble_name(ble_file_name)
+        self.default_fg_color = self.ble_status_label.cget("foreground")
 
-    def load_ble_name(self, ble_file_name):
-        if getattr(sys, "frozen", False):
-            current_dir = os.path.dirname(sys.executable)
+        if ble_names and len(ble_names) > 0:
+            self.trigger_device.set_device_names(ble_names)
+            dev_names = ", ".join(self.trigger_device.target_device_names)
+            self.ble_status_label.config(text=dev_names)
         else:
-            current_dir = os.path.dirname(__file__)
+            self.ble_btn.config(state="disabled")
+            self.ble_status_label.config(text="No devices configured")
+            self.ble_status_label.config(foreground="gray")
 
-        ble_file_path = os.path.join(current_dir, ble_file_name)
-        try:
-            with open(ble_file_path, "r", encoding="utf-8") as f:
-                device_names = [line.strip() for line in f.readlines()]
-            device_names = [name for name in device_names if name]
-            print(f"Loaded BLE device names: {device_names}")
-            self.trigger_device.set_device_names(device_names)
-        except Exception as e:
-            print(f"Error loading BLE device names: {e}")
-        dev_names = ", ".join(self.trigger_device.target_device_names)
-        self.ble_status_label.config(text=dev_names if dev_names else "No Devices")
+    def label_default(self):
+        self.ble_status_label.config(foreground=self.default_fg_color)
+
+    def label_black(self):
+        self.ble_status_label.config(foreground="black")
 
     def connect_ble(self):
         """BLE接続を開始"""

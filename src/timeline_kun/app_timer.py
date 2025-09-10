@@ -1,6 +1,9 @@
 import argparse
 import datetime
+import os
+import sys
 import tkinter as tk
+import tomllib
 from tkinter import ttk
 
 from . import (
@@ -24,7 +27,7 @@ class App(ttk.Frame):
         start_index=0,
         hmmss=True,
         sound_file_name="countdown3_orange.wav",
-        ble_file_name="ble_devices.txt",
+        toml_dict={},
     ):
         super().__init__(master)
         master.title("Timer")
@@ -112,9 +115,19 @@ class App(ttk.Frame):
         skip_btn = ttk.Button(buttons_frame, text="Skip", command=self.skip)
         skip_btn.pack(padx=12, side=tk.LEFT)
 
-        self.ble_manager = gui_ble_button.BleButtonManager(
-            buttons_frame, self.master, self.trigger_device, ble_file_name
-        )
+        ble_names = toml_dict.get("ble_names", [])
+        if len(ble_names) > 0:
+            self.enable_ble = True
+            self.stop_delay_sec = toml_dict.get("stop_delay_sec", 1)
+            self.ble_manager = gui_ble_button.BleButtonManager(
+                buttons_frame,
+                self.master,
+                self.trigger_device,
+                ble_names,
+                self.stop_delay_sec,
+            )
+        else:
+            self.enable_ble = False
 
         # close event
         self.master.protocol("WM_DELETE_WINDOW", self._on_closing)
@@ -136,7 +149,7 @@ class App(ttk.Frame):
     def update_clock(self):
         now = datetime.datetime.now()
         self.main_clock_label.config(text=now.strftime("%Y-%m-%d %H:%M:%S"))
-        self.after(200, self.update_clock)
+        self.after(100, self.update_clock)
 
         # If the timer is stopped, reset the timer
         if self.is_running is False:
@@ -146,6 +159,7 @@ class App(ttk.Frame):
             self.reset_time = datetime.datetime.now()
             self.total_skip_time = datetime.timedelta(seconds=0)
             self.is_skip = False
+            self.ble_manager.update_ble_status()
             return
         # cnt_up: internal time counter
         # self.disp_time: time used for display and log
@@ -192,8 +206,9 @@ class App(ttk.Frame):
         remaining_dt = self.calc_remaining_time_next(cnt_up, current_end_dt)
         self.sound(remaining_dt, offset_sec=3)
         # BLE
-        self.trigger(self.now_stage, remaining_dt)
-        self.ble_manager.update_ble_status()
+        if self.enable_ble:
+            self.trigger(self.now_stage, remaining_dt)
+            self.ble_manager.update_ble_status()
 
         self.update_remaining_time_label(remaining_dt)
         self.update_progress_bar(cnt_up, current_end_dt)
@@ -223,6 +238,8 @@ class App(ttk.Frame):
             self.ring_done = False
 
     def trigger(self, now_stage, remaining_dt):
+        is_start_trigger = False
+        is_stop_trigger = False
         next_stage = now_stage + 1
         if next_stage >= len(self.stage_list):
             return
@@ -230,11 +247,19 @@ class App(ttk.Frame):
         current_stage_instruction = self.stage_list[now_stage]["instruction"]
         # Trigger in before X seconds of next stage
         if remaining_dt < datetime.timedelta(seconds=self.trigger_device.offset_sec):
-            self.trigger_device.trigger_in(next_stage_instruction)
+            is_start_trigger = self.trigger_device.trigger_in(next_stage_instruction)
+        else:
+            # for 1st stage
+            is_start_trigger = self.trigger_device.trigger_in(current_stage_instruction)
+            # Trigger out when leaving current stage
+            is_stop_trigger = self.trigger_device.trigger_out(current_stage_instruction)
 
-        # Trigger out
-        if remaining_dt > datetime.timedelta(seconds=self.trigger_device.offset_sec):
-            self.trigger_device.trigger_out(current_stage_instruction)
+        if is_start_trigger:
+            self.tlog.add_log(self.disp_time, "recording start triggered")
+        if is_stop_trigger:
+            self.tlog.add_log(
+                self.disp_time, f"recording stop triggered (+{self.stop_delay_sec}s)"
+            )
 
     def update_progress_bar(self, cnt_up, next_dt):
         duration_dt = self.stage_list[self.now_stage]["duration"]
@@ -278,9 +303,7 @@ class App(ttk.Frame):
         self.remaining_time_label.config(text="")
 
         # BLE stop
-        self.trigger_device.trigger_out("(Recording)")
-        self.ble_manager.update_ble_status()
-        self.ble_manager.set_enabled()
+        self.trigger_device.trigger_out("")
 
         # for close log
         self.disp_time = datetime.timedelta(seconds=0)
@@ -327,6 +350,7 @@ class App(ttk.Frame):
             )
 
     def _on_closing(self):
+        self.trigger_device.trigger_out("")
         self.tlog.close_log(self.disp_time)
         self.master.quit()
         self.master.destroy()
@@ -376,8 +400,24 @@ def main(file_path=None, fg_color="orange", start_index=0, hmmss="hmmss"):
         hmmss = True
     else:
         hmmss = False
+
+    # BLE
+    if getattr(sys, "frozen", False):
+        current_dir = os.path.dirname(sys.executable)
+    else:
+        current_dir = os.path.dirname(__file__)
+    ble_file_name = os.path.join(current_dir, "ble_devices.toml")
+    with open(ble_file_name, "rb") as f:
+        toml = tomllib.load(f)
+    toml_dict = toml.get(fg_color, {})
+
     app = App(
-        root, file_path, start_index, hmmss, sound_file_name=color_and_sound[fg_color]
+        root,
+        file_path,
+        start_index,
+        hmmss,
+        sound_file_name=color_and_sound[fg_color],
+        toml_dict=toml_dict,
     )
     app.mainloop()
 

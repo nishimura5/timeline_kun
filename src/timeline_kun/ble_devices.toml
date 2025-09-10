@@ -1,0 +1,11 @@
+[orange]
+ble_names = ["GoPro 2700", "GoPro 4256"]
+stop_delay_sec = 2
+
+[cyan]
+ble_names = []
+stop_delay_sec = 2
+
+[lightgreen]
+ble_names = []
+stop_delay_sec = 2

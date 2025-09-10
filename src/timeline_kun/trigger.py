@@ -12,6 +12,7 @@ class Trigger:
         self.ble_thread = ble_control.BleThread()
         self.target_device_names = []
         self.connection_status = "Disconnected"
+        self.delay_sec = 1
 
     def ble_connect(self):
         self.ble_thread.start()
@@ -31,6 +32,9 @@ class Trigger:
 
     def set_keyword(self, keyword):
         self.keyword = keyword
+    
+    def set_delay_sec(self, delay_sec):
+        self.delay_sec = delay_sec
 
     def trigger_in(self, title):
         if self.keyword in title and self.triggered_in is False:
@@ -39,15 +43,22 @@ class Trigger:
             command, success, msg = result
             if success:
                 self.connection_status = "Recording"
+                return True
+            else:
+                self.connection_status = "Failed to start"
+        return False
 
     def trigger_out(self, title):
         if self.keyword not in title and self.triggered_in is True:
+            print("trigger out")
             self.triggered_in = False
-            # UIを止めずに別スレッドで2秒待ってから停止コマンドを送る
+            # UIを止めずに別スレッドで(self.delay_sec)秒待ってから停止コマンドを送る
             threading.Thread(target=self._delayed_stop, daemon=True).start()
+            return True
+        return False
 
     def _delayed_stop(self):
-        time.sleep(2)
+        time.sleep(self.delay_sec)
         command, success, msg = self.ble_thread.execute_command(
             "record_stop", None, timeout=5
         )

@@ -1,5 +1,4 @@
 import asyncio
-import os
 import queue
 import threading
 import time
@@ -235,6 +234,8 @@ class BleControl:
 
                 if self._is_keep_alive_ok(data):
                     ok_count += 1
+                else:
+                    print(f"Keep-alive response invalid from {addr}")
 
             except Exception:
                 pass
