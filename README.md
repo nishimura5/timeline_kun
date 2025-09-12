@@ -1,15 +1,15 @@
-# Timeline-kun 0.3.0
+# Timeline-kun 1.0.0
 
 Timeline-kun is an integrated graphical interface tool for planning and executing experimental protocols.
 
 ## Screen shot
 
 <p align="center">
-<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline_kun_020.png" width="70%">
+<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline-kun/timeline_kun_020.png" width="70%">
 <br>
-<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline_kun_020_2.png" width="70%">
+<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline-kun/timeline_kun_020_2.png" width="70%">
 <br>
-<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline_kun_020_3.png" width="70%">
+<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline-kun/timeline_kun_020_3.png" width="70%">
 </p>
 
 ## Key Features
@@ -110,31 +110,27 @@ There are two primary methods for determining event timing in Timeline-kun, whic
 - Users can select timer text colors from orange, cyan, and light green. Up to three timers can be operated simultaneously on a single PC
 - SVG diagrams are editable using vector graphics tools such as Affinity Designer or Adobe Illustrator
 
-## Log CSV File Format
+## GoPro Control
 
-The log CSV file uses the following columns:
-
-- **datetime**: The absolute timestamp from the PC's global timer (formatted as YYYY-MM-DD HH:MM:SS.fff)
-- **displaytime**: The elapsed time since timing started, with 0:00:00 as the starting point (formatted as H:MM:SS)
-- **message**: Text content of the log entry
-
-### CSV File Example (Log CSV)
+For GoPro models starting from HERO11 that support BLE communication, recording can be automatically started 4 seconds before a specified event (for the first event, recording starts simultaneously with the event). It is possible to send commands to start and stop recording on multiple GoPro devices. The target GoPro devices for control are specified in ble_devices.toml. Below is an example configuration where each of the three timers is assigned to a different GoPro. The parameter stop_delay_sec specifies the delay time (in seconds) between the end of an event and stopping the recording.
 
 ```
-datetime,displaytime,message
-2024-10-24 17:26:32.010,0:00:00,====== start ======
-2024-10-24 17:26:32.012,0:00:00,TASK A(0:00:00-0:04:00)
-2024-10-24 17:30:32.203,0:04:00,TASK B(0:04:00-0:09:00)
-2024-10-24 17:35:32.134,0:09:03,TASK C(0:09:00-0:14:00)
+[orange]
+ble_names = ["GoPro 2700", "GoPro 4256"]
+stop_delay_sec = 2
+
+[cyan]
+ble_names = ["GoPro 1320"]
+stop_delay_sec = 2
+
+[lightgreen]
+ble_names = []
+stop_delay_sec = 2
 ```
 
-| datetime  | displaytime  | message |
-| ------ | ------- | ------- |
-| 2024-10-24 17:26:32.010 | 0:00:00 | ====== start ====== |
-| 2024-10-24 17:26:32.012 | 0:00:00 | TASK A |
-| 2024-10-24 17:30:32.203 | 0:04:00 | TASK B |
-| 2024-10-24 17:35:32.134 | 0:09:00 | TASK C |
-| ...    | ...     | ...     |
+## Log File Format
+
+Timer execution logs conform to the BIDS (Brain Imaging Data Structure) events.tsv format.
 
 ## Sound File
 
