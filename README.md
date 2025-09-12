@@ -64,14 +64,14 @@ The timeline CSV file uses the following columns:
 
 ```
 title,member,start,duration,fixed,instruction
-TASK A,MEMBER1,0:00:00,,start,Prepare for TASK B
+TASK A,MEMBER1,0:00:00,,start,Prepare for TASK B (recording)
 TASK B,MEMBER1,0:04:00,0:05:00,start,Prepare for TASK C
 TASK C,MEMBER1,,0:05:00,duration,
 ```
 
 | title  | member  | start   | duration | fixed    | instruction |
 | ------ | ------- | ------- | -------- | -------- | ----------- |
-| TASK A | MEMBER1 | 0:00:00 |          | start    | Prepare for TASK B(recording) |
+| TASK A | MEMBER1 | 0:00:00 |          | start    | Prepare for TASK B (recording) |
 | TASK B | MEMBER1 | 0:04:00 | 0:05:00  | start    | Prepare for TASK C |
 | TASK C | MEMBER1 |         | 0:05:00  | duration |             |
 | ...    | ...     | ...     | ...      | ...      | ...         |
