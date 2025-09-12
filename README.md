@@ -71,7 +71,7 @@ TASK C,MEMBER1,,0:05:00,duration,
 
 | title  | member  | start   | duration | fixed    | instruction |
 | ------ | ------- | ------- | -------- | -------- | ----------- |
-| TASK A | MEMBER1 | 0:00:00 |          | start    | Prepare for TASK B |
+| TASK A | MEMBER1 | 0:00:00 |          | start    | Prepare for TASK B(recording) |
 | TASK B | MEMBER1 | 0:04:00 | 0:05:00  | start    | Prepare for TASK C |
 | TASK C | MEMBER1 |         | 0:05:00  | duration |             |
 | ...    | ...     | ...     | ...      | ...      | ...         |
@@ -112,7 +112,7 @@ There are two primary methods for determining event timing in Timeline-kun, whic
 
 ## GoPro Control
 
-For GoPro models starting from HERO11 that support BLE communication, recording can be automatically started 4 seconds before a specified event (for the first event, recording starts simultaneously with the event). It is possible to send commands to start and stop recording on multiple GoPro devices. The target GoPro devices for control are specified in ble_devices.toml. Below is an example configuration where each of the three timers is assigned to a different GoPro. The parameter stop_delay_sec specifies the delay time (in seconds) between the end of an event and stopping the recording.
+For GoPro models starting from HERO11 that support BLE communication, recording can be automatically started 4 seconds before a specified event (for the first event, recording starts simultaneously with the event). By entering "(recording)" in the event instruction, that event will be marked for recording. It is possible to send commands to start and stop recording on multiple GoPro devices. The target GoPro devices for control are specified in ble_devices.toml. Below is an example configuration where each of the three timers is assigned to a different GoPro. The parameter stop_delay_sec specifies the delay time (in seconds) between the end of an event and stopping the recording.
 
 ```
 [orange]
