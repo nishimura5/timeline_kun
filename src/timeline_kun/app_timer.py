@@ -161,7 +161,8 @@ class App(ttk.Frame):
             self.reset_time = datetime.datetime.now()
             self.total_skip_time = datetime.timedelta(seconds=0)
             self.is_skip = False
-            self.ble_manager.update_ble_status()
+            if self.enable_ble:
+                self.ble_manager.update_ble_status()
             return
         # cnt_up: internal time counter
         # self.disp_time: time used for display and log
@@ -323,7 +324,8 @@ class App(ttk.Frame):
         self.start_btn.config(state="disabled")
         self.sound_test_btn.config(state="disabled")
         self.reset_btn.config(state="normal")
-        self.ble_manager.set_disabled()
+        if self.enable_ble:
+            self.ble_manager.set_disabled()
         self.is_running = True
 
         # initial event log
