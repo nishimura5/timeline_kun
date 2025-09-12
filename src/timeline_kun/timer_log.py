@@ -59,15 +59,7 @@ class BIDSLog:
         # BIDS events.tsv format
         tar_dir = os.path.dirname(csv_file_path)
         tar_name = os.path.basename(csv_file_path).split(".")[0]
-
-        # events.tsv file
-        self.file_path = os.path.join(tar_dir, f"events_{tar_name}")
-        for i in range(100):
-            if os.path.exists(self.file_path + f"_{i:0>2}.tsv") is False:
-                self.file_path = self.file_path + f"_{i:0>2}.tsv"
-                break
-        with open(self.file_path, "w") as f:
-            f.write("onset\tduration\ttrial_type\n")
+        self.events_path = os.path.join(tar_dir, f"events_{tar_name}")
 
         # scans.tsv file
         self.scans_path = os.path.join(tar_dir, f"scans_{tar_name}.tsv")
@@ -87,6 +79,15 @@ class BIDSLog:
 
     def mark_start_time(self, start_time):
         self.session_start_time = start_time
+
+        # events.tsv file
+        for i in range(100):
+            if os.path.exists(self.events_path + f"_{i:0>2}.tsv") is False:
+                self.file_path = self.events_path + f"_{i:0>2}.tsv"
+                break
+        with open(self.file_path, "w") as f:
+            f.write("onset\tduration\ttrial_type\n")
+
         with open(self.scans_path, "a") as f:
             f.write(
                 f"{os.path.basename(self.file_path)}\t{datetime.now().strftime('%Y-%m-%dT%H:%M:%S')}\n"

@@ -142,10 +142,9 @@ class App(ttk.Frame):
 
         print(f"CSV file path: {file_path}")
         self.csv_path = file_path
-        self.tlog = timer_log.TimerLog(self.csv_path)
+#        self.tlog = timer_log.TimerLog(self.csv_path)
 
         self.bids_log = timer_log.BIDSLog(self.csv_path)
-        print(f"BIDS log path: {self.bids_log.file_path}")
 
         self.load_file(start_index)
 
@@ -192,7 +191,7 @@ class App(ttk.Frame):
                 else:
                     msg = f"{current_stage['title']}({current_stage['start_dt']}-{current_stage['end_dt']})"
                     self.bids_log.set_task_log(current_stage["title"])
-                self.tlog.add_log(self.disp_time, msg)
+#                self.tlog.add_log(self.disp_time, msg)
 
         # If the last stage is reached, stop the timer
         if self.now_stage >= len(self.stage_list):
@@ -201,7 +200,7 @@ class App(ttk.Frame):
             self.next_stage_label.config(text="---")
             self.remaining_time_label.config(text="")
             self.is_running = False
-            self.tlog.end_log(self.disp_time)
+#            self.tlog.end_log(self.disp_time)
             self.bids_log.add_task_log()
             self.bids_log.add_control_log("session_end")
             return
@@ -263,12 +262,12 @@ class App(ttk.Frame):
             is_stop_trigger = self.trigger_device.trigger_out(current_stage_instruction)
 
         if is_start_trigger:
-            self.tlog.add_log(self.disp_time, "recording start triggered")
+#            self.tlog.add_log(self.disp_time, "recording start triggered")
             self.bids_log.add_control_log("video_record_start")
-        if is_stop_trigger:
-            self.tlog.add_log(
-                self.disp_time, f"recording stop triggered (+{self.stop_delay_sec}s)"
-            )
+#        if is_stop_trigger:
+#            self.tlog.add_log(
+#                self.disp_time, f"recording stop triggered (+{self.stop_delay_sec}s)"
+#            )
 
     def update_progress_bar(self, cnt_up, next_dt):
         duration_dt = self.stage_list[self.now_stage]["duration"]
@@ -297,13 +296,13 @@ class App(ttk.Frame):
                 skip_time = remaining_dt - datetime.timedelta(seconds=offset_sec)
                 self.reset_time -= skip_time
                 self.total_skip_time += skip_time
-                self.tlog.skip_log(self.disp_time)
+#                self.tlog.skip_log(self.disp_time)
                 self.bids_log.add_control_log("task_skip")
             self.is_skip = False
 
     def reset_all(self):
         self.is_running = False
-        self.tlog.reset_log(self.disp_time)
+#        self.tlog.reset_log(self.disp_time)
         self.start_btn.config(state="normal")
         self.sound_test_btn.config(state="normal")
         self.reset_btn.config(state="disabled")
@@ -319,7 +318,7 @@ class App(ttk.Frame):
         self.disp_time = datetime.timedelta(seconds=0)
 
     def start(self):
-        self.tlog.start_log()
+#        self.tlog.start_log()
         self.bids_log.mark_start_time(datetime.datetime.now())
         self.start_btn.config(state="disabled")
         self.sound_test_btn.config(state="disabled")
@@ -330,7 +329,7 @@ class App(ttk.Frame):
         # initial event log
         current_stage = self.stage_list[0]
         msg = f"{current_stage['title']}({current_stage['start_dt']}-{current_stage['end_dt']})"
-        self.tlog.add_log(self.disp_time, msg)
+#        self.tlog.add_log(self.disp_time, msg)
         self.bids_log.set_task_log(current_stage["title"])
 
     def skip(self):
@@ -363,7 +362,7 @@ class App(ttk.Frame):
 
     def _on_closing(self):
         self.trigger_device.trigger_out("")
-        self.tlog.close_log(self.disp_time)
+#        self.tlog.close_log(self.disp_time)
         self.master.quit()
         self.master.destroy()
 
