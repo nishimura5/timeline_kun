@@ -144,6 +144,9 @@ class App(ttk.Frame):
         self.csv_path = file_path
         self.tlog = timer_log.TimerLog(self.csv_path)
 
+        self.bids_log = timer_log.BIDSLog(self.csv_path)
+        print(f"BIDS log path: {self.bids_log.file_path}")
+
         self.load_file(start_index)
 
     def update_clock(self):
@@ -182,10 +185,13 @@ class App(ttk.Frame):
                 current_stage = self.stage_list[self.now_stage]
                 current_start_dt = current_stage["start_dt"]
                 current_end_dt = current_stage["end_dt"]
+                self.bids_log.add_task_log()
                 if cnt_up < current_start_dt:
                     msg = f"{self.INTERMISSION}({current_stage['start_dt']}-{current_stage['end_dt']})"
+                    self.bids_log.set_task_log(self.INTERMISSION)
                 else:
                     msg = f"{current_stage['title']}({current_stage['start_dt']}-{current_stage['end_dt']})"
+                    self.bids_log.set_task_log(current_stage["title"])
                 self.tlog.add_log(self.disp_time, msg)
 
         # If the last stage is reached, stop the timer
@@ -196,6 +202,8 @@ class App(ttk.Frame):
             self.remaining_time_label.config(text="")
             self.is_running = False
             self.tlog.end_log(self.disp_time)
+            self.bids_log.add_task_log()
+            self.bids_log.add_control_log("session_end")
             return
 
         self.current_stage_label.config(text=current_stage["title"])
@@ -256,6 +264,7 @@ class App(ttk.Frame):
 
         if is_start_trigger:
             self.tlog.add_log(self.disp_time, "recording start triggered")
+            self.bids_log.add_control_log("video_record_start")
         if is_stop_trigger:
             self.tlog.add_log(
                 self.disp_time, f"recording stop triggered (+{self.stop_delay_sec}s)"
@@ -289,6 +298,7 @@ class App(ttk.Frame):
                 self.reset_time -= skip_time
                 self.total_skip_time += skip_time
                 self.tlog.skip_log(self.disp_time)
+                self.bids_log.add_control_log("task_skip")
             self.is_skip = False
 
     def reset_all(self):
@@ -310,6 +320,8 @@ class App(ttk.Frame):
 
     def start(self):
         self.tlog.start_log()
+        self.bids_log.mark_start_time(datetime.datetime.now())
+        self.bids_log.add_control_log("session_start")
         self.start_btn.config(state="disabled")
         self.sound_test_btn.config(state="disabled")
         self.reset_btn.config(state="normal")
@@ -320,6 +332,7 @@ class App(ttk.Frame):
         current_stage = self.stage_list[0]
         msg = f"{current_stage['title']}({current_stage['start_dt']}-{current_stage['end_dt']})"
         self.tlog.add_log(self.disp_time, msg)
+        self.bids_log.set_task_log(current_stage["title"])
 
     def skip(self):
         self.is_skip = True
