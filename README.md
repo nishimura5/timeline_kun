@@ -136,6 +136,22 @@ events_<timeline_csv_name>_00.tsv.
 
 Each time the timer is started, the suffix number is incremented and saved.
 
+A sample log is shown below:
+
+```
+onset	duration	trial_type
+0.0	60.0	TASK A
+66.2	0.0	video_record_start
+60.0	10.1	Intermission
+70.0	89.9	TASK B
+179.6	0.0	task_skip
+160.0	22.7	TASK C
+182.6	60.0	TASK D
+242.6	20.0	Intermission
+262.7	60.0	TASK E
+322.7	0.0	session_end
+```
+
 ## Sound File
 
 The timer application will load a 3-second wav file and play it as an alarm. The wav file will be stored in the "sound" folder with the following file names:
