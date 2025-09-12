@@ -130,7 +130,11 @@ stop_delay_sec = 2
 
 ## Log File Format
 
-Timer execution logs conform to the BIDS (Brain Imaging Data Structure) events.tsv format.
+Timer execution logs conform to the BIDS (Brain Imaging Data Structure) events.tsv format. The log files are stored in the same directory as the Timeline CSV file, with file names in the format:
+
+events_<timeline_csv_name>_00.tsv.
+
+Each time the timer is started, the suffix number is incremented and saved.
 
 ## Sound File
 
