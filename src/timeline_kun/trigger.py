@@ -11,7 +11,7 @@ class Trigger:
         self.keyword = "(recording)"
         self.ble_thread = ble_control.BleThread()
         self.target_device_names = []
-        self.connection_status = "Disconnected"
+        self.connection_status = "Idle"
         self.delay_sec = 1
 
     def ble_connect(self):
@@ -32,7 +32,7 @@ class Trigger:
 
     def set_keyword(self, keyword):
         self.keyword = keyword
-    
+
     def set_delay_sec(self, delay_sec):
         self.delay_sec = delay_sec
 
@@ -69,6 +69,9 @@ class Trigger:
 
     def get_triggered(self):
         return self.triggered_in
+
+    def set_status(self, status):
+        self.connection_status = status
 
     def get_status(self):
         return self.connection_status

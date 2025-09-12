@@ -52,7 +52,6 @@ class BIDSLog:
     CONTROL_LOGS = [
         "video_record_start",
         "task_skip",
-        "session_start",
         "session_end",
     ]
 
@@ -60,12 +59,21 @@ class BIDSLog:
         # BIDS events.tsv format
         tar_dir = os.path.dirname(csv_file_path)
         tar_name = os.path.basename(csv_file_path).split(".")[0]
-        today = datetime.now().strftime("%Y-%m-%d")
-        self.file_path = os.path.join(tar_dir, f"events_{today}_{tar_name}.tsv")
-        if os.path.exists(self.file_path) is False:
-            with open(self.file_path, "w") as f:
-                f.write("onset\tduration\ttrial_type\n")
 
+        # events.tsv file
+        self.file_path = os.path.join(tar_dir, f"events_{tar_name}")
+        for i in range(100):
+            if os.path.exists(self.file_path + f"_{i:0>2}.tsv") is False:
+                self.file_path = self.file_path + f"_{i:0>2}.tsv"
+                break
+        with open(self.file_path, "w") as f:
+            f.write("onset\tduration\ttrial_type\n")
+
+        # scans.tsv file
+        self.scans_path = os.path.join(tar_dir, f"scans_{tar_name}.tsv")
+        if os.path.exists(self.scans_path) is False:
+            with open(self.scans_path, "w") as f:
+                f.write("filename\tacq_time\n")
         self.task_name = None
         self.task_start_dt = None
 
@@ -73,8 +81,16 @@ class BIDSLog:
         with open(self.file_path, "a") as f:
             f.write(f"{onset:<.1f}\t{duration:<.1f}\t{trial_type}\n")
 
+    def _write_scans_log(self, filename, acq_time):
+        with open(self.scans_path, "a") as f:
+            f.write(f"{filename}\t{acq_time}\n")
+
     def mark_start_time(self, start_time):
         self.session_start_time = start_time
+        with open(self.scans_path, "a") as f:
+            f.write(
+                f"{os.path.basename(self.file_path)}\t{datetime.now().strftime('%Y-%m-%dT%H:%M:%S')}\n"
+            )
 
     def add_control_log(self, trial_type):
         if trial_type not in self.CONTROL_LOGS:
@@ -82,6 +98,11 @@ class BIDSLog:
         onset = (datetime.now() - self.session_start_time).total_seconds()
         duration = 0.0
         self._write_log(onset, duration, trial_type)
+        # for MP4 file in Cameras
+        if trial_type == "video_record_start":
+            self._write_scans_log(
+                "Unknown", datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+            )
 
     def set_task_log(self, task_name: str):
         self.task_start_time = datetime.now()

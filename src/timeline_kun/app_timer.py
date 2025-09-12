@@ -321,7 +321,6 @@ class App(ttk.Frame):
     def start(self):
         self.tlog.start_log()
         self.bids_log.mark_start_time(datetime.datetime.now())
-        self.bids_log.add_control_log("session_start")
         self.start_btn.config(state="disabled")
         self.sound_test_btn.config(state="disabled")
         self.reset_btn.config(state="normal")

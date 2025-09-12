@@ -29,7 +29,7 @@ class BleButtonManager:
         )
         self.ble_btn.pack(padx=0, side=tk.LEFT)
 
-        self.ble_status_label = ttk.Label(self.ble_frame, text="Disconnected")
+        self.ble_status_label = ttk.Label(self.ble_frame)
         self.ble_status_label.pack(padx=12, side=tk.LEFT)
 
         self.default_fg_color = self.ble_status_label.cget("foreground")
@@ -37,23 +37,16 @@ class BleButtonManager:
         if ble_names and len(ble_names) > 0:
             self.trigger_device.set_device_names(ble_names)
             dev_names = ", ".join(self.trigger_device.target_device_names)
-            self.ble_status_label.config(text=dev_names)
+            self.trigger_device.set_status(dev_names)
         else:
+            self.trigger_device.set_status("No devices configured")
             self.ble_btn.config(state="disabled")
-            self.ble_status_label.config(text="No devices configured")
             self.ble_status_label.config(foreground="gray")
-
-    def label_default(self):
-        self.ble_status_label.config(foreground=self.default_fg_color)
-
-    def label_black(self):
-        self.ble_status_label.config(foreground="black")
 
     def connect_ble(self):
         """BLE接続を開始"""
-        # ボタンを無効化して、接続中の表示に変更
         self.set_disabled()
-        self.ble_status_label.config(text="Connecting...")
+        self.trigger_device.set_status("Connecting...")
 
         def connect_thread():
             try:
@@ -80,7 +73,7 @@ class BleButtonManager:
     def _on_ble_connect_error(self):
         """BLE接続エラー時にメインスレッドで呼ばれる"""
         self.ble_btn.config(state="normal")
-        self.ble_status_label.config(text="Connect Failed")
+        self.trigger_device.set_status("Connection Error")
 
     def update_ble_status(self):
         """BLEステータスラベルを更新"""
