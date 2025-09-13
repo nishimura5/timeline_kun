@@ -14,14 +14,13 @@ Timeline-kun is an integrated graphical interface tool for planning and executin
 
 ## Key Features
 
-Timeline-kun integrates three primary functionalities:
+Timeline-kun integrates four primary functionalities:
 
 1. **Simplifying the planning of complex experimental schedules**
    - Visually represents experimental schedules
    - Stores schedule data in CSV format (time values formatted as 'H:MM:SS' for Excel compatibility)
    - Allows intuitive insertion, deletion, and reordering of events using Excel
    - Supports UTF-8 encoded CSV files, enabling editing in plain text editors
-   - Provides SVG export function suitable for experimental planning discussions and record-keeping
 
 2. **Integrating schedule planning and execution in a single tool**
    - Experimental schedules created with this tool can be directly used as timers
@@ -37,7 +36,7 @@ Timeline-kun integrates three primary functionalities:
 4. **Improving methodological transparency and reproducibility**
    - TSV log records in BIDS compliant events.tsv format
    - Deviations due to interruptions or running ahead can be reviewed later
-   - SVG diagrams can be used in academic papers and edited with vector tools
+   - Provides SVG export function suitable for experimental planning discussions and record-keeping
 
 ## Installation and Execution
 
