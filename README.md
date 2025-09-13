@@ -29,10 +29,14 @@ Timeline-kun integrates three primary functionalities:
    - Timer can be started from any point, allowing test executions or real-time schedule modifications
    - Supports custom alarm sounds using 3-second WAV files
 
-3. **Improving methodological transparency and reproducibility**
-   - Log function records timer operations in CSV format, capturing both planned and actual times
-   - Deviations due to interruptions or delays can be reviewed later
-   - Output files are compatible with standard analysis tools
+3. **Controlling GoPro devices**
+   - Start and stop recording based on schedules via BLE
+   - Simultaneous control of multiple devices
+   - Support for long standby times through keep-alive signals sent every 10 seconds
+   
+4. **Improving methodological transparency and reproducibility**
+   - TSV log records in BIDS compliant events.tsv format
+   - Deviations due to interruptions or running ahead can be reviewed later
    - SVG diagrams can be used in academic papers and edited with vector tools
 
 ## Installation and Execution
@@ -76,7 +80,7 @@ TASK C,MEMBER1,,0:05:00,duration,
 | TASK C | MEMBER1 |         | 0:05:00  | duration |             |
 | ...    | ...     | ...     | ...      | ...      | ...         |
 
-CSVは日本語にも対応しています。
+日本語のExcelとの互換のため、CSVはShift-JISにも対応しています。
 
 ### Scheduling Methods
 
