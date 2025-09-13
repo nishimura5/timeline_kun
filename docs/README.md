@@ -1,15 +1,15 @@
-# Timeline-kun 0.3.0
+# Timeline-kun 1.0.0
 
 Timeline-kun is an integrated graphical interface tool for planning and executing experimental protocols.
 
 ## Screen shot
 
 <p align="center">
-<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline_kun_020.png" width="70%">
+<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline-kun/timeline_kun_020.png" width="70%">
 <br>
-<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline_kun_020_2.png" width="70%">
+<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline-kun/timeline_kun_020_2.png" width="70%">
 <br>
-<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline_kun_020_3.png" width="70%">
+<img src="https://www.design.kyushu-u.ac.jp/~eigo/image/timeline-kun/timeline_kun_020_3.png" width="70%">
 </p>
 
 ## Key Features
@@ -29,10 +29,14 @@ Timeline-kun integrates three primary functionalities:
    - Timer can be started from any point, allowing test executions or real-time schedule modifications
    - Supports custom alarm sounds using 3-second WAV files
 
-3. **Improving methodological transparency and reproducibility**
-   - Log function records timer operations in CSV format, capturing both planned and actual times
-   - Deviations due to interruptions or delays can be reviewed later
-   - Output files are compatible with standard analysis tools
+3. **Controlling GoPro devices**
+   - Start and stop recording based on schedules via BLE
+   - Simultaneous control of multiple devices
+   - Support for long standby times through keep-alive signals sent every 10 seconds
+   
+4. **Improving methodological transparency and reproducibility**
+   - TSV log records in BIDS compliant events.tsv format
+   - Deviations due to interruptions or running ahead can be reviewed later
    - SVG diagrams can be used in academic papers and edited with vector tools
 
 ## Installation and Execution
@@ -44,7 +48,7 @@ Timeline-kun integrates three primary functionalities:
 ### Running from development environment
 1. Clone the repository: `git clone https://github.com/nishimura5/timeline_kun.git`
 2. Set up the environment using uv (simply run "uv sync" in the directory containing pyproject.toml)
-3. Run "uv run python src/app_previewer.py" in the directory containing pyproject.toml to launch
+3. Run "uv run python -m timeline_kun" in the directory containing pyproject.toml to launch
 
 *Note: macOS users will need to install tcl-tk and configure appropriate environment variables before installation as this tool relies on tkinter.*
 
@@ -64,19 +68,19 @@ The timeline CSV file uses the following columns:
 
 ```
 title,member,start,duration,fixed,instruction
-TASK A,MEMBER1,0:00:00,,start,Prepare for TASK B
+TASK A,MEMBER1,0:00:00,,start,Prepare for TASK B (recording)
 TASK B,MEMBER1,0:04:00,0:05:00,start,Prepare for TASK C
 TASK C,MEMBER1,,0:05:00,duration,
 ```
 
 | title  | member  | start   | duration | fixed    | instruction |
 | ------ | ------- | ------- | -------- | -------- | ----------- |
-| TASK A | MEMBER1 | 0:00:00 |          | start    | Prepare for TASK B |
+| TASK A | MEMBER1 | 0:00:00 |          | start    | Prepare for TASK B (recording) |
 | TASK B | MEMBER1 | 0:04:00 | 0:05:00  | start    | Prepare for TASK C |
 | TASK C | MEMBER1 |         | 0:05:00  | duration |             |
 | ...    | ...     | ...     | ...      | ...      | ...         |
 
-CSVは日本語にも対応しています。
+日本語のExcelとの互換のため、CSVはShift-JISにも対応しています。
 
 ### Scheduling Methods
 
@@ -110,31 +114,47 @@ There are two primary methods for determining event timing in Timeline-kun, whic
 - Users can select timer text colors from orange, cyan, and light green. Up to three timers can be operated simultaneously on a single PC
 - SVG diagrams are editable using vector graphics tools such as Affinity Designer or Adobe Illustrator
 
-## Log CSV File Format
+## GoPro Control
 
-The log CSV file uses the following columns:
-
-- **datetime**: The absolute timestamp from the PC's global timer (formatted as YYYY-MM-DD HH:MM:SS.fff)
-- **displaytime**: The elapsed time since timing started, with 0:00:00 as the starting point (formatted as H:MM:SS)
-- **message**: Text content of the log entry
-
-### CSV File Example (Log CSV)
+For GoPro models starting from HERO11 that support BLE communication, recording can be automatically started 4 seconds before a specified event (for the first event, recording starts simultaneously with the event). By entering "(recording)" in the event instruction, that event will be marked for recording. It is possible to send commands to start and stop recording on multiple GoPro devices. The target GoPro devices for control are specified in ble_devices.toml. Below is an example configuration where each of the three timers is assigned to a different GoPro. The parameter stop_delay_sec specifies the delay time (in seconds) between the end of an event and stopping the recording.
 
 ```
-datetime,displaytime,message
-2024-10-24 17:26:32.010,0:00:00,====== start ======
-2024-10-24 17:26:32.012,0:00:00,TASK A(0:00:00-0:04:00)
-2024-10-24 17:30:32.203,0:04:00,TASK B(0:04:00-0:09:00)
-2024-10-24 17:35:32.134,0:09:03,TASK C(0:09:00-0:14:00)
+[orange]
+ble_names = ["GoPro 2700", "GoPro 4256"]
+stop_delay_sec = 2
+
+[cyan]
+ble_names = ["GoPro 1320"]
+stop_delay_sec = 2
+
+[lightgreen]
+ble_names = []
+stop_delay_sec = 2
 ```
 
-| datetime  | displaytime  | message |
-| ------ | ------- | ------- |
-| 2024-10-24 17:26:32.010 | 0:00:00 | ====== start ====== |
-| 2024-10-24 17:26:32.012 | 0:00:00 | TASK A |
-| 2024-10-24 17:30:32.203 | 0:04:00 | TASK B |
-| 2024-10-24 17:35:32.134 | 0:09:00 | TASK C |
-| ...    | ...     | ...     |
+## Log File Format
+
+Timer execution logs conform to the BIDS (Brain Imaging Data Structure) events.tsv format. The log files are stored in the same directory as the Timeline CSV file, with file names in the format:
+
+events_<timeline_csv_name>_00.tsv.
+
+Each time the timer is started, the suffix number is incremented and saved.
+
+A sample log is shown below:
+
+```
+onset	duration	trial_type
+0.0	60.0	TASK A
+66.2	0.0	video_record_start
+60.0	10.1	Intermission
+70.0	89.9	TASK B
+179.6	0.0	task_skip
+160.0	22.7	TASK C
+182.6	60.0	TASK D
+242.6	20.0	Intermission
+262.7	60.0	TASK E
+322.7	0.0	session_end
+```
 
 ## Sound File
 
@@ -145,3 +165,5 @@ The timer application will load a 3-second wav file and play it as an alarm. The
 - countdown3_lightgreen.wav
 
 MMCV: ずんだもん
+
+
