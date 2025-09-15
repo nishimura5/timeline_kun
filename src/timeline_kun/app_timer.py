@@ -25,14 +25,14 @@ class App(ttk.Frame):
         master,
         file_path,
         start_index=0,
-        hmmss=True,
+        is_hmmss=True,
         sound_file_name="countdown3_orange.wav",
         toml_dict={},
     ):
         super().__init__(master)
         master.title("Timer")
         self.sound_file_name = sound_file_name
-        self.hmmss = hmmss
+        self.hmmss = is_hmmss
         self.master = master
 
         self.ap = sound.AudioPlayer()
@@ -142,7 +142,7 @@ class App(ttk.Frame):
 
         print(f"CSV file path: {file_path}")
         self.csv_path = file_path
-#        self.tlog = timer_log.TimerLog(self.csv_path)
+        #        self.tlog = timer_log.TimerLog(self.csv_path)
 
         self.bids_log = timer_log.BIDSLog(self.csv_path)
 
@@ -192,7 +192,7 @@ class App(ttk.Frame):
                 else:
                     msg = f"{current_stage['title']}({current_stage['start_dt']}-{current_stage['end_dt']})"
                     self.bids_log.set_task_log(current_stage["title"])
-#                self.tlog.add_log(self.disp_time, msg)
+        #                self.tlog.add_log(self.disp_time, msg)
 
         # If the last stage is reached, stop the timer
         if self.now_stage >= len(self.stage_list):
@@ -201,7 +201,7 @@ class App(ttk.Frame):
             self.next_stage_label.config(text="---")
             self.remaining_time_label.config(text="")
             self.is_running = False
-#            self.tlog.end_log(self.disp_time)
+            #            self.tlog.end_log(self.disp_time)
             self.bids_log.add_task_log()
             self.bids_log.add_control_log("session_end")
             return
@@ -263,12 +263,13 @@ class App(ttk.Frame):
             is_stop_trigger = self.trigger_device.trigger_out(current_stage_instruction)
 
         if is_start_trigger:
-#            self.tlog.add_log(self.disp_time, "recording start triggered")
+            #            self.tlog.add_log(self.disp_time, "recording start triggered")
             self.bids_log.add_control_log("video_record_start")
-#        if is_stop_trigger:
-#            self.tlog.add_log(
-#                self.disp_time, f"recording stop triggered (+{self.stop_delay_sec}s)"
-#            )
+
+    #        if is_stop_trigger:
+    #            self.tlog.add_log(
+    #                self.disp_time, f"recording stop triggered (+{self.stop_delay_sec}s)"
+    #            )
 
     def update_progress_bar(self, cnt_up, next_dt):
         duration_dt = self.stage_list[self.now_stage]["duration"]
@@ -297,13 +298,13 @@ class App(ttk.Frame):
                 skip_time = remaining_dt - datetime.timedelta(seconds=offset_sec)
                 self.reset_time -= skip_time
                 self.total_skip_time += skip_time
-#                self.tlog.skip_log(self.disp_time)
+                #                self.tlog.skip_log(self.disp_time)
                 self.bids_log.add_control_log("task_skip")
             self.is_skip = False
 
     def reset_all(self):
         self.is_running = False
-#        self.tlog.reset_log(self.disp_time)
+        #        self.tlog.reset_log(self.disp_time)
         self.start_btn.config(state="normal")
         self.sound_test_btn.config(state="normal")
         self.reset_btn.config(state="disabled")
@@ -319,7 +320,7 @@ class App(ttk.Frame):
         self.disp_time = datetime.timedelta(seconds=0)
 
     def start(self):
-#        self.tlog.start_log()
+        #        self.tlog.start_log()
         self.bids_log.mark_start_time(datetime.datetime.now())
         self.start_btn.config(state="disabled")
         self.sound_test_btn.config(state="disabled")
@@ -331,7 +332,7 @@ class App(ttk.Frame):
         # initial event log
         current_stage = self.stage_list[0]
         msg = f"{current_stage['title']}({current_stage['start_dt']}-{current_stage['end_dt']})"
-#        self.tlog.add_log(self.disp_time, msg)
+        #        self.tlog.add_log(self.disp_time, msg)
         self.bids_log.set_task_log(current_stage["title"])
 
     def skip(self):
@@ -364,12 +365,12 @@ class App(ttk.Frame):
 
     def _on_closing(self):
         self.trigger_device.trigger_out("")
-#        self.tlog.close_log(self.disp_time)
+        #        self.tlog.close_log(self.disp_time)
         self.master.quit()
         self.master.destroy()
 
 
-def main(file_path=None, fg_color="orange", start_index=0, hmmss="hmmss"):
+def main(file_path=None, fg_color:str="orange", start_index:int=0, hmmss:str="hmmss"):
     bg_color = "#202020"
     color_and_sound = {
         "orange": "countdown3_orange.wav",
@@ -410,9 +411,9 @@ def main(file_path=None, fg_color="orange", start_index=0, hmmss="hmmss"):
     )
 
     if hmmss == "hmmss":
-        hmmss = True
+        is_hmmss = True
     else:
-        hmmss = False
+        is_hmmss = False
 
     # BLE
     if getattr(sys, "frozen", False):
@@ -428,7 +429,7 @@ def main(file_path=None, fg_color="orange", start_index=0, hmmss="hmmss"):
         root,
         file_path,
         start_index,
-        hmmss,
+        is_hmmss,
         sound_file_name=color_and_sound[fg_color],
         toml_dict=toml_dict,
     )
@@ -436,18 +437,42 @@ def main(file_path=None, fg_color="orange", start_index=0, hmmss="hmmss"):
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file_path", type=str, required=True)
-    parser.add_argument("--text_color", type=str, default="orange")
-    parser.add_argument("--start_index", type=int, default=0)
-    parser.add_argument("--hmmss", type=str, default="hmmss")
+    parser = argparse.ArgumentParser(
+        description="Timeline-kun Timer: manage timed tasks with GUI."
+    )
+    parser.add_argument(
+        "--file_path",
+        type=str,
+        required=True,
+        help="Path to the CSV file containing task definitions (required).",
+    )
+    parser.add_argument(
+        "--fg_color",
+        type=str,
+        default="orange",
+        choices=["orange", "cyan", "lightgreen"],
+        help="Foreground color for text and theme (default: orange).",
+    )
+    parser.add_argument(
+        "--start_index",
+        type=int,
+        default=0,
+        help="Index of the task to start from (default: 0). Must be an integer.",
+    )
+    parser.add_argument(
+        "--hmmss",
+        type=str,
+        default="hmmss",
+        choices=["hmmss", "hhmmss"],
+        help="Display format for time (default: hmmss).",
+    )
     return parser
 
 
 def cli(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
-    return main(args.file_path, args.text_color, args.start_index, args.hmmss)
+    return main(args.file_path, args.fg_color, args.start_index, args.hmmss)
 
 
 if __name__ == "__main__":

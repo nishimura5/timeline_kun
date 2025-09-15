@@ -35,7 +35,7 @@ class FileLoader:
             raise e
         return warn_msg, time_table
 
-    def load_file_for_timer(self, start_index, csv_path):
+    def load_file_for_timer(self, start_index:int, csv_path:str):
         timetable_csv_str = self._read_file(csv_path)
         if timetable_csv_str is None:
             return

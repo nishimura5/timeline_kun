@@ -9,7 +9,7 @@ from tkinter import filedialog, ttk
 
 import ttkthemes
 
-from . import gui_canvas, gui_tree, icon_data, svg_writer, time_format, file_loader
+from . import file_loader, gui_canvas, gui_tree, icon_data, svg_writer, time_format
 from .gui_parts import Combobox
 
 IS_DARWIN = sys.platform.startswith("darwin")
@@ -405,7 +405,7 @@ class App(ttk.Frame):
                     tar_path,
                     "--file_path",
                     self.csv_path,
-                    "--text_color",
+                    "--fg_color",
                     color,
                     "--start_index",
                     str(self.start_index),
@@ -426,10 +426,14 @@ class App(ttk.Frame):
                     sys.executable,
                     "-m",
                     module,
-                    "--file_path", self.csv_path,
-                    "--text_color", color,
-                    "--start_index", str(self.start_index),
-                    "--hmmss", hmmss,
+                    "--file_path",
+                    self.csv_path,
+                    "--fg_color",
+                    color,
+                    "--start_index",
+                    str(self.start_index),
+                    "--hmmss",
+                    hmmss,
                 ]
             )
 
