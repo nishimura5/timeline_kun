@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system packages for Tk and audio backends
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3-tk \
+            xvfb \
+            libportaudio2 \
+            libsndfile1
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install Python 3.11 with uv
+        run: uv python install 3.11
+
+      - name: Create venv and sync dependencies
+        run: |
+          uv venv
+          . .venv/bin/activate
+          uv sync --dev
+
+      - name: Run tests under Xvfb for Tkinter
+        run: |
+          . .venv/bin/activate
+          xvfb-run -a pytest -q
