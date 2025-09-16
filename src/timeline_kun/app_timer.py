@@ -370,7 +370,9 @@ class App(ttk.Frame):
         self.master.destroy()
 
 
-def main(file_path=None, fg_color:str="orange", start_index:int=0, hmmss:str="hmmss"):
+def main(
+    file_path=None, fg_color: str = "orange", start_index: int = 0, hmmss: str = "hmmss"
+):
     bg_color = "#202020"
     color_and_sound = {
         "orange": "countdown3_orange.wav",
@@ -463,8 +465,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--hmmss",
         type=str,
         default="hmmss",
-        choices=["hmmss", "hhmmss"],
-        help="Display format for time (default: hmmss).",
+        choices=["hmmss", "mmss"],
+        help="Display format for time (default: hmmss). 'hmmss' for 1:23:45, 'mmss' for 83:45.",
     )
     return parser
 
