@@ -59,10 +59,10 @@ class BIDSLog:
         # BIDS events.tsv format
         tar_dir = os.path.dirname(csv_file_path)
         tar_name = os.path.basename(csv_file_path).split(".")[0]
-        self.events_path = os.path.join(tar_dir, f"events_{tar_name}")
+        self.events_path = os.path.join(tar_dir, f"{tar_name}_")
 
         # scans.tsv file
-        self.scans_path = os.path.join(tar_dir, f"scans_{tar_name}.tsv")
+        self.scans_path = os.path.join(tar_dir, f"{tar_name}_scans.tsv")
         if os.path.exists(self.scans_path) is False:
             with open(self.scans_path, "w") as f:
                 f.write("filename\tacq_time\n")
@@ -82,8 +82,8 @@ class BIDSLog:
 
         # events.tsv file
         for i in range(100):
-            if os.path.exists(self.events_path + f"_{i:0>2}.tsv") is False:
-                self.file_path = self.events_path + f"_{i:0>2}.tsv"
+            if os.path.exists(self.events_path + f"{i:0>2}_events.tsv") is False:
+                self.file_path = self.events_path + f"{i:0>2}_events.tsv"
                 break
         with open(self.file_path, "w") as f:
             f.write("onset\tduration\ttrial_type\n")
