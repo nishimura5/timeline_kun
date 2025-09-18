@@ -1,6 +1,12 @@
 # Timeline-kun 1.0.0
 
+[![DOI](https://zenodo.org/badge/DOI/10.48708/7325764.svg)](https://doi.org/10.48708/7325764)
+[![BIDS Compatible](https://img.shields.io/badge/BIDS-compatible-brightgreen)](https://bids.neuroimaging.io/)
+[![Release](https://img.shields.io/github/v/release/nishimura5/timeline_kun)](https://github.com/nishimura5/timeline_kun/releases)
+
 Timeline-kun is an integrated graphical interface tool for planning and executing experimental protocols.
+
+
 
 ## Screen shot
 
