@@ -53,7 +53,11 @@ Timeline-kun integrates four primary functionalities:
 ### Running from development environment
 1. Clone the repository: `git clone https://github.com/nishimura5/timeline_kun.git`
 2. Set up the environment using uv (simply run "uv sync" in the directory containing pyproject.toml)
-3. Run "uv run python -m timeline_kun" in the directory containing pyproject.toml to launch
+3. Run below in the directory containing pyproject.toml to launch
+
+```
+uv run python -m timeline_kun
+```
 
 *Note: macOS users will need to install tcl-tk and configure appropriate environment variables before installation as this tool relies on tkinter.*
 
