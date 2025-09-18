@@ -10,6 +10,7 @@ class FileLoader:
     ):
         self.stage_list = []
         self.intermission_desc = intermission_desc
+        self.encoding = None
 
     def _read_file(self, tar_path):
         self.stage_list = []
@@ -18,10 +19,12 @@ class FileLoader:
             return None
         try:
             with open(tar_path, "r", encoding="utf-8") as f:
+                self.encoding = "utf-8"
                 return f.read()
         except UnicodeDecodeError:
-            print("try shift-jis")
+            print("UTF-8 decoding failed, falling back to Shift-JIS")
             with open(tar_path, "r", encoding="shift-jis") as f:
+                self.encoding = "shift-jis"
                 return f.read()
 
     def load_file_for_preview(self, csv_path):
@@ -35,7 +38,7 @@ class FileLoader:
             raise e
         return warn_msg, time_table
 
-    def load_file_for_timer(self, start_index:int, csv_path:str):
+    def load_file_for_timer(self, start_index: int, csv_path: str):
         timetable_csv_str = self._read_file(csv_path)
         if timetable_csv_str is None:
             return
@@ -84,6 +87,9 @@ class FileLoader:
 
     def get_stage_list(self):
         return self.stage_list
+
+    def get_encoding(self):
+        return self.encoding
 
     def clear(self):
         self.stage_list = []

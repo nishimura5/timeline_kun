@@ -371,6 +371,10 @@ class App(ttk.Frame):
             self.msg_label.config(text="Successfully loaded.")
             self.timer_btn["state"] = "normal"
 
+        self.csv_encoding = fl.get_encoding()
+        if self.csv_encoding is not None:
+            self.tree.set_write_encoding(self.csv_encoding)
+
     def asign_rect_color(self):
         title_list = list(set([s["title"] for s in self.stage_list]))
         title_list.sort()

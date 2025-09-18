@@ -40,6 +40,7 @@ class Tree(ttk.Frame):
 
         self.menu = tk.Menu(self, tearoff=0)
         self.stage_list = []
+        self.write_encoding = "utf-8"
 
     def set_stages(self, stages):
         self.tree.delete(*self.tree.get_children())
@@ -61,6 +62,9 @@ class Tree(ttk.Frame):
 
     def add_menu(self, label, command):
         self.menu.add_command(label=label, command=command)
+
+    def set_write_encoding(self, encoding):
+        self.write_encoding = encoding
 
     def get_selected_index(self):
         selected = self.tree.selection()
@@ -181,7 +185,7 @@ class Tree(ttk.Frame):
             header = "title,member,start,end,duration,fixed,instruction"
             no_end = False
 
-        with open(file_path, "w", encoding="shift-jis") as f:
+        with open(file_path, "w", encoding=self.write_encoding) as f:
             f.write(header + "\n")
             for item in self.tree.get_children():
                 values = self.tree.item(item)["values"]
