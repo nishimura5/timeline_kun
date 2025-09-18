@@ -29,16 +29,15 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v3
 
-      - name: Install Python 3.11 with uv
-        run: uv python install 3.11
+      - name: Install Python with uv (matrix)
+        run: uv python install ${{ matrix.python-version }}
 
       - name: Create venv and sync dependencies
         run: |
-          uv venv
-          . .venv/bin/activate
+          uv venv --python ${{ matrix.python-version }}
           uv sync --dev
 
       - name: Run tests under Xvfb for Tkinter
         run: |
-          . .venv/bin/activate
-          xvfb-run -a pytest -q
+          xvfb-run -a uv run pytest -q
+
