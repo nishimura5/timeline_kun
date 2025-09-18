@@ -32,7 +32,7 @@ Repository = "https://github.com/nishimura5/timeline_kun"
 [project.scripts]
 timeline-kun = "timeline_kun.cli:main"
 
-# GUI アプリとしての起動（Windowsでコンソールを出さない）
+# Launch as a GUI application (do not show a console window on Windows)
 [project.gui-scripts]
 timeline-kun-gui = "timeline_kun.cli:main"
 
@@ -42,6 +42,6 @@ path = "src/timeline_kun/__init__.py"
 [tool.hatch.build.targets.wheel]
 packages = ["src/timeline_kun"]
 
-# sdistに必要ファイルのみ含める（不要物を除外）
+# Include only the files required for sdist (exclude unnecessary files)
 [tool.hatch.build.targets.sdist]
 include = ["src/timeline_kun", "README.md", "LICENSE"]
