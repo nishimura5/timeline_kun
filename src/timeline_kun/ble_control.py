@@ -129,6 +129,7 @@ class BleThread:
                 )
             if ok_count == len(self.ble_control.client_list):
                 self.last_keep_alive = current_time
+                print(f"Keep-alive successful {self.last_keep_alive}")
 
 
 class BleControl:
@@ -171,9 +172,12 @@ class BleControl:
         return len(self.device_list)
 
     def is_connected(self):
-        return len(self.client_list) > 0 and all(
+        if len(self.client_list) > 0 and all(
             client.is_connected for client in self.client_list
-        )
+        ):
+            return True
+        print("Not connected to devices")
+        return False
 
     async def start_recording(self):
         return await self._send_command_to_all(
@@ -204,7 +208,6 @@ class BleControl:
     async def send_keep_alive(self):
         ok_count = 0
         if not self.is_connected():
-            print("Not connected")
             return 0
 
         # イベントとデータを初期化
