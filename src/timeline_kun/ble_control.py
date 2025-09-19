@@ -129,7 +129,7 @@ class BleThread:
                 )
             if ok_count == len(self.ble_control.client_list):
                 self.last_keep_alive = current_time
-                print(f"Keep-alive successful {self.last_keep_alive}")
+                print("Keep-alive successful")
 
 
 class BleControl:
@@ -224,7 +224,8 @@ class BleControl:
 
             ok_count = await self._wait_for_responses()
             return ok_count
-        except Exception:
+        except Exception as e:
+            print(f"Error occurred while sending keep-alive: {e}")
             return 0
 
     async def _wait_for_responses(self, timeout=3.0):
@@ -242,8 +243,8 @@ class BleControl:
                 else:
                     print(f"Keep-alive response invalid from {addr}")
 
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"Error occurred while waiting for response from {addr}: {e}")
 
         return ok_count
 
