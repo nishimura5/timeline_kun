@@ -140,6 +140,7 @@ class BleControl:
         self.target_device_names = target_device_names
         self._notify_events = {}
         self._notify_data = {}
+        self._notify_handlers = {}
 
     async def connect(self):
         if len(self.client_list) == len(self.target_device_names):
@@ -160,6 +161,31 @@ class BleControl:
         except Exception:
             return 0
 
+    async def _reconnect(self, client, attempts=2):
+        addr = client.address
+        for attempt in range(attempts):
+            try:
+                if client.is_connected:
+                    return True
+                await client.connect()
+                if addr not in self._notify_handlers:
+
+                    async def handler(sender, data, addr=addr):
+                        self._notify_data[addr] = data
+                        if addr in self._notify_events:
+                            self._notify_events[addr].set()
+
+                    self._notify_handlers[addr] = handler
+                await client.start_notify(
+                    BleData.RESPONSE_UUID, self._notify_handlers[addr]
+                )
+                return True
+            except Exception as e:
+                print(f"Reconnection attempt {attempt + 1} failed for {addr}: {e}")
+                await asyncio.sleep(1)
+        print(f"Failed to reconnect to {addr} after {attempts} attempts")
+        return False
+
     async def discover_device(self):
         self.device_list = []
         devices = await BleakScanner.discover()
@@ -177,10 +203,6 @@ class BleControl:
         ):
             return True
         print("Not connected to devices")
-        # reconnect
-        for client in self.client_list:
-            if not client.is_connected:
-                asyncio.create_task(client.connect())
         return False
 
     async def start_recording(self):
@@ -211,10 +233,19 @@ class BleControl:
 
     async def send_keep_alive(self):
         ok_count = 0
-        if not self.is_connected():
+        # reconnect if any client is disconnected
+        alive_clients = []
+        for client in self.client_list:
+            if client.is_connected or await self._reconnect(client):
+                alive_clients.append(client)
+            else:
+                print(f"Client unusable: {client.address}")
+
+        if not alive_clients:
+            print("No connected clients for keep-alive")
             return 0
 
-        # イベントとデータを初期化
+        # initialize events and data storage
         for client in self.client_list:
             addr = client.address
             self._notify_events[addr] = asyncio.Event()
@@ -273,6 +304,7 @@ class BleControl:
                 if addr in self._notify_events:
                     self._notify_events[addr].set()
 
+            self._notify_handlers[addr] = handler
             await client.start_notify(BleData.RESPONSE_UUID, handler)
 
         return True
