@@ -6,8 +6,6 @@
 
 Timeline-kun is an integrated graphical interface tool for planning and executing experimental protocols.
 
-
-
 ## Screen shot
 
 <p align="center">
@@ -63,8 +61,6 @@ uv run python -m timeline_kun
 
 ## Timeline CSV File Format
 
-[A JSON schema is provided](schemas/timeline_kun_csv.schema.json?raw=1) under the assumption that CSV files may be generated using LLMs.
-
 The timeline CSV file uses the following columns:
 
 - **title**: The name of the event displayed on the timer screen (duplicate names are allowed)
@@ -74,6 +70,12 @@ The timeline CSV file uses the following columns:
 - **fixed**: Specifies whether the start time or duration is fixed (values: "duration" or "start")
 - **instruction**: Additional instructions or comments
 - **end**: Optional. End time of the event (formatted as H:MM:SS)
+
+### For LLM-based Generation
+
+For LLM-based generation (like ChatGPT), you can use [this JSON schema](https://github.com/nishimura5/timeline_kun/blob/main/schemas/timeline_kun_csv.schema.json?raw=1).
+
+To use it, either download the JSON file from the link or copy-paste its contents directly into your prompt, then instruct the LLM to generate your experimental timeline.
 
 ### CSV File Example (Timeline CSV)
 
