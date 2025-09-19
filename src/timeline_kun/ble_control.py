@@ -118,7 +118,6 @@ class BleThread:
         current_time = time.time()
         if (
             self.ble_control
-            and self.ble_control.is_connected()
             and self.last_keep_alive > 0
             and current_time - self.last_keep_alive >= self.keep_alive_interval
         ):
