@@ -177,6 +177,10 @@ class BleControl:
         ):
             return True
         print("Not connected to devices")
+        # reconnect
+        for client in self.client_list:
+            if not client.is_connected:
+                asyncio.create_task(client.connect())
         return False
 
     async def start_recording(self):
