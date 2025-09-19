@@ -22,13 +22,11 @@ Timeline-kun integrates four primary functionalities:
 
 1. **Simplifying the planning of complex experimental schedules**
    - Visually represents experimental schedules
-   - Stores schedule data in CSV format (time values formatted as 'H:MM:SS' for Excel compatibility)
+   - Stores schedule data in CSV format
    - Allows intuitive insertion, deletion, and reordering of events using Excel
-   - Supports UTF-8 encoded CSV files, enabling editing in plain text editors
 
 2. **Integrating schedule planning and execution in a single tool**
    - Experimental schedules created with this tool can be directly used as timers
-   - Timer interface displays the current event, upcoming event, and remaining time in a clear layout
    - Timer can be started from any point, allowing test executions or real-time schedule modifications
    - Supports custom alarm sounds using 3-second WAV files
 
