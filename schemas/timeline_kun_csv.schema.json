@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Timeline-kun CSV",
+  "description": "An array of CSV rows for Timeline-kun",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "title": { "type": "string", "description": "Event name" },
+      "member": { "type": "string", "description": "Person or group" },
+      "start": { "type": "string", "pattern": "^\\d{1,2}:[0-5]\\d:[0-5]\\d$", "description": "Start time H:MM:SS" },
+      "duration": { "type": "string", "pattern": "^\\d{1,2}:[0-5]\\d:[0-5]\\d$", "default": "0:00:05", "description": "Duration H:MM:SS" },
+      "fixed": { "type": "string", "enum": ["start","duration"]},
+      "instruction": { "type": "string", "description": "Notes" }
+    },
+    "required": ["title","member","fixed"],
+    "allOf": [
+      {
+        "if": { "properties": { "fixed": { "const": "start" } } },
+        "then": { "required": ["start"] }
+      },
+      {
+        "if": { "properties": { "fixed": { "const": "duration" } } },
+        "then": { "required": ["duration"] }
+      }
+    ]
+  },
+  "x-notes": {
+    "csvHeaderOrder": ["title","member","start","duration","fixed","instruction"],
+    "rowOrdering": "Array order is execution order. Do not reorder rows.",
+    "instructionTrigger": "The instruction field triggers recording only if it contains the exact substring '(recording)' with matching case",
+    "rowRules": [
+      "All column values may be duplicated across rows",
+      "If duration is not specified, default to 0:00:05"
+    ],
+    "examples": [
+      { "title": "Wake up",    "member": "all member", "start": "0:00:00", "fixed": "start", "instruction": "Good morning! (recording)" },
+      { "title": "Stand by",   "member": "group A",    "start": "0:10:00", "fixed": "start" },
+      { "title": "Walking",    "member": "group B",    "start": "0:11:00", "duration": "0:05:00", "fixed": "start" },
+      { "title": "Stand by",   "member": "sub-001",    "duration": "0:00:20", "fixed": "duration" },
+      { "title": "Monitoring", "member": "sub-001/ses-01",    "duration": "0:20:00", "fixed": "duration", "instruction": "Skip when core body temperature reaches 38.5°C" }
+    ]  }
+}
