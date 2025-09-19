@@ -167,6 +167,7 @@ class BleControl:
             try:
                 if client.is_connected:
                     return True
+                print(f"Attempting to reconnect to {addr} (attempt {attempt + 1})")
                 await client.connect()
                 if addr not in self._notify_handlers:
 
@@ -202,7 +203,6 @@ class BleControl:
             client.is_connected for client in self.client_list
         ):
             return True
-        print("Not connected to devices")
         return False
 
     async def start_recording(self):
