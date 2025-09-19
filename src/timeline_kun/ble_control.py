@@ -127,7 +127,8 @@ class BleThread:
                 print(
                     f"Keep-alive failed for {len(self.ble_control.client_list) - ok_count} devices"
                 )
-            self.last_keep_alive = current_time
+            if ok_count == len(self.ble_control.client_list):
+                self.last_keep_alive = current_time
 
 
 class BleControl:
@@ -203,6 +204,7 @@ class BleControl:
     async def send_keep_alive(self):
         ok_count = 0
         if not self.is_connected():
+            print("Not connected")
             return 0
 
         # イベントとデータを初期化
