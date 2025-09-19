@@ -63,7 +63,7 @@ uv run python -m timeline_kun
 
 The timeline CSV file uses the following columns:
 
-- **title**: The name of the event displayed on the timer screen (duplicate names are allowed)
+- **title**: The name of the event displayed on the timer screen
 - **member**: The participant or team responsible for the event
 - **start**: The start time of the event (formatted as H:MM:SS)
 - **duration**: The duration of the event (formatted as H:MM:SS)
@@ -73,7 +73,7 @@ The timeline CSV file uses the following columns:
 
 ### For LLM-based Generation
 
-For LLM-based generation (like ChatGPT), you can use [this JSON schema](https://github.com/nishimura5/timeline_kun/blob/main/schemas/timeline_kun_csv.schema.json?raw=1).
+For LLM-based generation (like [ChatGPT](https://chatgpt.com) or [Claude](https://claude.ai)), you can use [this JSON schema](https://github.com/nishimura5/timeline_kun/blob/main/schemas/timeline_kun_csv.schema.json).
 
 To use it, either download the JSON file from the link or copy-paste its contents directly into your prompt, then instruct the LLM to generate your experimental timeline.
 
