@@ -63,6 +63,8 @@ uv run python -m timeline_kun
 
 ## Timeline CSV File Format
 
+[A JSON schema is provided](schemas/timeline_kun_csv.schema.json?raw=1) under the assumption that CSV files may be generated using LLMs.
+
 The timeline CSV file uses the following columns:
 
 - **title**: The name of the event displayed on the timer screen (duplicate names are allowed)
@@ -89,7 +91,7 @@ TASK C,MEMBER1,,0:05:00,duration,
 | TASK C | MEMBER1 |         | 0:05:00  | duration |             |
 | ...    | ...     | ...     | ...      | ...      | ...         |
 
-日本語のExcelとの互換のため、CSVはShift-JISにも対応しています。
+For Japanese user: Excelで編集したCSVファイル（つまりShift-JISでエンコーディングされたCSVファイル）も読み込むことができます。最初にUTF-8での読み込みを試みて、失敗するとShift-JISにフォールバックします。
 
 ### Scheduling Methods
 
