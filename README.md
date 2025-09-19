@@ -179,4 +179,21 @@ The timer application will load a 3-second wav file and play it as an alarm. The
 
 MMCV: ずんだもん
 
+## Citation
 
+Please acknowledge and cite the use of this software and its authors when results are used in publications or published elsewhere.
+
+```
+Nishimura, E. (2025). Timeline-kun (Version 1.0) [Computer software]. Kyushu University, https://doi.org/10.48708/7325764
+```
+
+```
+@misc{timeline-kun-software,
+  title = {Timeline-kun},
+  author = {Nishimura, Eigo},
+  year = {2025},
+  publisher = {Kyushu University},
+  doi = {10.48708/7325764},
+  note = {Available at: \url{https://hdl.handle.net/2324/7325764}},
+}
+```
