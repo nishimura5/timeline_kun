@@ -1,5 +1,9 @@
 # Timeline-kun 1.0.0
 
+[![DOI](https://zenodo.org/badge/DOI/10.48708/7325764.svg)](https://doi.org/10.48708/7325764)
+[![BIDS Compatible](https://img.shields.io/badge/BIDS-compatible-brightgreen)](https://bids.neuroimaging.io/)
+[![Release](https://img.shields.io/github/v/release/nishimura5/timeline_kun)](https://github.com/nishimura5/timeline_kun/releases)
+
 Timeline-kun is an integrated graphical interface tool for planning and executing experimental protocols.
 
 ## Screen shot
@@ -14,14 +18,13 @@ Timeline-kun is an integrated graphical interface tool for planning and executin
 
 ## Key Features
 
-Timeline-kun integrates three primary functionalities:
+Timeline-kun integrates four primary functionalities:
 
 1. **Simplifying the planning of complex experimental schedules**
    - Visually represents experimental schedules
    - Stores schedule data in CSV format (time values formatted as 'H:MM:SS' for Excel compatibility)
    - Allows intuitive insertion, deletion, and reordering of events using Excel
    - Supports UTF-8 encoded CSV files, enabling editing in plain text editors
-   - Provides SVG export function suitable for experimental planning discussions and record-keeping
 
 2. **Integrating schedule planning and execution in a single tool**
    - Experimental schedules created with this tool can be directly used as timers
@@ -37,7 +40,7 @@ Timeline-kun integrates three primary functionalities:
 4. **Improving methodological transparency and reproducibility**
    - TSV log records in BIDS compliant events.tsv format
    - Deviations due to interruptions or running ahead can be reviewed later
-   - SVG diagrams can be used in academic papers and edited with vector tools
+   - Provides SVG export function suitable for experimental planning discussions and record-keeping
 
 ## Installation and Execution
 
@@ -48,7 +51,11 @@ Timeline-kun integrates three primary functionalities:
 ### Running from development environment
 1. Clone the repository: `git clone https://github.com/nishimura5/timeline_kun.git`
 2. Set up the environment using uv (simply run "uv sync" in the directory containing pyproject.toml)
-3. Run "uv run python -m timeline_kun" in the directory containing pyproject.toml to launch
+3. Run below in the directory containing pyproject.toml to launch
+
+```
+uv run python -m timeline_kun
+```
 
 *Note: macOS users will need to install tcl-tk and configure appropriate environment variables before installation as this tool relies on tkinter.*
 
@@ -63,6 +70,12 @@ The timeline CSV file uses the following columns:
 - **fixed**: Specifies whether the start time or duration is fixed (values: "duration" or "start")
 - **instruction**: Additional instructions or comments
 - **end**: Optional. End time of the event (formatted as H:MM:SS)
+
+### For LLM-based Generation
+
+For LLM-based generation (like ChatGPT), you can use [this JSON schema](https://github.com/nishimura5/timeline_kun/blob/main/schemas/timeline_kun_csv.schema.json?raw=1).
+
+To use it, either download the JSON file from the link or copy-paste its contents directly into your prompt, then instruct the LLM to generate your experimental timeline.
 
 ### CSV File Example (Timeline CSV)
 
@@ -80,7 +93,7 @@ TASK C,MEMBER1,,0:05:00,duration,
 | TASK C | MEMBER1 |         | 0:05:00  | duration |             |
 | ...    | ...     | ...     | ...      | ...      | ...         |
 
-For Japanese user: 日本語のExcelとの互換のため、Shift-JISでエンコーディングされたCSVファイルも読み込むことができます。最初にUTF-8での読み込みを試みて、失敗するとShift-JISにフォールバックします。
+For Japanese user: Excelで編集したCSVファイル（つまりShift-JISでエンコーディングされたCSVファイル）も読み込むことができます。最初にUTF-8での読み込みを試みて、失敗するとShift-JISにフォールバックします。
 
 ### Scheduling Methods
 
