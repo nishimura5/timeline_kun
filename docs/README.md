@@ -80,7 +80,7 @@ TASK C,MEMBER1,,0:05:00,duration,
 | TASK C | MEMBER1 |         | 0:05:00  | duration |             |
 | ...    | ...     | ...     | ...      | ...      | ...         |
 
-日本語のExcelとの互換のため、CSVはShift-JISにも対応しています。
+For Japanese user: 日本語のExcelとの互換のため、Shift-JISでエンコーディングされたCSVファイルも読み込むことができます。最初にUTF-8での読み込みを試みて、失敗するとShift-JISにフォールバックします。
 
 ### Scheduling Methods
 
