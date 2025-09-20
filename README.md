@@ -37,7 +37,7 @@ Timeline-kun integrates four primary functionalities:
 3. **Controlling GoPro devices**
    - Start and stop recording based on schedules via BLE
    - Simultaneous control of multiple devices
-   - Support for long standby times through keep-alive signals sent every 10 seconds
+   - Support for long standby times through keep-alive signals sent every 3 seconds
    
 4. **Improving methodological transparency and reproducibility**
    - TSV log records in BIDS compliant events.tsv format

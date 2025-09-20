@@ -30,7 +30,7 @@ class BleThread:
         self.running = False
         self.ble_control = None
         self.last_keep_alive = 0
-        self.keep_alive_interval = 10.0
+        self.keep_alive_interval = 3.0
         self.target_device_names = [""]
 
         # コマンドハンドラーマップ
