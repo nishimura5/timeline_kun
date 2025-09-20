@@ -2,6 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.48708/7325764.svg)](https://doi.org/10.48708/7325764)
 [![BIDS Compatible](https://img.shields.io/badge/BIDS-compatible-brightgreen)](https://bids.neuroimaging.io/)
+[![GoPro](https://img.shields.io/badge/GoPro-HERO11%20%2B-4cbee0?logo=gopro&logoColor=white)](https://gopro.com)
 [![Release](https://img.shields.io/github/v/release/nishimura5/timeline_kun)](https://github.com/nishimura5/timeline_kun/releases)
 
 Timeline-kun is an integrated graphical interface tool for planning and executing experimental protocols.
@@ -22,20 +23,18 @@ Timeline-kun integrates four primary functionalities:
 
 1. **Simplifying the planning of complex experimental schedules**
    - Visually represents experimental schedules
-   - Stores schedule data in CSV format (time values formatted as 'H:MM:SS' for Excel compatibility)
+   - Stores schedule data in CSV format
    - Allows intuitive insertion, deletion, and reordering of events using Excel
-   - Supports UTF-8 encoded CSV files, enabling editing in plain text editors
 
 2. **Integrating schedule planning and execution in a single tool**
    - Experimental schedules created with this tool can be directly used as timers
-   - Timer interface displays the current event, upcoming event, and remaining time in a clear layout
    - Timer can be started from any point, allowing test executions or real-time schedule modifications
    - Supports custom alarm sounds using 3-second WAV files
 
 3. **Controlling GoPro devices**
    - Start and stop recording based on schedules via BLE
    - Simultaneous control of multiple devices
-   - Support for long standby times through keep-alive signals sent every 10 seconds
+   - Support for long standby times through keep-alive signals sent every 3 seconds
    
 4. **Improving methodological transparency and reproducibility**
    - TSV log records in BIDS compliant events.tsv format
@@ -63,7 +62,7 @@ uv run python -m timeline_kun
 
 The timeline CSV file uses the following columns:
 
-- **title**: The name of the event displayed on the timer screen (duplicate names are allowed)
+- **title**: The name of the event displayed on the timer screen
 - **member**: The participant or team responsible for the event
 - **start**: The start time of the event (formatted as H:MM:SS)
 - **duration**: The duration of the event (formatted as H:MM:SS)
@@ -73,7 +72,7 @@ The timeline CSV file uses the following columns:
 
 ### For LLM-based Generation
 
-For LLM-based generation (like ChatGPT), you can use [this JSON schema](https://github.com/nishimura5/timeline_kun/blob/main/schemas/timeline_kun_csv.schema.json?raw=1).
+For LLM-based generation (like [ChatGPT](https://chatgpt.com) or [Claude](https://claude.ai)), you can use [this JSON schema](https://github.com/nishimura5/timeline_kun/blob/main/schemas/timeline_kun_csv.schema.json).
 
 To use it, either download the JSON file from the link or copy-paste its contents directly into your prompt, then instruct the LLM to generate your experimental timeline.
 
@@ -179,4 +178,21 @@ The timer application will load a 3-second wav file and play it as an alarm. The
 
 MMCV: ずんだもん
 
+## Citation
 
+Please acknowledge and cite the use of this software and its authors when results are used in publications or published elsewhere.
+
+```
+Nishimura, E. (2025). Timeline-kun (Version 1.0) [Computer software]. Kyushu University, https://doi.org/10.48708/7325764
+```
+
+```
+@misc{timeline-kun-software,
+  title = {Timeline-kun},
+  author = {Nishimura, Eigo},
+  year = {2025},
+  publisher = {Kyushu University},
+  doi = {10.48708/7325764},
+  note = {Available at: \url{https://hdl.handle.net/2324/7325764}},
+}
+```
