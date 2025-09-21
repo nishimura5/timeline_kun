@@ -1,309 +1,338 @@
+# ble_control.py
 import asyncio
 import queue
 import threading
-import time
+from dataclasses import dataclass, field
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 from bleak import BleakClient, BleakScanner
 
+Result = Tuple[str, int, str]
+CommandHandler = Callable[[Optional[Any]], Awaitable[Result]]
 
+
+@dataclass(frozen=True)
 class BleData:
-    # GoPro GATT UUID
-    COMMAND_UUID = "b5f90072-aa8d-11e3-9046-0002a5d5c51b"
-    SETTING_UUID = "b5f90074-aa8d-11e3-9046-0002a5d5c51b"
-    RESPONSE_UUID = "b5f90075-aa8d-11e3-9046-0002a5d5c51b"
+    COMMAND_UUID: str = "b5f90072-aa8d-11e3-9046-0002a5d5c51b"
+    SETTING_UUID: str = "b5f90074-aa8d-11e3-9046-0002a5d5c51b"
+    RESPONSE_UUID: str = "b5f90075-aa8d-11e3-9046-0002a5d5c51b"
 
-    # control commands for GoPro
-    START_RECORDING = bytearray([0x03, 0x01, 0x01, 0x01])
-    STOP_RECORDING = bytearray([0x03, 0x01, 0x01, 0x00])
-    KEEP_ALIVE = bytearray([0x03, 0x5B, 0x01, 0x42])
+    START_RECORDING: bytearray = field(
+        default_factory=lambda: bytearray([0x03, 0x01, 0x01, 0x01])
+    )
+    STOP_RECORDING: bytearray = field(
+        default_factory=lambda: bytearray([0x03, 0x01, 0x01, 0x00])
+    )
+    KEEP_ALIVE: bytearray = field(
+        default_factory=lambda: bytearray([0x03, 0x5B, 0x01, 0x42])
+    )
 
-    KEEP_ALIVE_ID = 0x5B
-    OK = 0x00
+    KEEP_ALIVE_ID: int = 0x5B
+    OK: int = 0x00
+    RESP_PREFIX: int = 0x02
+
+
+BLE = BleData()
+
+
+@dataclass
+class BLEMessage:
+    raw: bytes
+    msg_type: int
+    msg_id: int
+    status: int
+    payload: bytes
+
+    @classmethod
+    def parse(cls, data: bytearray) -> Optional["BLEMessage"]:
+        b = bytes(data)
+        if len(b) < 3:
+            return None
+        return cls(raw=b, msg_type=b[0], msg_id=b[1], status=b[2], payload=b[3:])
+
+
+NotifyHandler = Callable[[int, bytearray], Awaitable[None]]
+
+
+class NotifyCenter:
+    """デバイス単位の通知集約"""
+
+    def __init__(self) -> None:
+        self._queues: Dict[int, asyncio.Queue[BLEMessage]] = {}
+        self._handler: Optional[NotifyHandler] = None
+
+    def _queue_for(self, msg_id: int) -> asyncio.Queue[BLEMessage]:
+        q = self._queues.get(msg_id)
+        if q is None:
+            q = asyncio.Queue(maxsize=16)
+            self._queues[msg_id] = q
+        return q
+
+    def get_handler(self) -> NotifyHandler:
+        if self._handler is None:
+
+            async def handler(sender: int, data: bytearray) -> None:
+                msg = BLEMessage.parse(data)
+                if msg is None:
+                    return
+                await self._safe_put(self._queue_for(msg.msg_id), msg)
+
+            self._handler = handler
+        return self._handler
+
+    async def _safe_put(self, q: asyncio.Queue, item: BLEMessage) -> None:
+        try:
+            q.put_nowait(item)
+        except asyncio.QueueFull:
+            try:
+                _ = q.get_nowait()
+            except asyncio.QueueEmpty:
+                pass
+            await q.put(item)
+
+    async def wait_for(self, msg_id: int, timeout: float) -> Optional[BLEMessage]:
+        q = self._queue_for(msg_id)
+        try:
+            return await asyncio.wait_for(q.get(), timeout=timeout)
+        except asyncio.TimeoutError:
+            return None
+
+    def clear(self, msg_id: Optional[int] = None) -> None:
+        if msg_id is None:
+            for q in self._queues.values():
+                self._drain(q)
+        else:
+            q = self._queues.get(msg_id)
+            if q:
+                self._drain(q)
+
+    @staticmethod
+    def _drain(q: asyncio.Queue) -> None:
+        try:
+            while True:
+                q.get_nowait()
+        except asyncio.QueueEmpty:
+            return
+
+
+class DeviceSession:
+    def __init__(self, address: str) -> None:
+        self.address = address
+        self.client = BleakClient(address)
+        self.center = NotifyCenter()
+
+    async def connect_and_listen(self) -> bool:
+        if not self.client.is_connected:
+            await self.client.connect()
+        await self.client.start_notify(BLE.RESPONSE_UUID, self.center.get_handler())
+        return True
+
+    async def ensure_connected(self) -> bool:
+        if self.client.is_connected:
+            return True
+        try:
+            await self.connect_and_listen()
+            print(f"reconnected {self.address}")
+            return True
+        except Exception as e:
+            print(f"reconnect failed {self.address} {e}")
+            return False
+
+    async def write_command(self, uuid: str, payload: bytearray) -> bool:
+        if not await self.ensure_connected():
+            return False
+        try:
+            await self.client.write_gatt_char(uuid, payload, response=True)
+            return True
+        except Exception as e:
+            print(f"write failed {self.address} {e}")
+            return False
+
+    async def keep_alive_roundtrip(self, timeout: float = 3.0) -> bool:
+        self.center.clear(BLE.KEEP_ALIVE_ID)
+        if not await self.write_command(BLE.SETTING_UUID, BLE.KEEP_ALIVE):
+            return False
+        msg = await self.center.wait_for(BLE.KEEP_ALIVE_ID, timeout=timeout)
+        if msg and msg.status != BLE.OK:
+            print(msg)
+        return bool(msg and msg.msg_type == BLE.RESP_PREFIX and msg.status == BLE.OK)
+
+
+class BleManager:
+    def __init__(
+        self, target_device_names: List[str], keep_alive_sec: float = 3.0
+    ) -> None:
+        self.target_device_names = target_device_names
+        self.sessions: List[DeviceSession] = []
+        self.keep_alive_sec = keep_alive_sec
+        self._keep_task: Optional[asyncio.Task] = None
+        self._running = False
+        self.is_recording = False
+
+    async def discover_and_connect(self) -> int:
+        devices = await BleakScanner.discover(timeout=10)
+        names = set(n for n in self.target_device_names if n)
+        addrs: List[str] = []
+        for d in devices:
+            if d.name and d.name in names:
+                print(f"found {d.name} {d.address}")
+                addrs.append(d.address)
+
+        self.sessions = [DeviceSession(addr) for addr in addrs]
+        ok = 0
+        for s in self.sessions:
+            try:
+                await s.connect_and_listen()
+                ok += 1
+            except Exception as e:
+                print(f"connect failed {s.address} {e}")
+
+        if ok:
+            self.start_keep_alive_loop()
+        return ok
+
+    def start_keep_alive_loop(self) -> None:
+        if self._keep_task is None or self._keep_task.done():
+            self._running = True
+            self._keep_task = asyncio.create_task(self._keep_loop())
+
+    def stop_keep_alive_loop(self) -> None:
+        self._running = False
+        if self._keep_task:
+            self._keep_task.cancel()
+
+    async def _keep_loop(self) -> None:
+        while self._running:
+            await self.send_keep_alive_all()
+            try:
+                await asyncio.sleep(self.keep_alive_sec)
+            except asyncio.CancelledError:
+                break
+
+    async def send_keep_alive_all(self) -> int:
+        ok_cnt = 0
+        for s in list(self.sessions):
+            alive = await s.keep_alive_roundtrip(timeout=3.0)
+            if not alive:
+                # 再接続のチャンスをここで与える
+                if await s.ensure_connected():
+                    alive = await s.keep_alive_roundtrip(timeout=3.0)
+            if alive:
+                ok_cnt += 1
+        #        print(f"keep alive {ok} of {len(self.sessions)}")
+        if ok_cnt < len(self.sessions):
+            print(f"[!] keep alive ok {ok_cnt} of {len(self.sessions)}")
+        return ok_cnt
+
+    async def start_recording_all(self) -> int:
+        cnt = 0
+        for s in self.sessions:
+            if await s.write_command(BLE.COMMAND_UUID, BLE.START_RECORDING):
+                cnt += 1
+        self.is_recording = cnt > 0
+        return cnt
+
+    async def stop_recording_all(self) -> int:
+        cnt = 0
+        for s in self.sessions:
+            if await s.write_command(BLE.COMMAND_UUID, BLE.STOP_RECORDING):
+                cnt += 1
+        self.is_recording = False if cnt > 0 else self.is_recording
+        return cnt
 
 
 class BleThread:
-    def __init__(self):
-        self.thread = None
-        self.loop = None
-        self.command_queue = queue.Queue()
-        self.result_queue = queue.Queue()
-        self.running = False
-        self.ble_control = None
-        self.last_keep_alive = 0
-        self.keep_alive_interval = 3.0
-        self.target_device_names = [""]
+    """スレッドはキュー処理だけに限定"""
 
-        # コマンドハンドラーマップ
-        self._command_handlers = {
-            "connect": self._handle_connect,
-            "record_start": self._handle_record_start,
-            "record_stop": self._handle_record_stop,
+    def __init__(self) -> None:
+        self.thread: Optional[threading.Thread] = None
+        self.loop: Optional[asyncio.AbstractEventLoop] = None
+        self.running = False
+        self.command_q: "queue.Queue[Tuple[str, Optional[Any]]]" = queue.Queue()
+        self.result_q: "queue.Queue[Result]" = queue.Queue()
+        self.manager: Optional[BleManager] = None
+        self.target_device_names: List[str] = [""]
+        self._handlers: Dict[str, CommandHandler] = {
+            "connect": self._h_connect,
+            "record_start": self._h_start,
+            "record_stop": self._h_stop,
         }
 
-    def set_target_device_names(self, names):
+    def set_target_device_names(self, names: List[str]) -> None:
         self.target_device_names = names
 
-    def start(self):
-        if not self.thread or not self.thread.is_alive():
-            self.running = True
-            self.thread = threading.Thread(target=self._run_thread, daemon=True)
-            self.thread.start()
+    def start(self) -> None:
+        if self.thread and self.thread.is_alive():
+            return
+        self.running = True
+        self.thread = threading.Thread(target=self._run, daemon=True)
+        self.thread.start()
 
-    def stop(self):
-        if self.running:
-            self.running = False
-            self.command_queue.put(("stop", None))
-            if self.thread and self.thread.is_alive():
-                self.thread.join()
-
-    def execute_command(self, command, data=None, timeout=30):
-        """同期的にコマンドを実行するためのパブリックインターフェース"""
+    def stop(self) -> None:
         if not self.running:
-            return (command, False, "Thread not running")
+            return
+        self.running = False
+        self.command_q.put(("__stop__", None))
+        if self.thread and self.thread.is_alive():
+            self.thread.join()
 
-        self.command_queue.put((command, data))
+    def execute_command(
+        self, command: str, data: Optional[Any] = None, timeout: int = 30
+    ) -> Result:
+        if not self.running:
+            return (command, 0, "thread not running")
+        self.command_q.put((command, data))
         try:
-            return self.result_queue.get(timeout=timeout)
+            return self.result_q.get(timeout=timeout)
         except queue.Empty:
-            return (command, False, "No response")
+            return (command, 0, "timeout")
 
-    def _run_thread(self):
+    def _run(self) -> None:
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
-        self.ble_control = BleControl(self.target_device_names)
-        self.loop.run_until_complete(self._command_loop())
-        if self.loop:
-            self.loop.close()
+        try:
+            self.manager = BleManager(self.target_device_names, keep_alive_sec=3.0)
+            self.loop.run_until_complete(self._loop())
+        finally:
+            if self.loop:
+                self.loop.close()
 
-    async def _command_loop(self):
+    async def _loop(self) -> None:
+        assert self.manager is not None
         while self.running:
             try:
-                command, data = self.command_queue.get_nowait()
+                cmd, data = self.command_q.get_nowait()
             except queue.Empty:
-                await self._check_keep_alive()
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.05)
                 continue
 
-            if command == "stop":
+            if cmd == "__stop__":
+                self.manager.stop_keep_alive_loop()
                 break
 
-            result = await self._process_command(command, data)
-            self.result_queue.put(result)
-
-    async def _process_command(self, command, data):
-        """コマンドを処理し、適切なハンドラーを呼び出す"""
-        if command in self._command_handlers:
-            return await self._command_handlers[command](data)
-        else:
-            return (command, 0, "unknown command")
-
-    async def _handle_connect(self, data):
-        """接続コマンドを処理"""
-        ok_count = await self.ble_control.connect()
-        if ok_count:
-            self.last_keep_alive = time.time()
-        return ("connect", ok_count, "success" if ok_count else "failed")
-
-    async def _handle_record_start(self, data):
-        """録画開始コマンドを処理"""
-        ok_count = await self.ble_control.start_recording()
-        return ("record_start", ok_count, "success" if ok_count else "failed")
-
-    async def _handle_record_stop(self, data):
-        """録画停止コマンドを処理"""
-        ok_count = await self.ble_control.stop_recording()
-        return ("record_stop", ok_count, "success" if ok_count else "failed")
-
-    async def _check_keep_alive(self):
-        current_time = time.time()
-        if (
-            self.ble_control
-            and self.last_keep_alive > 0
-            and current_time - self.last_keep_alive >= self.keep_alive_interval
-        ):
-            ok_count = await self.ble_control.send_keep_alive()
-            if ok_count < len(self.ble_control.client_list):
-                print(
-                    f"Keep-alive failed for {len(self.ble_control.client_list) - ok_count} devices"
-                )
-            if ok_count == len(self.ble_control.client_list):
-                self.last_keep_alive = current_time
-                print("Keep-alive successful")
-
-
-class BleControl:
-    def __init__(self, target_device_names):
-        self.client_list = []
-        self.device_list = []
-        self.is_recording = False
-        self.target_device_names = target_device_names
-        self._notify_events = {}
-        self._notify_data = {}
-        self._notify_handlers = {}
-
-    async def connect(self):
-        if len(self.client_list) == len(self.target_device_names):
-            return len(self.client_list)
-        ok_count = await self.discover_device()
-        if ok_count < len(self.target_device_names):
-            return ok_count
-
-        try:
-            for device in self.device_list:
-                client = BleakClient(device.address)
-                await client.connect()
-                self.client_list.append(client)
-
-            await self._setup_notifications()
-            ok_count = await self.send_keep_alive()
-            return ok_count
-        except Exception:
-            return 0
-
-    async def _reconnect(self, client, attempts=2):
-        addr = client.address
-        for attempt in range(attempts):
+            handler = self._handlers.get(cmd)
+            if handler is None:
+                self.result_q.put((cmd, 0, "unknown"))
+                continue
             try:
-                if client.is_connected:
-                    return True
-                print(f"Attempting to reconnect to {addr} (attempt {attempt + 1})")
-                await client.connect()
-                if addr not in self._notify_handlers:
-
-                    async def handler(sender, data, addr=addr):
-                        self._notify_data[addr] = data
-                        if addr in self._notify_events:
-                            self._notify_events[addr].set()
-
-                    self._notify_handlers[addr] = handler
-                await client.start_notify(
-                    BleData.RESPONSE_UUID, self._notify_handlers[addr]
-                )
-                return True
+                res = await handler(data)
             except Exception as e:
-                print(f"Reconnection attempt {attempt + 1} failed for {addr}: {e}")
-                await asyncio.sleep(1)
-        print(f"Failed to reconnect to {addr} after {attempts} attempts")
-        return False
+                res = (cmd, 0, f"error {e}")
+            self.result_q.put(res)
 
-    async def discover_device(self):
-        self.device_list = []
-        devices = await BleakScanner.discover()
+    # handlers
+    async def _h_connect(self, _: Optional[Any]) -> Result:
+        assert self.manager is not None
+        self.manager.target_device_names = self.target_device_names
+        ok = await self.manager.discover_and_connect()
+        return ("connect", ok, "success" if ok else "failed")
 
-        for device in devices:
-            if device.name and device.name in self.target_device_names:
-                print(f"Found target device: {device.name} ({device.address})")
-                self.device_list.append(device)
+    async def _h_start(self, _: Optional[Any]) -> Result:
+        assert self.manager is not None
+        ok = await self.manager.start_recording_all()
+        return ("record_start", ok, "success" if ok else "failed")
 
-        return len(self.device_list)
-
-    def is_connected(self):
-        if len(self.client_list) > 0 and all(
-            client.is_connected for client in self.client_list
-        ):
-            return True
-        return False
-
-    async def start_recording(self):
-        return await self._send_command_to_all(
-            BleData.COMMAND_UUID, BleData.START_RECORDING, set_recording=True
-        )
-
-    async def stop_recording(self):
-        return await self._send_command_to_all(
-            BleData.COMMAND_UUID, BleData.STOP_RECORDING, set_recording=False
-        )
-
-    async def _send_command_to_all(self, uuid, command, set_recording=None):
-        ok_count = 0
-        if not self.is_connected():
-            return 0
-
-        try:
-            for client in self.client_list:
-                await client.write_gatt_char(uuid, command, response=True)
-                ok_count += 1
-
-            if set_recording is not None:
-                self.is_recording = set_recording
-            return ok_count
-        except Exception:
-            return 0
-
-    async def send_keep_alive(self):
-        ok_count = 0
-        # reconnect if any client is disconnected
-        alive_clients = []
-        for client in self.client_list:
-            if client.is_connected or await self._reconnect(client):
-                alive_clients.append(client)
-            else:
-                print(f"Client unusable: {client.address}")
-
-        if not alive_clients:
-            print("No connected clients for keep-alive")
-            return 0
-
-        # initialize events and data storage
-        for client in self.client_list:
-            addr = client.address
-            self._notify_events[addr] = asyncio.Event()
-            self._notify_data[addr] = None
-
-        try:
-            for client in self.client_list:
-                await client.write_gatt_char(
-                    BleData.SETTING_UUID, BleData.KEEP_ALIVE, response=True
-                )
-
-            ok_count = await self._wait_for_responses()
-            return ok_count
-        except Exception as e:
-            print(f"Error occurred while sending keep-alive: {e}")
-            return 0
-
-    async def _wait_for_responses(self, timeout=3.0):
-        ok_count = 0
-        for client in self.client_list:
-            addr = client.address
-            try:
-                await asyncio.wait_for(
-                    self._notify_events[addr].wait(), timeout=timeout
-                )
-                data = self._notify_data.get(addr)
-
-                if self._is_keep_alive_ok(data):
-                    ok_count += 1
-                else:
-                    print(f"Keep-alive response invalid from {addr}")
-
-            except Exception as e:
-                print(f"Error occurred while waiting for response from {addr}: {e}")
-
-        return ok_count
-
-    def _is_keep_alive_ok(self, data):
-        if not data:
-            return False
-
-        b = bytes(data)
-        return (
-            len(b) >= 3
-            and b[0] == 0x02
-            and b[1] == BleData.KEEP_ALIVE_ID
-            and b[2] == BleData.OK
-        )
-
-    async def _setup_notifications(self):
-        for client in self.client_list:
-            addr = client.address
-
-            async def handler(sender, data, addr=addr):
-                self._notify_data[addr] = data
-                if addr in self._notify_events:
-                    self._notify_events[addr].set()
-
-            self._notify_handlers[addr] = handler
-            await client.start_notify(BleData.RESPONSE_UUID, handler)
-
-        return True
+    async def _h_stop(self, _: Optional[Any]) -> Result:
+        assert self.manager is not None
+        ok = await self.manager.stop_recording_all()
+        return ("record_stop", ok, "success" if ok else "failed")

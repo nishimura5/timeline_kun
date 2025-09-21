@@ -5,7 +5,13 @@ from . import ble_control
 
 
 class Trigger:
-    def __init__(self, offset_sec=5):
+    """録画トリガーの公開インターフェースは変更しない。
+    set_device_names と set_keyword と set_delay_sec
+    ble_connect と trigger_in と trigger_out
+    get_triggered と set_status と get_status
+    """
+
+    def __init__(self, offset_sec: int = 5) -> None:
         self.triggered_in = False
         self.offset_sec = offset_sec
         self.keyword = "(recording)"
@@ -14,10 +20,11 @@ class Trigger:
         self.connection_status = "Idle"
         self.delay_sec = 1
 
-    def ble_connect(self):
+    def ble_connect(self) -> None:
         self.ble_thread.start()
-        result = self.ble_thread.execute_command("connect", None, timeout=30)
-        command, ok_count, msg = result
+        command, ok_count, msg = self.ble_thread.execute_command(
+            "connect", None, timeout=30
+        )
         if ok_count == len(self.target_device_names):
             self.connection_status = "Connected"
         else:
@@ -39,20 +46,19 @@ class Trigger:
     def trigger_in(self, title):
         if self.keyword in title and self.triggered_in is False:
             self.triggered_in = True
-            result = self.ble_thread.execute_command("record_start", None, timeout=3)
-            command, success, msg = result
+            command, success, msg = self.ble_thread.execute_command(
+                "record_start", None, timeout=3
+            )
             if success:
                 self.connection_status = "Recording"
                 return True
-            else:
-                self.connection_status = "Failed to start"
+            self.connection_status = "Failed to start"
         return False
 
     def trigger_out(self, title):
         if self.keyword not in title and self.triggered_in is True:
             print("trigger out")
             self.triggered_in = False
-            # UIを止めずに別スレッドで(self.delay_sec)秒待ってから停止コマンドを送る
             threading.Thread(target=self._delayed_stop, daemon=True).start()
             return True
         return False
@@ -65,7 +71,7 @@ class Trigger:
         if success:
             self.connection_status = "Connected"
         else:
-            self.connection_status = f"Failed to stop"
+            self.connection_status = "Failed to stop"
 
     def get_triggered(self):
         return self.triggered_in

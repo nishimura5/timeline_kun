@@ -201,9 +201,9 @@ class App(ttk.Frame):
             self.next_stage_label.config(text="---")
             self.remaining_time_label.config(text="")
             self.is_running = False
-            #            self.tlog.end_log(self.disp_time)
             self.bids_log.add_task_log()
             self.bids_log.add_control_log("session_end")
+            self.trigger_device.trigger_out("End")
             return
 
         self.current_stage_label.config(text=current_stage["title"])
@@ -247,7 +247,6 @@ class App(ttk.Frame):
 
     def trigger(self, now_stage, remaining_dt):
         is_start_trigger = False
-        is_stop_trigger = False
         next_stage = now_stage + 1
         if next_stage >= len(self.stage_list):
             return
@@ -265,11 +264,6 @@ class App(ttk.Frame):
         if is_start_trigger:
             #            self.tlog.add_log(self.disp_time, "recording start triggered")
             self.bids_log.add_control_log("video_record_start")
-
-    #        if is_stop_trigger:
-    #            self.tlog.add_log(
-    #                self.disp_time, f"recording stop triggered (+{self.stop_delay_sec}s)"
-    #            )
 
     def update_progress_bar(self, cnt_up, next_dt):
         duration_dt = self.stage_list[self.now_stage]["duration"]
