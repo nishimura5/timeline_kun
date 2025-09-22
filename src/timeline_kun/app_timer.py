@@ -248,9 +248,13 @@ class App(ttk.Frame):
     def trigger(self, now_stage, remaining_dt):
         is_start_trigger = False
         next_stage = now_stage + 1
-        if next_stage >= len(self.stage_list):
+        if next_stage > len(self.stage_list):
             return
-        next_stage_instruction = self.stage_list[next_stage]["instruction"]
+
+        if next_stage == len(self.stage_list):
+            next_stage_instruction = "End"
+        else:
+            next_stage_instruction = self.stage_list[next_stage]["instruction"]
         current_stage_instruction = self.stage_list[now_stage]["instruction"]
         # Trigger in before X seconds of next stage
         if remaining_dt < datetime.timedelta(seconds=self.trigger_device.offset_sec):

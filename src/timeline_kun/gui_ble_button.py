@@ -68,7 +68,7 @@ class BleButtonManager:
     def _on_ble_connect_complete(self):
         """BLE接続完了時にメインスレッドで呼ばれる"""
         self.ble_btn.config(state="normal")
-        self.update_ble_status()
+        self.ble_status_label.config(text=self.trigger_device.get_status())
 
     def _on_ble_connect_error(self):
         """BLE接続エラー時にメインスレッドで呼ばれる"""
@@ -77,4 +77,5 @@ class BleButtonManager:
 
     def update_ble_status(self):
         """BLEステータスラベルを更新"""
-        self.ble_status_label.config(text=self.trigger_device.get_status())
+        status = self.trigger_device.update_status()
+        self.ble_status_label.config(text=status)

@@ -1,0 +1,7 @@
+title,member,start,duration,fixed,instruction
+TASK A,MEMBER1,,0:03:00,duration,(recording)
+TASK B,MEMBER1,,0:00:10,duration,
+TASK C,MEMBER1,,0:05:00,duration,(recording)
+TASK D,MEMBER1,,0:03:00,duration,GoPro shut down test
+TASK E,MEMBER1,,0:05:00,duration,(recording)
+TASK F,MEMBER1,0:20:00,0:10:00,start,(recording)

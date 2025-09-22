@@ -120,9 +120,11 @@ class DeviceSession:
         self.address = address
         self.client = BleakClient(address)
         self.center = NotifyCenter()
+        self.last_alive: bool = False
 
     async def connect_and_listen(self) -> bool:
         if not self.client.is_connected:
+            print(f"connecting {self.address}")
             await self.client.connect()
         await self.client.start_notify(BLE.RESPONSE_UUID, self.center.get_handler())
         return True
@@ -151,11 +153,14 @@ class DeviceSession:
     async def keep_alive_roundtrip(self, timeout: float = 3.0) -> bool:
         self.center.clear(BLE.KEEP_ALIVE_ID)
         if not await self.write_command(BLE.SETTING_UUID, BLE.KEEP_ALIVE):
+            self.last_alive = False
             return False
         msg = await self.center.wait_for(BLE.KEEP_ALIVE_ID, timeout=timeout)
         if msg and msg.status != BLE.OK:
             print(msg)
-        return bool(msg and msg.msg_type == BLE.RESP_PREFIX and msg.status == BLE.OK)
+        ok = bool(msg and msg.msg_type == BLE.RESP_PREFIX and msg.status == BLE.OK)
+        self.last_alive = ok
+        return ok
 
 
 class BleManager:
@@ -256,6 +261,7 @@ class BleThread:
             "connect": self._h_connect,
             "record_start": self._h_start,
             "record_stop": self._h_stop,
+            "status": self._h_status,
         }
 
     def set_target_device_names(self, names: List[str]) -> None:
@@ -336,3 +342,10 @@ class BleThread:
         assert self.manager is not None
         ok = await self.manager.stop_recording_all()
         return ("record_stop", ok, "success" if ok else "failed")
+
+    async def _h_status(self, _: Optional[Any]) -> Result:
+        assert self.manager is not None
+        total = len(self.manager.sessions)
+        alive_cnt = sum(1 for s in self.manager.sessions if s.last_alive)
+        state = "recording" if self.manager.is_recording else "idle"
+        return ("status", alive_cnt, f"{alive_cnt}/{total} {state}")

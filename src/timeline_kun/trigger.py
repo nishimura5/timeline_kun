@@ -81,3 +81,29 @@ class Trigger:
 
     def get_status(self):
         return self.connection_status
+
+    def update_status(self):
+        cmd, alive_cnt, msg = self.ble_thread.execute_command("status", None, timeout=3)
+        if cmd != "status":
+            return self.connection_status
+        try:
+            ratio, state = msg.split(maxsplit=1)
+            alive_str, total_str = ratio.split("/")
+            total = int(total_str)
+        except Exception:
+            return self.connection_status
+
+        if total == 0:
+            # 未接続またはデバイス未検出
+            return self.connection_status
+
+        if alive_cnt == 0:
+            self.connection_status = "Disconnected"
+        elif alive_cnt < total:
+            self.connection_status = f"KeepAlive Failed ({alive_cnt}/{total})"
+        else:
+            if state.startswith("recording"):
+                self.connection_status = "Recording..."
+            else:
+                self.connection_status = "Connected"
+        return self.connection_status
