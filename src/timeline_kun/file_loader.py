@@ -93,3 +93,28 @@ class FileLoader:
 
     def clear(self):
         self.stage_list = []
+
+
+def utf8_to_sjis(tar_path: str) -> bool:
+    try:
+        with open(tar_path, "r", encoding="utf-8") as f:
+            content = f.read()
+    except UnicodeDecodeError as e:
+        print(f"Error converting {tar_path}: {e}")
+        return False
+
+    if _can_encode_cp932(content):
+        with open(tar_path, "w", encoding="cp932", errors="replace") as f:
+            f.write(content)
+    else:
+        print(f"Content in {tar_path} cannot be encoded in cp932.")
+        return False
+    return True
+
+
+def _can_encode_cp932(text: str) -> bool:
+    try:
+        text.encode("cp932")
+        return True
+    except UnicodeEncodeError:
+        return False

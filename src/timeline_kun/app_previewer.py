@@ -442,6 +442,9 @@ class App(ttk.Frame):
             )
 
     def open_excel(self):
+        is_sjis = file_loader.utf8_to_sjis(self.csv_path)
+        if is_sjis:
+            self.csv_encoding = "shift-jis"
         if IS_DARWIN:
             os.system(f"open -a /Applications/Microsoft/ Excel.app {self.csv_path}")
         else:
