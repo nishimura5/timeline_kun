@@ -47,6 +47,17 @@ Timeline-kun integrates four primary functionalities:
 1. Download and extract the ZIP file from the [latest release](https://github.com/nishimura5/timeline_kun/releases)
 2. Double-click "TimelineKun.exe" to run the application
 
+### From PyPI
+```
+uv add timeline-kun
+uv run timeline-kun
+```
+or
+```
+pip install timeline-kun
+python -m timeline_kun
+```
+
 ### Running from development environment
 1. Clone the repository: `git clone https://github.com/nishimura5/timeline_kun.git`
 2. Set up the environment using uv (simply run "uv sync" in the directory containing pyproject.toml)
