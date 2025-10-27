@@ -446,7 +446,7 @@ class App(ttk.Frame):
         if is_sjis:
             self.csv_encoding = "shift-jis"
         if IS_DARWIN:
-            os.system(f"open -a /Applications/Microsoft/ Excel.app {self.csv_path}")
+            os.system(f"open -a '/Applications/Microsoft Excel.app' {self.csv_path}")
         else:
             os.system(f'start excel "{self.csv_path}"')
 
