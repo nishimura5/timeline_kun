@@ -120,7 +120,7 @@ class Tree(ttk.Frame):
             values[4] = dialog.selected_duration
             if dialog.selected_instruction != "":
                 values[6] = dialog.selected_instruction
-            elif dialog.selected_instruction == " ":
+            elif dialog.selected_instruction == " " or dialog.selected_instruction == "":
                 values[6] = ""
 
             self.tree.item(item, values=values)
