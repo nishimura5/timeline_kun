@@ -1,4 +1,4 @@
-# Timeline-kun 1.0.0
+# Timeline-kun 1.0.1
 
 [![DOI](https://zenodo.org/badge/DOI/10.48708/7325764.svg)](https://doi.org/10.48708/7325764)
 [![BIDS Compatible](https://img.shields.io/badge/BIDS-compatible-brightgreen)](https://bids.neuroimaging.io/)
