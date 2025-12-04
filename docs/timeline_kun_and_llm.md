@@ -27,7 +27,7 @@ If you click the **Send to timer** button in the upper-right corner, the timer s
 
 ## Preparing a Schema for ChatGPT
 
-You can edit CSV files easily in Excel or a text editor, and for small adjustments you can also edit them directly within the Timeline-kun application. However, when you need to create a complex schedule, it is even more convenient to make use of ChatGPT.
+You can edit CSV files easily in Excel or a text editor, and for small adjustments you can also edit them directly within the Timeline-kun application. However, when you need to create a complex schedule, it is even more convenient to make use of LLM.
 
 Here we show an example prompt for ChatGPT that generates a CSV file for Timeline-kun.
 
@@ -46,14 +46,38 @@ In such cases, providing a schema helps improve the accuracy of the generated da
     "type": "object",
     "additionalProperties": false,
     "properties": {
-      "title": { "type": "string", "description": "Event name" },
-      "member": { "type": "string", "description": "Person or group" },
-      "start": { "type": "string", "pattern": "^\d{1,2}:[0-5]\d:[0-5]\d$", "description": "Start time H:MM:SS" },
-      "duration": { "type": "string", "pattern": "^\d{1,2}:[0-5]\d:[0-5]\d$", "default": "0:00:05", "description": "Duration H:MM:SS" },
-      "fixed": { "type": "string", "enum": ["start","duration"]},
-      "instruction": { "type": "string", "description": "Notes" }
+      "title": {
+        "type": "string",
+        "description": "Event name",
+        "pattern": "^[^\",\\r\\n]*$"
+      },
+      "member": {
+        "type": "string",
+        "description": "Person or group",
+        "pattern": "^[^\",\\r\\n]*$"
+      },
+      "start": {
+        "type": "string",
+        "pattern": "^\\d{1,2}:[0-5]\\d:[0-5]\\d$",
+        "description": "Start time H:MM:SS"
+      },
+      "duration": {
+        "type": "string",
+        "pattern": "^\\d{1,2}:[0-5]\\d:[0-5]\\d$",
+        "default": "0:00:05",
+        "description": "Duration H:MM:SS"
+      },
+      "fixed": {
+        "type": "string",
+        "enum": ["start", "duration"]
+      },
+      "instruction": {
+        "type": "string",
+        "description": "Notes",
+        "pattern": "^[^\",\\r\\n]*$"
+      }
     },
-    "required": ["title","member","fixed"],
+    "required": ["title", "member", "fixed"],
     "allOf": [
       {
         "if": { "properties": { "fixed": { "const": "start" } } },
@@ -66,19 +90,13 @@ In such cases, providing a schema helps improve the accuracy of the generated da
     ]
   },
   "x-notes": {
-    "csvHeaderOrder": ["title","member","start","duration","fixed","instruction"],
+    "csvHeaderOrder": ["title", "member", "start", "duration", "fixed", "instruction"],
     "rowOrdering": "Array order is execution order. Do not reorder rows.",
     "instructionTrigger": "The instruction field triggers recording only if it contains the exact substring '(recording)' with matching case",
     "rowRules": [
       "All column values may be duplicated across rows",
-      "If duration is not specified, default to 0:00:05"
-    ],
-    "examples": [
-      { "title": "Wake up",    "member": "all member", "start": "0:00:00", "fixed": "start", "instruction": "Good morning! (recording)" },
-      { "title": "Stand by",   "member": "group A",    "start": "0:10:00", "fixed": "start" },
-      { "title": "Walking",    "member": "group B",    "start": "0:11:00", "duration": "0:05:00", "fixed": "start" },
-      { "title": "Stand by",   "member": "sub-001",    "duration": "0:00:20", "fixed": "duration" },
-      { "title": "Monitoring", "member": "sub-001/ses-01",    "duration": "0:20:00", "fixed": "duration", "instruction": "Skip when core body temperature reaches 38.5°C" }
+      "If duration is not specified, default to 0:00:05",
+      "Do not enclose each cell in double quotes in the CSV. Instead, do not include double quotes, commas, or line breaks in the values."
     ]
   }
 }
@@ -95,7 +113,7 @@ Here is an example of a prompt you might actually send to ChatGPT:
 ```text
 Please generate a CSV file according to this schema.
 Three 5-minute sessions, with 1-minute changeover times in between, and a 10-minute discussion at the end.
-Please provide the result as a CSV file. The language should be Japanese.
+Please provide the result as a CSV file.
 ```
 
 ### Example ChatGPT Response
@@ -106,12 +124,12 @@ An example response from ChatGPT might look like this (visualized here as a tabl
 
 ```csv
 title,member,start,duration,fixed,instruction
-Session 1,Group A,0:00:00,0:05:00,start,Start recording (recording)
+Session 1,All,0:00:00,0:05:00,start,
 Changeover 1,All,0:05:00,0:01:00,start,
-Session 2,Group B,0:06:00,0:05:00,start,
+Session 2,All,0:06:00,0:05:00,start,
 Changeover 2,All,0:11:00,0:01:00,start,
-Session 3,Group C,0:12:00,0:05:00,start,
-Discussion,All,0:17:00,0:10:00,start,Wrap-up discussion
+Session 3,All,0:12:00,0:05:00,start,
+Discussion,All,0:17:00,0:10:00,start,
 ```
 
 As long as your instructions are consistent and contain no omissions, even a concise prompt like the one above can produce an accurate CSV file. After adjusting the `title` or `instruction` fields as needed, you can use the result directly as a timer schedule in Timeline-kun.
