@@ -1,0 +1,27 @@
+title,member,start,duration,fixed,instruction
+Idle,test,,0:05:00,duration,
+Record 1,test,,0:05:00,duration,(recording)
+Idle,test,,0:05:00,duration,
+Record 2,test,,0:05:00,duration,(recording)
+Idle,test,,0:05:00,duration,
+Record 3,test,,0:05:00,duration,(recording)
+Idle,test,,0:05:00,duration,
+Record 4,test,,0:05:00,duration,(recording)
+Idle,test,,0:05:00,duration,
+Record 5,test,,0:05:00,duration,(recording)
+Idle,test,,0:05:00,duration,
+Record 6,test,,0:05:00,duration,(recording)
+Idle,test,,0:05:00,duration,
+Record 7,test,,0:05:00,duration,(recording)
+Idle,test,,0:05:00,duration,
+Record 8,test,,0:05:00,duration,(recording)
+Idle,test,,0:05:00,duration,
+Record 9,test,,0:05:00,duration,(recording)
+Idle,test,,0:05:00,duration,
+Record 10,test,,0:05:00,duration,(recording)
+Idle,test,,0:05:00,duration,
+Record 11,test,,0:05:00,duration,(recording)
+Idle,test,,0:05:00,duration,
+Record 12,test,,0:05:00,duration,(recording)
+Idle,test,,0:05:00,duration,
+Record long,test,,1:00:00,duration,(recording)

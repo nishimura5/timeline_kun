@@ -16,7 +16,13 @@ if file_loader.get_encoding is None:
         "Could not import 'get_encoding' from 'timeline_kun.file_loader.FileLoader'"
     )
 
-PARAMS = [("ja_utf8.csv", "utf-8"), ("ja_sjis.csv", "shift-jis")]
+RECORDING_FILES = sorted(p.name for p in FIXTURE_DIR.glob("recording*.csv"))
+
+PARAMS = [
+    ("ja_utf8.csv", "utf-8"),
+    ("ja_sjis.csv", "shift-jis"),
+    *[(name, "utf-8") for name in RECORDING_FILES],
+]
 
 
 @pytest.mark.parametrize("filename, expected_encoding", PARAMS)
