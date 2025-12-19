@@ -18,8 +18,8 @@ dependencies = [
     "bleak>=0.22.3",
 ]
 
-[tool.uv]
-dev-dependencies =[
+[dependency-groups]
+dev = [
     "pyinstaller>=6.11.0",
     "pyinstaller-versionfile>=2.1",
     "pytest>=8.3",
