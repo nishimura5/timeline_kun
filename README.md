@@ -1,13 +1,28 @@
 # Timeline-kun 1.0.1
 
+[![Release](https://img.shields.io/github/v/release/nishimura5/timeline_kun)](https://github.com/nishimura5/timeline_kun/releases)
 [![DOI](https://zenodo.org/badge/DOI/10.48708/7325764.svg)](https://doi.org/10.48708/7325764)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![BIDS Compatible](https://img.shields.io/badge/BIDS-compatible-brightgreen)](https://bids.neuroimaging.io/)
 [![GoPro](https://img.shields.io/badge/GoPro-HERO11%20%2B-4cbee0?logo=gopro&logoColor=white)](https://gopro.com)
-[![Release](https://img.shields.io/github/v/release/nishimura5/timeline_kun)](https://github.com/nishimura5/timeline_kun/releases)
 [![CI](https://github.com/nishimura5/timeline_kun/actions/workflows/ci.yml/badge.svg)](https://github.com/nishimura5/timeline_kun/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/timeline-kun.svg)](https://pypi.org/project/timeline-kun/)
 
 
 Timeline-kun is an integrated graphical interface tool for planning and executing experimental protocols.
+
+## Quick start
+
+### Option A: Windows (standalone)
+1. Download the latest `.exe` from the Releases page:
+   https://github.com/nishimura5/timeline_kun/releases
+2. Double-click to launch.
+
+### Option B: Python (PyPI)
+```bash
+pip install timeline-kun
+python -m timeline_kun
+```
 
 ## Screen shot
 
