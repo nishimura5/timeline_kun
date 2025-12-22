@@ -4,6 +4,8 @@
 [![BIDS Compatible](https://img.shields.io/badge/BIDS-compatible-brightgreen)](https://bids.neuroimaging.io/)
 [![GoPro](https://img.shields.io/badge/GoPro-HERO11%20%2B-4cbee0?logo=gopro&logoColor=white)](https://gopro.com)
 [![Release](https://img.shields.io/github/v/release/nishimura5/timeline_kun)](https://github.com/nishimura5/timeline_kun/releases)
+[![CI](https://github.com/nishimura5/timeline_kun/actions/workflows/ci.yml/badge.svg)](https://github.com/nishimura5/timeline_kun/actions/workflows/ci.yml)
+
 
 Timeline-kun is an integrated graphical interface tool for planning and executing experimental protocols.
 
