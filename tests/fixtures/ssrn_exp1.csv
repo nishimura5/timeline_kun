@@ -1,0 +1,9 @@
+title,member,start,duration,fixed,instruction
+Enter,Exp 1,0:00:00,,start,
+Task (begin),Exp 1,0:20:00,0:05:00,start,
+Monitoring,Exp 1,,0:35:00,duration,Skip when core body temperature reaches 38.5‹C
+Task (end),Exp 1,,0:05:00,duration,
+Exit,Exp 1,,0:05:00,duration,
+Monitoring,Exp 1,,0:20:00,duration,
+Monitoring (additional),Exp 1,,0:20:00,duration,Skip when core body temperature reaches 38‹C
+,,,,,

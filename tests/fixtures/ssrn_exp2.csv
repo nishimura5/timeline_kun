@@ -1,0 +1,7 @@
+title,member,start,duration,fixed,instruction
+Stand by 1,Exp 2,,0:03:00,duration,Skip when ready
+Walking 1,Exp 2,,0:07:00,duration,-
+Stand by 2,Exp 2,,0:03:00,duration,Skip when ready
+Walking 2,Exp 2,,0:07:00,duration,-
+Stand by 3,Exp 2,,0:03:00,duration,Skip when ready
+Walking 3,Exp 2,,0:07:00,duration,Measurement phase

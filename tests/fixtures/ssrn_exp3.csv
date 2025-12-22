@@ -1,0 +1,9 @@
+title,member,start,duration,fixed,instruction
+Wake up,Exp 3-A,0:00:00,,start,
+Breakfast,Exp 3-A,1:25:00,1:00:00,start,
+Rest,Exp 3-M,5:25:00,0:25:00,start,
+Exercise,Exp 3-M,,0:15:00,duration,
+Lunch,Exp 3-A,6:45:00,1:00:00,start,
+Dinner,Exp 3-B,10:45:00,,start,
+Snack,Exp 3-B,12:10:00,,start,
+Sleep,Exp 3-B,13:20:00,6:40:00,start,

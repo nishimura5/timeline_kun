@@ -24,6 +24,24 @@ class TimeTable:
         # header-correct_header dictionary to get the index of each header
         header_dict = {header[i]: i for i in range(len(header))}
 
+        # Header must include title, member, duration, start, fixed
+        required_headers = [
+            "title",
+            "member",
+            "duration",
+            "start",
+            "fixed",
+            "instruction",
+        ]
+        missing_headers = []
+        for rh in required_headers:
+            if rh not in header_dict.keys():
+                missing_headers.append(rh)
+        if len(missing_headers) > 0:
+            raise ValueError(
+                f"Header missing required field: {', '.join(missing_headers)}"
+            )
+
         # Process each row
         if "end" not in header_dict.keys():
             is_no_end = True
@@ -51,18 +69,18 @@ class TimeTable:
             duration_sec = time_format.time_str_to_seconds(duration_sec_str)
             start_sec = time_format.time_str_to_seconds(start_sec_str)
             end_sec = time_format.time_str_to_seconds(end_sec_str)
-            if fixed not in ["start", "duration", "none"]:
+            if fixed not in ["start", "duration"]:
                 raise ValueError(f"[line {i + 1}] Invalid fixed code: {fixed}")
 
             has_error = False
             if fixed == "start":
                 if start_sec < self.current_time:
-                    warn_msg = f"[line {i + 1}] {title} Conflict with the previous line"
+                    warn_msg = f"[line {i + 1}] {title} conflict with the previous line"
                     has_error = True
 
                 if start_sec == 0 and i != 0:
                     raise ValueError(
-                        f"[line {i + 1}] start_sec must be set in fixed==start"
+                        f"[line {i + 1}] Start must be set in fixed==start"
                     )
                 if duration_sec > 0:
                     end_sec = start_sec + duration_sec
@@ -79,7 +97,7 @@ class TimeTable:
             elif fixed == "duration":
                 if duration_sec == 0:
                     raise ValueError(
-                        f"[line {i + 1}] duration_sec must be set in fixed==duration"
+                        f"[line {i + 1}] Duration must be set in fixed==duration"
                     )
                 if start_sec == 0 and end_sec == 0:
                     start_sec = self.current_time
@@ -92,7 +110,7 @@ class TimeTable:
                     start_sec = end_sec - duration_sec
                 if (i > 0) and (has_end_time is False):
                     warn_msg = (
-                        f"[line {i + 1}] No Duration (or End) in the previous line"
+                        f"[line {i + 1}] No duration (or end) in the previous line"
                     )
                     has_error = True
 
@@ -118,6 +136,16 @@ class TimeTable:
             # Update current time
             self.current_time = end_sec
             has_end_time = end_sec_str != "" or duration_sec_str != ""
+
+        # Check start times are non-decreasing
+        for i in range(1, len(self.time_table)):
+            if self.time_table[i]["start"] < self.time_table[i - 1]["start"]:
+                warn_msg = (
+                    f"[line {i + 1}] Start time is earlier than the previous line"
+                )
+                self.time_table[i]["has_error"] = True
+                break
+
         return warn_msg
 
     def _asign(self, line_str, header_dict, is_no_end=False):
