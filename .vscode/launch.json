@@ -1,11 +1,12 @@
 {
     "version": "0.2.0",
     "configurations": [
-            {
-      "name": "Run: timeline_kun (module via uv .venv)",
+    {
+      "name": "Run: timeline_kun (module via .venv)",
       "type": "python",
       "request": "launch",
       "module": "timeline_kun",
+      "python": "${workspaceFolder}/.venv/bin/python",
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}",
       "envFile": "${workspaceFolder}/.env",
