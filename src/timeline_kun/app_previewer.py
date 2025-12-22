@@ -37,7 +37,6 @@ class App(ttk.Frame):
             head_frame, text="Send to timer", command=self.open_timer
         )
         self.timer_btn.pack(padx=5, side=tk.RIGHT)
-        self.timer_btn["state"] = "disabled"
 
         values = ["orange", "cyan", "lightgreen"]
         self.timer_color_combobox = Combobox(head_frame, "Color:", values, width=12)
@@ -46,12 +45,14 @@ class App(ttk.Frame):
         send_timer_frame = ttk.Frame(master)
         send_timer_frame.pack(padx=10, pady=(5, 10), fill=tk.X)
 
-        excel_btn = ttk.Button(
+        self.send_excel_btn = ttk.Button(
             send_timer_frame, text="Send to Excel", width=13, command=self.open_excel
         )
-        excel_btn.pack(padx=5, side=tk.LEFT)
-        reload_btn = ttk.Button(send_timer_frame, text="Reload", command=self.load_file)
-        reload_btn.pack(padx=5, side=tk.LEFT)
+        self.send_excel_btn.pack(padx=5, side=tk.LEFT)
+        self.reload_btn = ttk.Button(
+            send_timer_frame, text="Reload", command=self.load_file
+        )
+        self.reload_btn.pack(padx=5, side=tk.LEFT)
 
         values = ["mm:ss", "h:mm:ss"]
         self.time_format_combobox = Combobox(
@@ -74,10 +75,10 @@ class App(ttk.Frame):
         self.direction_combobox.pack_horizontal(padx=5, side=tk.LEFT, anchor=tk.E)
         self.direction_combobox.set_selected_bind(lambda e: self.draw_stages())
 
-        export_svg_btn = ttk.Button(
+        self.export_svg_btn = ttk.Button(
             send_timer_frame, text="Export SVG", command=self.export_svg
         )
-        export_svg_btn.pack(padx=5, side=tk.LEFT)
+        self.export_svg_btn.pack(padx=5, side=tk.LEFT)
 
         # error message frame
         msg_frame = ttk.Frame(send_timer_frame)
@@ -115,6 +116,11 @@ class App(ttk.Frame):
 
         # ctrl+z shortcut control
         master.bind("<Control-z>", self.undo)
+
+        self.timer_btn["state"] = "disabled"
+        self.reload_btn["state"] = "disabled"
+        self.send_excel_btn["state"] = "disabled"
+        self.export_svg_btn["state"] = "disabled"
 
         self.csv_path = None
         self.start_index = 0
@@ -333,13 +339,17 @@ class App(ttk.Frame):
 
     def load_file(self):
         self.start_index = 0
+        self.clear_tree_and_canvas()
         self.file_path_label.config(text=self.csv_path)
+        self.send_excel_btn["state"] = "normal"
+        self.reload_btn["state"] = "normal"
 
         fl = file_loader.FileLoader()
         try:
             warn_msg, timetable = fl.load_file_for_preview(self.csv_path)
         except Exception as e:
             self.timer_btn["state"] = "disabled"
+            self.export_svg_btn["state"] = "disabled"
             self.msg_label.config(text=f"[ERROR]{e}")
             return
 
@@ -367,13 +377,23 @@ class App(ttk.Frame):
         if warn_msg != "":
             self.msg_label.config(text=f"[ERROR]{warn_msg}")
             self.timer_btn["state"] = "disabled"
+            self.export_svg_btn["state"] = "disabled"
         else:
             self.msg_label.config(text="Successfully loaded.")
             self.timer_btn["state"] = "normal"
+            self.export_svg_btn["state"] = "normal"
 
         self.csv_encoding = fl.get_encoding()
         if self.csv_encoding is not None:
             self.tree.set_write_encoding(self.csv_encoding)
+
+    def clear_tree_and_canvas(self):
+        self.tree.clear()
+        self.canvas.delete("all")
+        self.send_excel_btn["state"] = "disabled"
+        self.reload_btn["state"] = "disabled"
+        self.timer_btn["state"] = "disabled"
+        self.export_svg_btn["state"] = "disabled"
 
     def asign_rect_color(self):
         title_list = list(set([s["title"] for s in self.stage_list]))
