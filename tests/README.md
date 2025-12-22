@@ -11,20 +11,6 @@ uv sync --group dev
 uv run pytest
 ```
 
-If you do not use `uv`, install `pytest` in your environment and run:
-
-```bash
-pytest
-```
-
-## Coverage
-
-To measure test coverage, install `pytest-cov` (included in the `dev` dependency group) and run:
-
-```bash
-uv sync --group dev
-uv run pytest --cov=timeline_kun --cov-report=term-missing
-```
 
 ## Test files
 
@@ -39,6 +25,17 @@ uv run pytest --cov=timeline_kun --cov-report=term-missing
 	- CSV loading and validation tests using fixture files under `tests/fixtures/`.
 
 ## Fixtures
+
+The fixtures cover cases such as:
+
+- Invalid or missing headers (missing required columns)
+- Invalid `fixed` codes (only `start` or `duration` are accepted)
+- Missing values in required fields
+- Temporal inconsistencies (e.g., start times that go backwards, or overlaps)
+- Last-row edge cases where an end time cannot be inferred
+- Text encoding detection:
+	- Accepts UTF-8 and Shift-JIS
+	- Rejects unsupported encodings
 
 Fixture CSVs live in `tests/fixtures/`. They are used mainly by `test_file_loader.py`.
 
@@ -64,14 +61,3 @@ Fixtures are named to make intent obvious from the filename:
 - `valid__header_only.csv`: minimal valid CSV (header only)
 - `valid__with_end_column.csv`: valid CSV with `end` column
 - `valid__time_format__mmss.csv`: supported time format variant (MM:SS)
-
-The fixtures cover cases such as:
-
-- Invalid or missing headers (missing required columns)
-- Invalid `fixed` codes (only `start` or `duration` are accepted)
-- Missing values in required fields
-- Temporal inconsistencies (e.g., start times that go backwards, or overlaps)
-- Last-row edge cases where an end time cannot be inferred
-- Text encoding detection:
-	- Accepts UTF-8 and Shift-JIS
-	- Rejects unsupported encodings
