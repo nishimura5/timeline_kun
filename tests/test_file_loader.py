@@ -24,50 +24,59 @@ def _fixture_path(filename: str) -> str:
 INVALID_CASES = [
     # filename, expected_warn_msg, expected_err_msg
     (
-        "blank.csv",
+        "invalid__header__missing_required_columns.csv",
         "",
         "Header missing required field: title, member, duration, start, fixed, instruction",
     ),
-    ("invalid_fixed_code.csv", "", "[line 1] Invalid fixed code: none"),
+    ("invalid__fixed__unsupported_code.csv", "", "[line 1] Invalid fixed code: none"),
     (
-        "non_decreasing_start.csv",
+        "warn__time__start_earlier_than_previous.csv",
         "[line 2] Start time is earlier than the previous line",
         None,
     ),
     (
-        "no_start.csv",
+        "invalid__required__missing_start_when_fixed_start.csv",
         "",
         "[line 2] Start must be set in fixed==start",
     ),
     (
-        "no_duration.csv",
+        "invalid__required__missing_duration_when_fixed_duration.csv",
         "",
         "[line 1] Duration must be set in fixed==duration",
     ),
-    ("no_duration_last_row.csv", "", "[line 2] No next line"),
-    ("conflict_rows.csv", "[line 2] Task2 conflict with the previous line", None),
+    ("invalid__last_row__cannot_infer_end_time.csv", "", "[line 2] No next line"),
+    (
+        "warn__time__overlap_with_previous.csv",
+        "[line 2] Task2 conflict with the previous line",
+        None,
+    ),
 ]
 
 VALID_CASES = [
     # filename
-    ("only_header.csv"),
-    ("with_end.csv"),
-    ("mmss_format.csv"),
+    ("valid__header_only.csv"),
+    ("valid__with_end_column.csv"),
+    ("valid__time_format__mmss.csv"),
     # CSVs used in manual test
-    ("recording_1.csv"),
-    ("recording_2.csv"),
-    ("recording_3hour.csv"),
+    ("valid__recording__example_1.csv"),
+    ("valid__recording__example_2.csv"),
+    ("valid__recording__example_3hour.csv"),
     # CSVs used in SSRN
-    ("ssrn_exp1.csv"),
-    ("ssrn_exp2.csv"),
-    ("ssrn_exp3.csv"),
+    ("valid__ssrn__exp1.csv"),
+    ("valid__ssrn__exp2.csv"),
+    ("valid__ssrn__exp3.csv"),
 ]
 
 TEXT_ENCODING_CASES = [
     # filename, expected_encoding, expected_warn_msg, expected_err_msg
-    ("ja_utf8.csv", "utf-8", "", None),
-    ("ja_sjis.csv", "shift-jis", "", None),
-    ("ja_euc.csv", "utf-8", "", "File encoding not supported (not UTF-8 or Shift-JIS)"),
+    ("valid__encoding__utf8.csv", "utf-8", "", None),
+    ("valid__encoding__shift_jis.csv", "shift-jis", "", None),
+    (
+        "invalid__encoding__unsupported.csv",
+        "utf-8",
+        "",
+        "File encoding not supported (not UTF-8 or Shift-JIS)",
+    ),
 ]
 
 
