@@ -14,18 +14,26 @@ class FileLoader:
 
     def _read_file(self, tar_path):
         self.stage_list = []
+        self.encoding = None
+
         if not os.path.exists(tar_path):
             print(f"File not found: {tar_path}")
             return None
         try:
             with open(tar_path, "r", encoding="utf-8") as f:
-                self.encoding = "utf-8"
-                return f.read()
+                content = f.read()
+            self.encoding = "utf-8"
+            return content
         except UnicodeDecodeError:
             print("UTF-8 decoding failed, falling back to Shift-JIS")
-            with open(tar_path, "r", encoding="shift-jis") as f:
+            try:
+                with open(tar_path, "r", encoding="shift-jis") as f:
+                    content = f.read()
                 self.encoding = "shift-jis"
-                return f.read()
+                return content
+            except UnicodeDecodeError:
+                self.encoding = None
+                raise ValueError("File encoding not supported (not UTF-8 or Shift-JIS)")
 
     def load_file_for_preview(self, csv_path):
         timetable_csv_str = self._read_file(csv_path)
