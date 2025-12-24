@@ -140,10 +140,10 @@ class App(ttk.Frame):
         self.is_skip = False
         self.disp_time = datetime.timedelta(seconds=0)
 
-        print(f"CSV file path: {file_path}")
+        print(f"Timeline CSV file path: {file_path}")
         self.csv_path = file_path
-        #        self.tlog = timer_log.TimerLog(self.csv_path)
 
+        # Make events.tsv
         self.bids_log = timer_log.BIDSLog(self.csv_path)
 
         self.load_file(start_index)

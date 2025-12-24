@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 
-from . import time_format
+from . import events_json, time_format
 
 
 class TimerLog:
@@ -59,19 +59,28 @@ class BIDSLog:
         # BIDS events.tsv format
         tar_dir = os.path.dirname(csv_file_path)
         tar_name = os.path.basename(csv_file_path).split(".")[0]
-        self.events_path = os.path.join(tar_dir, f"{tar_name}_")
+
+        self.output_dir = os.path.join(tar_dir, f"{tar_name}_bids")
+        os.makedirs(self.output_dir, exist_ok=True)
+
+        self.events_path = os.path.join(self.output_dir, f"{tar_name}_")
 
         # scans.tsv file
-        self.scans_path = os.path.join(tar_dir, f"{tar_name}_scans.tsv")
+        self.scans_path = os.path.join(self.output_dir, f"{tar_name}_scans.tsv")
         if os.path.exists(self.scans_path) is False:
             with open(self.scans_path, "w") as f:
                 f.write("filename\tacq_time\n")
+
         self.task_name = None
         self.task_start_dt = None
 
     def _write_log(self, onset, duration, trial_type):
         with open(self.file_path, "a") as f:
             f.write(f"{onset:<.1f}\t{duration:<.1f}\t{trial_type}\n")
+
+    def make_events_json(self):
+        prefix = self.file_path.rsplit("_events.tsv", 1)[0]
+        events_json.make_events_json(prefix)
 
     def _write_scans_log(self, filename, acq_time):
         with open(self.scans_path, "a") as f:
