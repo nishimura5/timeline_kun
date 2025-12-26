@@ -420,7 +420,7 @@ def main(
         current_dir = os.path.dirname(sys.executable)
     else:
         current_dir = os.path.dirname(__file__)
-    ble_file_name = os.path.join(current_dir, "ble_devices.toml")
+    ble_file_name = os.path.join(current_dir, "config.toml")
     with open(ble_file_name, "rb") as f:
         toml = tomllib.load(f)
     toml_dict = toml.get(fg_color, {})
