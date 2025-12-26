@@ -60,7 +60,7 @@ class BIDSLog:
         tar_dir = os.path.dirname(csv_file_path)
         tar_name = os.path.basename(csv_file_path).split(".")[0]
 
-        self.output_dir = os.path.join(tar_dir, f"{tar_name}_bids")
+        self.output_dir = os.path.join(tar_dir, "log")
         os.makedirs(self.output_dir, exist_ok=True)
 
         self.events_path = os.path.join(self.output_dir, f"{tar_name}_")
