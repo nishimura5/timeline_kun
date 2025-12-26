@@ -145,6 +145,9 @@ class App(ttk.Frame):
 
         # Make events.tsv
         self.bids_log = timer_log.BIDSLog(self.csv_path)
+        make_events_json = toml_dict.get("make_events_json", False)
+        if make_events_json:
+            self.bids_log.make_events_json()
 
         self.load_file(start_index)
 
@@ -415,7 +418,7 @@ def main(
     else:
         is_hmmss = False
 
-    # BLE
+    # Load toml config
     if getattr(sys, "frozen", False):
         current_dir = os.path.dirname(sys.executable)
     else:
@@ -423,7 +426,12 @@ def main(
     ble_file_name = os.path.join(current_dir, "config.toml")
     with open(ble_file_name, "rb") as f:
         toml = tomllib.load(f)
-    toml_dict = toml.get(fg_color, {})
+    # Construct toml_dict for App
+    ble_conf = toml.get("ble", {}).get(fg_color, {})
+    log_conf = toml.get("log", {})
+    toml_dict = {**ble_conf, **log_conf}
+
+    print(f"TOML config: {toml_dict}")
 
     app = App(
         root,

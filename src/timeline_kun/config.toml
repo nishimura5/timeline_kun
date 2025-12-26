@@ -1,11 +1,15 @@
-[orange]
+
+[ble.orange]
 ble_names = []
 stop_delay_sec = 2
 
-[cyan]
+[ble.cyan]
 ble_names = []
 stop_delay_sec = 2
 
-[lightgreen]
+[ble.lightgreen]
 ble_names = []
 stop_delay_sec = 2
+
+[log]
+make_events_json = true

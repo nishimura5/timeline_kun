@@ -1,3 +1,5 @@
+import os
+
 
 def make_events_json(file_prefix):
     json_content = """
@@ -19,5 +21,7 @@ def make_events_json(file_prefix):
 }
 """
     json_file_path = f"{file_prefix}_events.json"
+    if os.path.exists(json_file_path):
+        return
     with open(json_file_path, "w") as f:
         f.write(json_content)

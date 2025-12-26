@@ -159,15 +159,15 @@ There are two primary methods for determining event timing in Timeline-kun, whic
 For GoPro models starting from HERO11 that support BLE communication, recording can be automatically started 4 seconds before a specified event (for the first event, recording starts simultaneously with the event). By entering "(recording)" in the event instruction, that event will be marked for recording. It is possible to send commands to start and stop recording on multiple GoPro devices. The target GoPro devices for control are specified in config.toml. Below is an example configuration where each of the three timers is assigned to a different GoPro. The parameter stop_delay_sec specifies the delay time (in seconds) between the end of an event and stopping the recording.
 
 ```
-[orange]
+[ble.orange]
 ble_names = ["GoPro 2700", "GoPro 4256"]
 stop_delay_sec = 2
 
-[cyan]
+[ble.cyan]
 ble_names = ["GoPro 1320"]
 stop_delay_sec = 2
 
-[lightgreen]
+[ble.lightgreen]
 ble_names = []
 stop_delay_sec = 2
 ```

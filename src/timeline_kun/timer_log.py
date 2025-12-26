@@ -79,8 +79,8 @@ class BIDSLog:
             f.write(f"{onset:<.1f}\t{duration:<.1f}\t{trial_type}\n")
 
     def make_events_json(self):
-        prefix = self.file_path.rsplit("_events.tsv", 1)[0]
-        events_json.make_events_json(prefix)
+        json_path = self.events_path + "events.json"
+        events_json.make_events_json(json_path)
 
     def _write_scans_log(self, filename, acq_time):
         with open(self.scans_path, "a") as f:
