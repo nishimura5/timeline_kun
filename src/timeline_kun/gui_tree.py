@@ -3,10 +3,12 @@ import re
 import sys
 import tkinter as tk
 from tkinter import ttk
+from typing import Literal
 
 from . import time_format, timetable_to_csv
 
 IS_DARWIN = sys.platform.startswith("darwin")
+ValidateMode = Literal["none", "focus", "focusin", "focusout", "key", "all"]
 
 
 class Tree(ttk.Frame):
@@ -406,12 +408,20 @@ class TimeEntry(ttk.Frame):
 
         label = ttk.Label(self, text=label_text)
         label.pack(side=tk.LEFT)
+        self._focusin_value = ""
+        self._validate_mode: ValidateMode = "focusout"
+
         vcmd = (self.register(self._validate), "%P")
         invcmd = (self.register(self._invalid), "%P")
         self.time_entry = ttk.Entry(
-            self, width=7, validatecommand=vcmd, invalidcommand=invcmd
+            self,
+            width=7,
+            validate="focusout",
+            validatecommand=vcmd,
+            invalidcommand=invcmd,
         )
         self.time_entry.pack(side=tk.LEFT)
+        self.time_entry.bind("<FocusIn>", self._on_focus_in)
 
     def set_time(self, time_str):
         self.time_entry.delete(0, tk.END)
@@ -446,13 +456,78 @@ class TimeEntry(ttk.Frame):
     def is_blank(self):
         return self.time_entry.get() == ""
 
-    def _validate(self, text):
-        p = r"(?:[0-5]?\d):[0-5]?\d"
-        m = re.match(p, text)
-        return m is not None
+    def _validate(self, text: str) -> bool:
+        if text is None:
+            return False
+
+        text = text.strip()
+        if text == "":
+            return True
+
+        # Only digits and ":" allowed
+        if not re.fullmatch(r"[0-9:]+", text):
+            return False
+
+        # At most two colons
+        if text.count(":") > 2:
+            return False
+
+        parts = text.split(":")
+
+        # Helper: validate a 0-59 field (minute/second) with partial typing support
+        def valid_0_59_field(field: str) -> bool:
+            if field == "":
+                return True  # allow partial like "1:" or "1:2:"
+            if not field.isdigit():
+                return False
+            if len(field) > 2:
+                return False
+            if len(field) == 2 and int(field) > 59:
+                return False
+            return True  # len==1 is always allowed while typing
+
+        # 1-colon: M:SS  (M can be any length >=1 once completed)
+        if len(parts) == 2:
+            m, s = parts
+
+            # minutes part: allow partial typing ("" only allowed if user starts with ":"; optional)
+            if m != "" and not m.isdigit():
+                return False
+
+            # seconds must be 0-59 once 2 digits are present; <=2 digits always
+            return valid_0_59_field(s)
+
+        # 2-colon: H:MM:SS
+        if len(parts) == 3:
+            h, m, s = parts
+
+            # hours part: any non-negative integer, allow partial ("" while typing)
+            if h != "" and not h.isdigit():
+                return False
+
+            # minutes/seconds are 0-59 fields
+            if not valid_0_59_field(m):
+                return False
+            if not valid_0_59_field(s):
+                return False
+
+            return True
+
+        return text.isdigit()
 
     def _invalid(self, text):
-        self.time_entry.delete(0, tk.END)
+        # revert to previous value
+        self.time_entry.config(validate="none")
+        try:
+            self.time_entry.delete(0, tk.END)
+            self.time_entry.insert(0, self._focusin_value)
+        finally:
+            self.time_entry.config(validate=self._validate_mode)
+
+        self.time_entry.after_idle(self.time_entry.focus_set)
+
+    def _on_focus_in(self, event):
+        self._focusin_value = self.time_entry.get()
 
 
 class TimeRangeLabel(ttk.Frame):

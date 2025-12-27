@@ -21,20 +21,31 @@ def timedelta_to_str_mm_ss(td):
 
 def seconds_to_time_str(src):
     if isinstance(src, str):
-        if src == "":
+        s = src.strip()
+        if s == "":
             return ""
-        colons = src.count(":")
+
+        colons = s.count(":")
         if colons == 2:
-            return src
+            h, m, sec = s.split(":")
+            total = int(h) * 3600 + int(m) * 60 + int(sec)
+            return seconds_to_time_str(total)
+
         elif colons == 1:
-            minutes, seconds = src.split(":")
-            hours = int(minutes) // 60
-            minutes = int(minutes) % 60
-            return f"{hours}:{minutes:02}:{int(seconds):02}"
+            minutes, seconds = s.split(":")
+            minutes_i = int(minutes)
+            seconds_i = int(seconds)
+            total = minutes_i * 60 + seconds_i
+            return seconds_to_time_str(total)
+
         elif colons == 0:
-            sec = int(src)
+            sec = int(s)
+        else:
+            raise ValueError(f"Invalid time format: {src!r}")
+
     else:
-        sec = src
+        sec = int(src)
+
     hours = sec // 3600
     remain = sec - (hours * 3600)
     minutes = remain // 60
