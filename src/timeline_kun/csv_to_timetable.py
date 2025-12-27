@@ -154,15 +154,12 @@ class TimeTable:
         member = splited_line[header_dict["member"]]
         duration_sec_str = splited_line[header_dict["duration"]]
         start_sec_str = splited_line[header_dict["start"]]
+        instruction = splited_line[header_dict["instruction"]]
         if is_no_end:
             end_sec_str = ""
         else:
             end_sec_str = splited_line[header_dict["end"]]
         fixed = splited_line[header_dict["fixed"]]
-        if "instruction" in header_dict.keys():
-            instruction = splited_line[header_dict["instruction"]]
-        else:
-            instruction = ""
         return (
             title,
             member,
