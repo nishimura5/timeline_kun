@@ -120,7 +120,7 @@ TASK C,MEMBER1,,0:05:00,duration,
 | TASK C | MEMBER1 |         | 0:05:00  | duration |             |
 | ...    | ...     | ...     | ...      | ...      | ...         |
 
-For Japanese user: Excelで編集したCSVファイル（つまりShift-JISでエンコーディングされたCSVファイル）も読み込むことができます。最初にUTF-8での読み込みを試みて、失敗するとShift-JISにフォールバックします。
+For Japanese user: Excelで編集したCSVファイル（つまりShift-JISでエンコーディングされたCSVファイル）も読み込むことができます。内部的には、最初にUTF-8での読み込みを試みて、Shift-JISにフォールバックします。
 
 ### Scheduling Methods
 
@@ -156,7 +156,9 @@ There are two primary methods for determining event timing in Timeline-kun, whic
 
 ## GoPro Control
 
-For GoPro models starting from HERO11 that support BLE communication, recording can be automatically started 4 seconds before a specified event (for the first event, recording starts simultaneously with the event). By entering "(recording)" in the event instruction, that event will be marked for recording. It is possible to send commands to start and stop recording on multiple GoPro devices. The target GoPro devices for control are specified in config.toml. Below is an example configuration where each of the three timers is assigned to a different GoPro. The parameter stop_delay_sec specifies the delay time (in seconds) between the end of an event and stopping the recording.
+For GoPro models starting from HERO11 that support BLE communication, recording can be automatically started shortly before a specified event begins (5 seconds before the next event starts). For the first event, recording starts at the beginning of the event. By entering "(recording)" in the event instruction, that event will be marked for recording. It is possible to send commands to start and stop recording on multiple GoPro devices.
+
+The target GoPro devices for control are specified in config.toml (loaded from the application directory). Below is an example configuration where each of the three timers (orange/cyan/lightgreen) is assigned to a different GoPro. The parameter stop_delay_sec specifies the delay time (in seconds) between the end of an event and stopping the recording (default: 2).
 
 ```
 [ble.orange]
@@ -170,15 +172,24 @@ stop_delay_sec = 2
 [ble.lightgreen]
 ble_names = []
 stop_delay_sec = 2
+
+[log]
+make_events_json = true
 ```
 
 ## Log File Format
 
 Timer execution logs conform to the BIDS (Brain Imaging Data Structure) events.tsv format. The log files are stored in the same directory as the Timeline CSV file, with file names in the format:
 
-<timeline_csv_name>_00_events.tsv.
+log/<timeline_csv_name>_00_events.tsv.
+
+Additionally, a scans file is written to:
+
+log/<timeline_csv_name>_scans.tsv.
 
 Each time the timer is started, the number (00) is incremented and saved.
+
+If [log].make_events_json is set to true in config.toml, an events JSON sidecar will also be generated in the log/ directory (current implementation writes: log/<timeline_csv_name>_events.json_events.json).
 
 A sample log is shown below:
 
