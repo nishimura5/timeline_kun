@@ -165,7 +165,7 @@ log/<timeline_csv_name>_scans.tsv.
 
 Each time the timer is started, the number (00) is incremented and saved.
 
-If [log].make_events_json is set to true in config.toml, an events JSON sidecar will also be generated in the log/ directory (current implementation writes: log/<timeline_csv_name>_events.json_events.json).
+If [log].make_events_json is set to true in config.toml, an events JSON sidecar will also be generated in the log/ directory.
 
 A sample log is shown below:
 
