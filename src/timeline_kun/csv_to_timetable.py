@@ -66,9 +66,9 @@ class TimeTable:
                 instruction,
             ) = self._asign(line, header_dict, is_no_end)
 
-            duration_sec = time_format.time_str_to_seconds(duration_sec_str)
-            start_sec = time_format.time_str_to_seconds(start_sec_str)
-            end_sec = time_format.time_str_to_seconds(end_sec_str)
+            duration_sec = time_format.str_to_seconds(duration_sec_str)
+            start_sec = time_format.str_to_seconds(start_sec_str)
+            end_sec = time_format.str_to_seconds(end_sec_str)
             if fixed not in ["start", "duration"]:
                 raise ValueError(f"[line {i + 1}] Invalid fixed code: {fixed}")
 
@@ -200,4 +200,4 @@ class TimeTable:
         ) = self._asign(next_line, header_dict)
         if start_sec_str == "0":
             raise ValueError(f"next_start_sec is 0: {current_line}")
-        return time_format.time_str_to_seconds(start_sec_str)
+        return time_format.str_to_seconds(start_sec_str)

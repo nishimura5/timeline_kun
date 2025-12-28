@@ -19,48 +19,48 @@ def timedelta_to_str_mm_ss(td):
     return f"{int(minutes)}:{int(seconds):02}"
 
 
-def seconds_to_time_str(src):
-    if isinstance(src, str):
-        s = src.strip()
-        if s == "":
-            return ""
+def seconds_to_time_str(sec: int | float) -> str:
+    sec_i = int(sec)
+    if sec_i < 0:
+        raise ValueError(f"sec must be >= 0, got {sec!r}")
 
-        colons = s.count(":")
-        if colons == 2:
-            h, m, sec = s.split(":")
-            total = int(h) * 3600 + int(m) * 60 + int(sec)
-            return seconds_to_time_str(total)
-
-        elif colons == 1:
-            minutes, seconds = s.split(":")
-            minutes_i = int(minutes)
-            seconds_i = int(seconds)
-            total = minutes_i * 60 + seconds_i
-            return seconds_to_time_str(total)
-
-        elif colons == 0:
-            sec = int(s)
-        else:
-            raise ValueError(f"Invalid time format: {src!r}")
-
-    else:
-        sec = int(src)
-
-    hours = sec // 3600
-    remain = sec - (hours * 3600)
+    hours = sec_i // 3600
+    remain = sec_i - (hours * 3600)
     minutes = remain // 60
     seconds = remain - (minutes * 60)
     return f"{int(hours)}:{int(minutes):02}:{int(seconds):02}"
 
 
-def time_str_to_seconds(time_str):
-    if time_str == "":
-        time_str = "0"
-    colons = time_str.count(":")
-    if colons == 2:
-        hours, minutes, seconds = time_str.split(":")
-        return int(hours) * 3600 + int(minutes) * 60 + int(seconds)
-    elif colons == 0:
-        return int(time_str)
-    minutes, seconds = time_str.split(":")
-    return int(minutes) * 60 + int(seconds)
+def str_to_seconds(src: str) -> int:
+    s = src.strip()
+    if s == "":
+        return 0
+
+    parts = s.split(":")
+    if len(parts) == 1:
+        sec = int(parts[0])
+        if sec < 0:
+            raise ValueError(f"Invalid time (negative): {src!r}")
+        return sec
+
+    if len(parts) == 2:
+        m_str, s_str = parts
+        minutes = int(m_str)
+        seconds = int(s_str)
+        return minutes * 60 + seconds
+
+    if len(parts) == 3:
+        h_str, m_str, s_str = parts
+        hours = int(h_str)
+        minutes = int(m_str)
+        seconds = int(s_str)
+        return hours * 3600 + minutes * 60 + seconds
+
+    raise ValueError(f"Invalid time format: {src!r}")
+
+
+def str_to_time_str(src: str) -> str:
+    s = src.strip()
+    if s == "":
+        return ""
+    return seconds_to_time_str(str_to_seconds(s))

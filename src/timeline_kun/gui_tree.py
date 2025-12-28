@@ -53,9 +53,9 @@ class Tree(ttk.Frame):
                 values=[
                     stage["title"],
                     stage["member"],
-                    time_format.seconds_to_time_str(stage["start_sec"]),
-                    time_format.seconds_to_time_str(stage["end_sec"]),
-                    time_format.seconds_to_time_str(stage["duration_sec"]),
+                    time_format.str_to_time_str(stage["start_sec"]),
+                    time_format.str_to_time_str(stage["end_sec"]),
+                    time_format.str_to_time_str(stage["duration_sec"]),
                     stage["fixed"],
                     stage["instruction"],
                 ],
@@ -300,7 +300,7 @@ class TimelineTreeDialog(tk.Frame):
         self._update()
         # when start is set, entry should be current start time
         current_start = self.current_time_range_label.start_label.cget("text")
-        current_start_sec = time_format.time_str_to_seconds(current_start)
+        current_start_sec = time_format.str_to_seconds(current_start)
         self.start_entry.set_seconds(current_start_sec)
 
     def _update(self):
@@ -434,14 +434,14 @@ class TimeEntry(ttk.Frame):
         if seconds == "":
             self.set_time("")
             return
-        time_str = time_format.seconds_to_time_str(seconds)
+        time_str = time_format.str_to_time_str(seconds)
         self.set_time(time_str)
 
     def get_seconds(self):
         time_str = self.time_entry.get()
         if time_str == "":
             return 0
-        return time_format.time_str_to_seconds(time_str)
+        return time_format.str_to_seconds(time_str)
 
     def get_status(self):
         status = self.time_entry.cget("state")
