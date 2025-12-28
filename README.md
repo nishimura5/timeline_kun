@@ -98,6 +98,16 @@ The timeline CSV file uses the following columns:
 - **instruction**: Additional instructions or comments
 - **end**: Optional. End time of the event (formatted as H:MM:SS)
 
+### Notes / Limitations (CSV parsing)
+
+This project does not use a fully compliant CSV parser. The input is parsed by splitting lines on newline characters (supports both `\n` and `\r\n`) and fields on `,`. Therefore, quoted CSV is not supported.
+
+- Do not use double quotes (`"`) in the CSV.
+- As a consequence, each cell value must not contain:
+  - double quotes (`"`)
+  - commas (`,`)
+  - line breaks (`\n` / `\r\n`)
+
 ### For LLM-based Generation
 
 For LLM-based generation (like [ChatGPT](https://chatgpt.com) or [Claude](https://claude.ai)), you can use [this JSON schema](https://github.com/nishimura5/timeline_kun/blob/main/schemas/timeline_kun_csv.schema.json).
