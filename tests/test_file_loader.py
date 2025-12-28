@@ -50,6 +50,11 @@ INVALID_CASES = [
         "[line 2] Task2 conflict with the previous line",
         None,
     ),
+    (
+        "warn__previous__missing_duration_or_end.csv",
+        "[line 2] No duration (or end) in the previous line",
+        None,
+    ),
     ("invalid__quoted_fields.csv", "", "[line 1] Double quotes are not supported"),
 ]
 
@@ -59,6 +64,7 @@ VALID_CASES = [
     ("valid__with_end_column.csv"),
     ("valid__time_format__mmss.csv"),
     ("valid__crlf.csv"),
+    ("valid__empty_lines__ignored.csv"),
     # CSVs used in manual test
     ("valid__recording__example_1.csv"),
     ("valid__recording__example_2.csv"),
@@ -72,6 +78,7 @@ VALID_CASES = [
 TEXT_ENCODING_CASES = [
     # filename, expected_encoding, expected_warn_msg, expected_err_msg
     ("valid__encoding__utf8.csv", "utf-8", "", None),
+    ("valid__encoding__utf8_bom.csv", "utf-8", "", None),
     ("valid__encoding__shift_jis.csv", "shift-jis", "", None),
     (
         "invalid__encoding__unsupported.csv",

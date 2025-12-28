@@ -56,8 +56,11 @@ Fixtures are named to make intent obvious from the filename:
 - `warn__time__start_earlier_than_previous.csv`: temporal inconsistency (start time goes backwards)
 - `warn__time__overlap_with_previous.csv`: temporal inconsistency (overlap/conflict with previous row)
 - `valid__encoding__utf8.csv`: supported encoding (UTF-8)
+- `valid__encoding__utf8_bom.csv`: supported encoding (UTF-8 with BOM)
 - `valid__encoding__shift_jis.csv`: supported encoding (Shift-JIS)
 - `invalid__encoding__unsupported.csv`: unsupported encoding is rejected
 - `valid__header_only.csv`: minimal valid CSV (header only)
 - `valid__with_end_column.csv`: valid CSV with `end` column
 - `valid__time_format__mmss.csv`: supported time format variant (MM:SS)
+- `valid__empty_lines__ignored.csv`: valid CSV with empty/blank lines ignored
+- `warn__previous__missing_duration_or_end.csv`: warning when previous row has no duration (or end)
