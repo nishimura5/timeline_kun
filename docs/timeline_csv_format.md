@@ -13,17 +13,21 @@ This CSV behavior follows the implementation in `src/timeline_kun/csv_to_timetab
 - If a UTF-8 **BOM (`\ufeff`)** exists at the beginning of the file, it is automatically removed.
 
 ### Newlines
-- The file is split by `\n` after applying `strip()` to the entire content.
+- Both **LF (`\n`)** and **CRLF (`\r\n`)** are accepted.
+- Internally, the file is split by `\n` after applying `strip()` to the entire content.
 
 ### CSV parsing limitations (important)
-- **Double quotes `"` are not supported** (if present, it becomes an error).
-- The parser splits each line by `split(",")` (simple comma splitting).
-  - Therefore, **fields cannot contain commas**.
-- Lines that contain only commas (e.g., `",,,,,"`, effectively blank) are skipped.
-- The header row is parsed with `lines[0].strip().split(",")`.  
-  If you write spaces after commas in the header like `title, member,...`, then the column name becomes `" member"` and will not match.
-  - Recommended: write header names **without spaces**.
+Timeline-kun uses a simple CSV parsing approach (split into lines, then split each line on `,`).
+As a result, it does not support quoted CSV fields (i.e., values enclosed in double quotes).
 
+- Do not use double quotes (`"`) anywhere in the CSV (it will be treated as an error).
+- As a consequence, each cell value must not contain:
+  - double quotes (`"`)
+  - commas (`,`)
+  - line breaks (`\n` / `\r\n`)
+- Lines that contain only commas (e.g., `",,,,,"`, effectively blank) are skipped.
+- The header row is parsed by `split(",")` without trimming each field.
+  - Do not put spaces after commas in the header (e.g., `title, member` will not match).
 
 ## 2. Header (required / optional)
 
@@ -162,11 +166,22 @@ title,member,start,duration,fixed,instruction
 
 Example:
 
+```
 title,member,start,duration,fixed,instruction
-Intro,,0,1:00,start,
-Task A,Alice,,3:00,duration,(recording) setup
-Task B,Bob,,2:00,duration,
-Wrap,,10:00,,start,closing
+TASK A,MEMBER1,0:00:00,,start,Prepare for TASK B (recording)
+TASK B,MEMBER1,0:04:00,0:05:00,start,Prepare for TASK C
+TASK C,MEMBER1,,0:05:00,duration,
+```
+
+
+| title  | member  | start   | duration | fixed    | instruction |
+| ------ | ------- | ------- | -------- | -------- | ----------- |
+| TASK A | MEMBER1 | 0:00:00 |          | start    | Prepare for TASK B (recording) |
+| TASK B | MEMBER1 | 0:04:00 | 0:05:00  | start    | Prepare for TASK C |
+| TASK C | MEMBER1 |         | 0:05:00  | duration |             |
+| ...    | ...     | ...     | ...      | ...      | ...         |
+
+
 
 Notes:
 - For `fixed=duration`, leaving start/end empty means “start at the previous end time”.
