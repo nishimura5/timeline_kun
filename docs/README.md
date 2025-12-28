@@ -95,7 +95,7 @@ Timeline-kun reads a *simple* comma-separated file (not a fully compliant CSV pa
 
 See the full specification and examples in:
 - [`timeline_csv_format.md`](https://github.com/nishimura5/timeline_kun/blob/main/docs/timeline_csv_format.md)
-- (LLM generation) [`schemas/timeline_kun_csv.schema.json`](https://github.com/nishimura5/timeline_kun/blob/main/docs/schemas/timeline_kun_csv.schema.json) and [`timeline_kun_and_llm.md`](https://github.com/nishimura5/timeline_kun/blob/main/docs/timeline_kun_and_llm.md)
+- (LLM generation) [`schemas/timeline_kun_csv.schema.json`](https://github.com/nishimura5/timeline_kun/blob/main/schemas/timeline_kun_csv.schema.json) and [`timeline_kun_and_llm.md`](https://github.com/nishimura5/timeline_kun/blob/main/docs/timeline_kun_and_llm.md)
 
 Minimal example:
 
