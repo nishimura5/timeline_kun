@@ -86,85 +86,25 @@ uv run python -m timeline_kun
 
 *Note: macOS users will need to install tcl-tk and configure appropriate environment variables before installation as this tool relies on tkinter.*
 
-## Timeline CSV File Format
+## Timeline CSV
 
-The timeline CSV file uses the following columns:
+Timeline-kun reads a *simple* comma-separated file (not a fully compliant CSV parser: quoted fields are not supported).
 
-- **title**: The name of the event displayed on the timer screen
-- **member**: The participant or team responsible for the event
-- **start**: The start time of the event (formatted as H:MM:SS)
-- **duration**: The duration of the event (formatted as H:MM:SS)
-- **fixed**: Specifies whether the start time or duration is fixed (values: "duration" or "start")
-- **instruction**: Additional instructions or comments
-- **end**: Optional. End time of the event (formatted as H:MM:SS)
+- **Required columns**: `title,member,start,duration,fixed,instruction` (optional: `end`)
+- **Encoding**: UTF-8 (falls back to Shift-JIS when UTF-8 decoding fails)
 
-### Time format (start / duration)
+See the full specification and examples in:
+- [`timeline_csv_format.md`](./timeline_csv_format.md)
+- (LLM generation) [`schemas/timeline_kun_csv.schema.json`](./schemas/timeline_kun_csv.schema.json) and [`docs/timeline_kun_and_llm.md`](./docs/timeline_kun_and_llm.md)
 
-Use **h:mm:ss** as the canonical format (e.g., `1:02:03`).  
-To reduce ambiguity in user input, Timeline-kun applies a two-step process: **parse → normalize** (as a best-effort fallback).
+Minimal example:
 
-#### 1) Parsing (determined by the number of `:`)
-
-- **Two colons**: parse as `h:mm:ss`
-- **One colon**: parse as `mm:ss` (treat as `h=0`)
-- **No colons**: parse as seconds `s` (treat as `h=0, m=0`)
-
-#### 2) Normalization (always normalize to `h:mm:ss`)
-
-After parsing, the value is **normalized to `h:mm:ss`** (including zero-padding and carry/rollover).
-
-- Zero-padding examples:
-  - `01:2:3` → `1:02:03`
-  - `1:2` (= `mm:ss`) → `0:01:02`
-  - `10` (= `s`) → `0:00:10`
-- Carry/rollover examples:
-  - `1:70:00` → `2:10:00`
-  - `0:00:3600` → `1:00:00`
-  - `70:00` (= `mm:ss`) → `1:10:00`
-
-Note: **h:mm:ss is the official format**. Fewer colons and carry/rollover handling exist only to mitigate ambiguous input.
-
-### Notes / Limitations (CSV parsing)
-
-This project does not use a fully compliant CSV parser. The input is parsed by splitting lines on newline characters (supports both `\n` and `\r\n`) and fields on `,`. Therefore, quoted CSV is not supported.
-
-- Do not use double quotes (`"`) in the CSV.
-- As a consequence, each cell value must not contain:
-  - double quotes (`"`)
-  - commas (`,`)
-  - line breaks (`\n` / `\r\n`)
-
-### For LLM-based Generation
-
-For LLM-based generation (like [ChatGPT](https://chatgpt.com) or [Claude](https://claude.ai)), you can use [this JSON schema](https://github.com/nishimura5/timeline_kun/blob/main/schemas/timeline_kun_csv.schema.json).
-
-To use it, either download the JSON file from the link or copy-paste its contents directly into your prompt, then instruct the LLM to generate your experimental timeline.
-
-### CSV File Example (Timeline CSV)
-
-```
+```csv
 title,member,start,duration,fixed,instruction
-TASK A,MEMBER1,0:00:00,,start,Prepare for TASK B (recording)
-TASK B,MEMBER1,0:04:00,0:05:00,start,Prepare for TASK C
-TASK C,MEMBER1,,0:05:00,duration,
+TASK A,MEMBER1,0:00:00,,start,
+TASK B,MEMBER1,,0:05:00,duration,(recording)
 ```
 
-| title  | member  | start   | duration | fixed    | instruction |
-| ------ | ------- | ------- | -------- | -------- | ----------- |
-| TASK A | MEMBER1 | 0:00:00 |          | start    | Prepare for TASK B (recording) |
-| TASK B | MEMBER1 | 0:04:00 | 0:05:00  | start    | Prepare for TASK C |
-| TASK C | MEMBER1 |         | 0:05:00  | duration |             |
-| ...    | ...     | ...     | ...      | ...      | ...         |
-
-For Japanese user: Excelで編集したCSVファイル（つまりShift-JISでエンコーディングされたCSVファイル）も読み込むことができます。内部的には、最初にUTF-8での読み込みを試みて、Shift-JISにフォールバックします。
-
-### Scheduling Methods
-
-There are two primary methods for determining event timing in Timeline-kun, which can be used exclusively or in combination:
-
-1. **Duration-fixed scheduling**: When an event has a fixed duration but its start time depends on when the previous event ends. With this approach, the 'start' field is left empty, and events flow sequentially based on their durations. Set the value "duration" in the "fixed" column.
-
-2. **Start-time-fixed scheduling**: When events must begin at specific elapsed times from the experiment start. In this approach, the 'duration' field can be left empty for events where only the start time matters (except in the last row). Set the value "start" in the "fixed" column.
 
 ## Usage Procedure
 
