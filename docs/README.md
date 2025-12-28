@@ -94,8 +94,8 @@ Timeline-kun reads a *simple* comma-separated file (not a fully compliant CSV pa
 - **Encoding**: UTF-8 (falls back to Shift-JIS when UTF-8 decoding fails)
 
 See the full specification and examples in:
-- [`timeline_csv_format.md`](./timeline_csv_format.md)
-- (LLM generation) [`schemas/timeline_kun_csv.schema.json`](./schemas/timeline_kun_csv.schema.json) and [`docs/timeline_kun_and_llm.md`](./docs/timeline_kun_and_llm.md)
+- [`timeline_csv_format.md`](https://github.com/nishimura5/timeline_kun/blob/main/docs/timeline_csv_format.md)
+- (LLM generation) [`schemas/timeline_kun_csv.schema.json`](https://github.com/nishimura5/timeline_kun/blob/main/docs/schemas/timeline_kun_csv.schema.json) and [`timeline_kun_and_llm.md`](https://github.com/nishimura5/timeline_kun/blob/main/docs/timeline_kun_and_llm.md)
 
 Minimal example:
 
