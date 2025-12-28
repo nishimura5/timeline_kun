@@ -56,6 +56,10 @@ class TimeTable:
                 print(f"[line {i + 1}] Empty line")
                 continue
 
+            # double quotes are not supported
+            if '"' in line:
+                raise ValueError(f"[line {i + 1}] Double quotes are not supported")
+
             (
                 title,
                 member,

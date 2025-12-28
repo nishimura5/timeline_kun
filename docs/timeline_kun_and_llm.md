@@ -77,7 +77,7 @@ In such cases, providing a schema helps improve the accuracy of the generated da
         "pattern": "^[^\",\\r\\n]*$"
       }
     },
-    "required": ["title", "member", "fixed"],
+    "required": ["title", "member", "fixed", "instruction"],
     "allOf": [
       {
         "if": { "properties": { "fixed": { "const": "start" } } },

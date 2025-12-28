@@ -50,6 +50,7 @@ INVALID_CASES = [
         "[line 2] Task2 conflict with the previous line",
         None,
     ),
+    ("invalid__quoted_fields.csv", "", "[line 1] Double quotes are not supported"),
 ]
 
 VALID_CASES = [
@@ -57,6 +58,7 @@ VALID_CASES = [
     ("valid__header_only.csv"),
     ("valid__with_end_column.csv"),
     ("valid__time_format__mmss.csv"),
+    ("valid__crlf.csv"),
     # CSVs used in manual test
     ("valid__recording__example_1.csv"),
     ("valid__recording__example_2.csv"),
