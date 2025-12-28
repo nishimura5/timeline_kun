@@ -98,6 +98,32 @@ The timeline CSV file uses the following columns:
 - **instruction**: Additional instructions or comments
 - **end**: Optional. End time of the event (formatted as H:MM:SS)
 
+### Time format (start / duration)
+
+Use **h:mm:ss** as the canonical format (e.g., `1:02:03`).  
+To reduce ambiguity in user input, Timeline-kun applies a two-step process: **parse → normalize** (as a best-effort fallback).
+
+#### 1) Parsing (determined by the number of `:`)
+
+- **Two colons**: parse as `h:mm:ss`
+- **One colon**: parse as `mm:ss` (treat as `h=0`)
+- **No colons**: parse as seconds `s` (treat as `h=0, m=0`)
+
+#### 2) Normalization (always normalize to `h:mm:ss`)
+
+After parsing, the value is **normalized to `h:mm:ss`** (including zero-padding and carry/rollover).
+
+- Zero-padding examples:
+  - `01:2:3` → `1:02:03`
+  - `1:2` (= `mm:ss`) → `0:01:02`
+  - `10` (= `s`) → `0:00:10`
+- Carry/rollover examples:
+  - `1:70:00` → `2:10:00`
+  - `0:00:3600` → `1:00:00`
+  - `70:00` (= `mm:ss`) → `1:10:00`
+
+Note: **h:mm:ss is the official format**. Fewer colons and carry/rollover handling exist only to mitigate ambiguous input.
+
 ### Notes / Limitations (CSV parsing)
 
 This project does not use a fully compliant CSV parser. The input is parsed by splitting lines on newline characters (supports both `\n` and `\r\n`) and fields on `,`. Therefore, quoted CSV is not supported.
