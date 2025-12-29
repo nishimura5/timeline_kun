@@ -5,12 +5,6 @@ from . import ble_control
 
 
 class Trigger:
-    """録画トリガーの公開インターフェースは変更しない。
-    set_device_names と set_keyword と set_delay_sec
-    ble_connect と trigger_in と trigger_out
-    get_triggered と set_status と get_status
-    """
-
     def __init__(self, offset_sec: int = 5) -> None:
         self.triggered_in = False
         self.offset_sec = offset_sec
@@ -94,7 +88,6 @@ class Trigger:
             return self.connection_status
 
         if total == 0:
-            # 未接続またはデバイス未検出
             return self.connection_status
 
         if alive_cnt == 0:
