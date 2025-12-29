@@ -4,6 +4,7 @@ import sys
 import tkinter as tk
 from tkinter import ttk
 from typing import Literal
+import csv
 
 from . import time_format, timetable_to_csv
 
@@ -189,14 +190,16 @@ class Tree(ttk.Frame):
             header = "title,member,start,end,duration,fixed,instruction"
             no_end = False
 
-        with open(file_path, "w", encoding=self.write_encoding) as f:
-            f.write(header + "\n")
+        with open(file_path, "w", encoding=self.write_encoding, newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(header.split(","))
+
             for item in self.tree.get_children():
                 values = self.tree.item(item)["values"]
                 if no_end:
                     values.pop(end_col_num)
-                line = ",".join(str(val) for val in values)
-                f.write(line + "\n")
+
+                writer.writerow([str(v) for v in values])
 
     def clear(self):
         self.tree.delete(*self.tree.get_children())
