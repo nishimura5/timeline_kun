@@ -18,12 +18,12 @@
       },
       "start": {
         "type": "string",
-        "pattern": "^\d{1,2}:[0-5]\d:[0-5]\d$",
+        "pattern": "^\\d{1,2}:[0-5]\\d:[0-5]\\d$",
         "description": "Start time H:MM:SS"
       },
       "duration": {
         "type": "string",
-        "pattern": "^\d{1,2}:[0-5]\d:[0-5]\d$",
+        "pattern": "^\\d{1,2}:[0-5]\\d:[0-5]\\d$",
         "default": "0:00:05",
         "description": "Duration H:MM:SS"
       },
