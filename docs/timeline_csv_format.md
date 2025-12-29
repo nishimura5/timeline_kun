@@ -8,19 +8,34 @@ This CSV behavior follows the implementation in `src/timeline_kun/csv_to_timetab
 ## 1. File assumptions
 
 ### Text encoding
-- The primary encoding is **UTF-8**.
+- Timeline CSV files are read as **UTF-8**.
 - If decoding as UTF-8 fails, Timeline-kun falls back to **Shift-JIS**.
-- If a UTF-8 **BOM (`\ufeff`)** exists at the beginning of the file, it is automatically removed.
+- If a UTF-8 **BOM (`\ufeff`)** exists at the beginning of the file, it is automatically removed before parsing.
 
-### Newlines
+### Newlines and empty lines
 - Both **LF (`\n`)** and **CRLF (`\r\n`)** are accepted.
-- Internally, the file is split by `\n` after applying `strip()` to the entire content.
+- Parsing is performed using Python’s standard CSV reader (there is no manual `split("\n")` of the file content).
+- Completely empty rows (rows where all cells are empty/whitespace) are ignored.
+
+### CSV parsing (delimiter / quoting)
+- Fields are separated by commas (`,`).
+- Standard double-quote quoting is supported. Use quotes when a field contains a comma, e.g.:
+  - `title,member,start,duration,fixed,instruction`
+  - `"Task, with comma",Alice,0:00:00,0:01:00,start,`
+- Inside a quoted field, a literal double quote should be written as `""` (CSV-style escaping).
+- Leading and trailing whitespace in each cell is stripped after parsing.
+
 
 ## 2. Header (required / optional)
 
 ### Required columns
-The following columns are **required** (order does not matter, but names must match exactly):
+The following columns are **required**. The order does not matter.
 
+Header matching is:
+- **case-insensitive**, and
+- ignores **leading/trailing whitespace** around header names.
+
+Required columns:
 - `title`
 - `member`
 - `duration`
@@ -32,6 +47,9 @@ The following columns are **required** (order does not matter, but names must ma
 - `end` (optional)
   - If the header does not include `end`, each row’s `end` is treated as an empty string.
 
+### Missing / extra cells in data rows
+- If a data row has fewer cells than the header, missing cells are treated as empty strings.
+- Extra cells beyond the header are ignored.
 
 ## 3. Column meanings
 

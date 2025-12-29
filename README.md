@@ -87,7 +87,7 @@ uv run python -m timeline_kun
 
 ## Timeline CSV
 
-Timeline-kun reads a *simple* comma-separated file (not a fully compliant CSV parser: quoted fields are not supported).
+Timeline-kun reads a simple comma-separated file.
 
 - **Required columns**: `title,member,start,duration,fixed,instruction` (optional: `end`)
 - **Encoding**: UTF-8 (falls back to Shift-JIS when UTF-8 decoding fails)
