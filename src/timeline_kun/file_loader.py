@@ -1,4 +1,5 @@
 import os
+import re
 
 from . import csv_to_timetable
 
@@ -130,6 +131,8 @@ def utf8_to_utf8bom(tar_path: str, fallback_encoding: str) -> bool:
             print(f"Error converting {tar_path}: {e}")
             return False
 
+    # Remove existing BOM if present
+    content = re.sub(r"^\ufeff+", "", content)
     with open(tar_path, "w", encoding="utf-8-sig") as f:
         f.write(content)
     return True
