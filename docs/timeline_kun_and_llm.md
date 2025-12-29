@@ -49,12 +49,10 @@ In such cases, providing a schema helps improve the accuracy of the generated da
       "title": {
         "type": "string",
         "description": "Event name",
-        "pattern": "^[^\",\\r\\n]*$"
       },
       "member": {
         "type": "string",
         "description": "Person or group",
-        "pattern": "^[^\",\\r\\n]*$"
       },
       "start": {
         "type": "string",
@@ -74,7 +72,6 @@ In such cases, providing a schema helps improve the accuracy of the generated da
       "instruction": {
         "type": "string",
         "description": "Notes",
-        "pattern": "^[^\",\\r\\n]*$"
       }
     },
     "required": ["title", "member", "fixed", "instruction"],
@@ -96,7 +93,6 @@ In such cases, providing a schema helps improve the accuracy of the generated da
     "rowRules": [
       "All column values may be duplicated across rows",
       "If duration is not specified, default to 0:00:05",
-      "Do not enclose each cell in double quotes in the CSV. Instead, do not include double quotes, commas, or line breaks in the values."
     ]
   }
 }

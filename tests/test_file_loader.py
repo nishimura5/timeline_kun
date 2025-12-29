@@ -55,7 +55,6 @@ INVALID_CASES = [
         "[line 2] No duration (or end) in the previous line",
         None,
     ),
-    ("invalid__quoted_fields.csv", "", "[line 1] Double quotes are not supported"),
 ]
 
 VALID_CASES = [
@@ -65,6 +64,7 @@ VALID_CASES = [
     ("valid__time_format__mmss.csv"),
     ("valid__crlf.csv"),
     ("valid__empty_lines__ignored.csv"),
+    ("valid__quoted_fields.csv"),
     # CSVs used in manual test
     ("valid__recording__example_1.csv"),
     ("valid__recording__example_2.csv"),

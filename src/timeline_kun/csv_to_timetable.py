@@ -1,4 +1,6 @@
 import datetime
+import csv
+import io
 
 from . import time_format
 
@@ -10,6 +12,14 @@ class TimeTable:
         self.time_table = []
         self.current_time = 0
 
+    @staticmethod
+    def _cell(row, idx: int) -> str:
+        if idx is None or idx < 0:
+            return ""
+        if idx >= len(row):
+            return ""
+        return row[idx].strip()
+
     def load_csv_str(self, csv_str):
         warn_msg = ""
         # UTF-8 BOM removal
@@ -17,14 +27,14 @@ class TimeTable:
             bom_len = len(self.BOM)
             csv_str = csv_str[bom_len:]
 
-        lines = csv_str.strip().split("\n")
+        reader = csv.reader(io.StringIO(csv_str))
 
-        # Validate the header
-        header = lines[0].strip().split(",")
-        # header-correct_header dictionary to get the index of each header
-        header_dict = {header[i]: i for i in range(len(header))}
+        rows = []
+        for row in reader:
+            if not row or all(cell.strip() == "" for cell in row):
+                continue
+            rows.append(row)
 
-        # Header must include title, member, duration, start, fixed
         required_headers = [
             "title",
             "member",
@@ -33,33 +43,33 @@ class TimeTable:
             "fixed",
             "instruction",
         ]
-        missing_headers = []
-        for rh in required_headers:
-            if rh not in header_dict.keys():
-                missing_headers.append(rh)
-        if len(missing_headers) > 0:
+
+        # Empty file check
+        if not rows:
+            raise ValueError(
+                f"Header missing required field: {', '.join(required_headers)}"
+            )
+
+        # Validate the header
+        header = [h.strip().lower() for h in rows[0]]
+        header_dict = {header[i]: i for i in range(len(header))}
+
+        missing_headers = [rh for rh in required_headers if rh not in header_dict]
+        if missing_headers:
             raise ValueError(
                 f"Header missing required field: {', '.join(missing_headers)}"
             )
 
-        # Process each row
-        if "end" not in header_dict.keys():
+        if "end" not in header_dict:
             is_no_end = True
             header_dict["end"] = -1
         else:
             is_no_end = False
-        # For checking if the previous row has an end time by "end_sec_str" or "duration_sec_str"
+
         has_end_time = True
-        for i, line in enumerate(lines[1:]):
-            # Skip if the line is empty like ",,,,," or ",,,,"
-            if line.strip().replace(",", "") == "":
-                print(f"[line {i + 1}] Empty line")
-                continue
 
-            # double quotes are not supported
-            if '"' in line:
-                raise ValueError(f"[line {i + 1}] Double quotes are not supported")
-
+        data_rows = rows[1:]
+        for i, line in enumerate(data_rows):
             (
                 title,
                 member,
@@ -73,6 +83,7 @@ class TimeTable:
             duration_sec = time_format.str_to_seconds(duration_sec_str)
             start_sec = time_format.str_to_seconds(start_sec_str)
             end_sec = time_format.str_to_seconds(end_sec_str)
+
             if fixed not in ["start", "duration"]:
                 raise ValueError(f"[line {i + 1}] Invalid fixed code: {fixed}")
 
@@ -86,18 +97,19 @@ class TimeTable:
                     raise ValueError(
                         f"[line {i + 1}] Start must be set in fixed==start"
                     )
+
                 if duration_sec > 0:
                     end_sec = start_sec + duration_sec
                 elif end_sec > 0:
                     end_sec = end_sec
-                # if duration and end are not set, get the next start time
-                elif i < len(lines) - 2:
-                    next_line = lines[i + 2]
-                    end_sec = self.get_next_start(line, next_line, header_dict)
+                else:
+                    next_row = self._find_next_nonempty_row(data_rows, i)
+                    if next_row is None:
+                        raise ValueError(f"[line {i + 1}] No next line")
+                    end_sec = self.get_next_start(line, next_row, header_dict)
                     if end_sec == 0:
                         end_sec = start_sec
-                else:
-                    raise ValueError(f"[line {i + 1}] No next line")
+
             elif fixed == "duration":
                 if duration_sec == 0:
                     raise ValueError(
@@ -107,11 +119,10 @@ class TimeTable:
                     start_sec = self.current_time
                     end_sec = start_sec + duration_sec
                 elif start_sec > 0:
-                    start_sec = start_sec
                     end_sec = start_sec + duration_sec
                 elif end_sec > 0:
-                    end_sec = end_sec
                     start_sec = end_sec - duration_sec
+
                 if (i > 0) and (has_end_time is False):
                     warn_msg = (
                         f"[line {i + 1}] No duration (or end) in the previous line"
@@ -121,7 +132,6 @@ class TimeTable:
             start_td = datetime.timedelta(seconds=start_sec)
             end_td = datetime.timedelta(seconds=end_sec)
 
-            # Add task start and end times to the timetable
             self.time_table.append(
                 {
                     "title": title,
@@ -137,11 +147,9 @@ class TimeTable:
                 }
             )
 
-            # Update current time
             self.current_time = end_sec
-            has_end_time = end_sec_str != "" or duration_sec_str != ""
+            has_end_time = (end_sec_str != "") or (duration_sec_str != "")
 
-        # Check start times are non-decreasing
         for i in range(1, len(self.time_table)):
             if self.time_table[i]["start"] < self.time_table[i - 1]["start"]:
                 warn_msg = (
@@ -152,18 +160,20 @@ class TimeTable:
 
         return warn_msg
 
-    def _asign(self, line_str, header_dict, is_no_end=False):
-        splited_line = line_str.strip().split(",")
-        title = splited_line[header_dict["title"]]
-        member = splited_line[header_dict["member"]]
-        duration_sec_str = splited_line[header_dict["duration"]]
-        start_sec_str = splited_line[header_dict["start"]]
-        instruction = splited_line[header_dict["instruction"]]
+    def _asign(self, row, header_dict, is_no_end=False):
+        title = self._cell(row, header_dict["title"])
+        member = self._cell(row, header_dict["member"])
+        duration_sec_str = self._cell(row, header_dict["duration"])
+        start_sec_str = self._cell(row, header_dict["start"])
+        instruction = self._cell(row, header_dict["instruction"])
+
         if is_no_end:
             end_sec_str = ""
         else:
-            end_sec_str = splited_line[header_dict["end"]]
-        fixed = splited_line[header_dict["fixed"]]
+            end_sec_str = self._cell(row, header_dict["end"])
+
+        fixed = self._cell(row, header_dict["fixed"])
+
         return (
             title,
             member,
@@ -173,6 +183,13 @@ class TimeTable:
             fixed,
             instruction,
         )
+
+    def _find_next_nonempty_row(self, data_rows, current_index: int):
+        for j in range(current_index + 1, len(data_rows)):
+            row = data_rows[j]
+            if row and any(c.strip() != "" for c in row):
+                return row
+        return None
 
     def get_timetable(self):
         return self.time_table
@@ -192,7 +209,7 @@ class TimeTable:
             )
         return ret_table
 
-    def get_next_start(self, current_line, next_line, header_dict):
+    def get_next_start(self, current_row, next_row, header_dict):
         (
             title,
             member,
@@ -201,7 +218,7 @@ class TimeTable:
             end_sec_str,
             fixed,
             instruction,
-        ) = self._asign(next_line, header_dict)
+        ) = self._asign(next_row, header_dict, False)
         if start_sec_str == "0":
-            raise ValueError(f"next_start_sec is 0: {current_line}")
+            raise ValueError(f"next_start_sec is 0: {current_row}")
         return time_format.str_to_seconds(start_sec_str)
