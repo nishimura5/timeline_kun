@@ -1,13 +1,12 @@
-import datetime
 import csv
+import datetime
 import io
+import re
 
 from . import time_format
 
 
 class TimeTable:
-    BOM = "\ufeff"
-
     def __init__(self):
         self.time_table = []
         self.current_time = 0
@@ -23,9 +22,7 @@ class TimeTable:
     def load_csv_str(self, csv_str):
         warn_msg = ""
         # UTF-8 BOM removal
-        if csv_str.startswith(self.BOM):
-            bom_len = len(self.BOM)
-            csv_str = csv_str[bom_len:]
+        csv_str = re.sub(r"^\ufeff+", "", csv_str)
 
         reader = csv.reader(io.StringIO(csv_str))
 

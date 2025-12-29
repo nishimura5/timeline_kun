@@ -123,7 +123,8 @@ class App(ttk.Frame):
         self.send_excel_btn["state"] = "disabled"
         self.export_svg_btn["state"] = "disabled"
 
-        self.fallback_encoding = toml_dict.get("file_fallback_encoding", "utf-8-sig")
+        self.fallback_encoding = toml_dict.get("read_extra_encoding", "utf-8-sig")
+        print(self.fallback_encoding)
 
         self.csv_path = None
         self.start_index = 0
@@ -510,8 +511,6 @@ def main():
     root.tk.call("wm", "iconphoto", root._w, tk.PhotoImage(data=icon_data.icon_data))
     s = ttk.Style(root)
     s.configure(".", background=bg_color)
-    app = App(root)
-    root.protocol("WM_DELETE_WINDOW", lambda: quit(root))
 
     # Load toml config
     if getattr(sys, "frozen", False):
@@ -527,6 +526,8 @@ def main():
 
     print(f"TOML config: {toml_dict}")
 
+    app = App(root, toml_dict=toml_dict)
+    root.protocol("WM_DELETE_WINDOW", lambda: quit(root))
     app.mainloop()
 
 

@@ -80,6 +80,7 @@ TEXT_ENCODING_CASES = [
     ("valid__encoding__utf8.csv", "utf-8", "", None),
     ("valid__encoding__utf8_bom.csv", "utf-8", "", None),
     ("valid__encoding__shift_jis.csv", "cp932", "", None),
+    ("valid__encoding__euc_jp.csv", "euc_jp", "", None),
     (
         "invalid__encoding__unsupported.csv",
         "utf-8",
@@ -129,7 +130,7 @@ def test_load_file_for_encoding_detection(
     expected_err_msg,
 ):
     file_path = _fixture_path(filename)
-    fl = FileLoader()
+    fl = FileLoader(fallback_encoding=expected_encoding)
     if expected_err_msg is not None:
         with pytest.raises(ValueError) as e:
             _ = fl.load_file_for_preview(file_path)

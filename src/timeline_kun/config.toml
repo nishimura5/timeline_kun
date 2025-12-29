@@ -15,4 +15,4 @@ stop_delay_sec = 2
 make_events_json = true
 
 [excel]
-encoding = "utf-8-sig"
+#read_extra_encoding = "your_encoding"

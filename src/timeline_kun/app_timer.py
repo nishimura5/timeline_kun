@@ -149,7 +149,7 @@ class App(ttk.Frame):
         if make_events_json:
             self.bids_log.make_events_json()
 
-        fall_back_encoding = toml_dict.get("file_fallback_encoding", "utf-8-sig")
+        fall_back_encoding = toml_dict.get("read_extra_encoding", "utf-8-sig")
         self.load_file(start_index, fallback_encoding=fall_back_encoding)
 
     def update_clock(self):
