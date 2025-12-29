@@ -16,19 +16,6 @@ This CSV behavior follows the implementation in `src/timeline_kun/csv_to_timetab
 - Both **LF (`\n`)** and **CRLF (`\r\n`)** are accepted.
 - Internally, the file is split by `\n` after applying `strip()` to the entire content.
 
-### CSV parsing limitations (important)
-Timeline-kun uses a simple CSV parsing approach (split into lines, then split each line on `,`).
-As a result, it does not support quoted CSV fields (i.e., values enclosed in double quotes).
-
-- Do not use double quotes (`"`) anywhere in the CSV (it will be treated as an error).
-- As a consequence, each cell value must not contain:
-  - double quotes (`"`)
-  - commas (`,`)
-  - line breaks (`\n` / `\r\n`)
-- Lines that contain only commas (e.g., `",,,,,"`, effectively blank) are skipped.
-- The header row is parsed by `split(",")` without trimming each field.
-  - Do not put spaces after commas in the header (e.g., `title, member` will not match).
-
 ## 2. Header (required / optional)
 
 ### Required columns
