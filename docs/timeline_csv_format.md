@@ -7,10 +7,20 @@ This CSV behavior follows the implementation in `src/timeline_kun/csv_to_timetab
 
 ## 1. File assumptions
 
-### Text encoding
-- Timeline CSV files are read as **UTF-8**.
-- If decoding as UTF-8 fails, Timeline-kun falls back to **Shift-JIS**.
-- If a UTF-8 **BOM (`\ufeff`)** exists at the beginning of the file, it is automatically removed before parsing.
+### Text encoding (read behavior)
+Timeline-kun reads CSV files using the following decoding order:
+
+1. Try **UTF-8**
+2. If it fails, try the encoding specified by `read_extra_encoding` in `config.toml`
+3. If it still fails, fall back to **cp932**
+
+If a UTF-8 **BOM (`\ufeff`)** exists at the beginning of the decoded text, it is automatically removed before parsing
+(including the case where multiple BOMs are repeated at the start).
+
+### Text encoding (write / export behavior)
+- When you edit and save a CSV **inside Timeline-kun**, it is saved as **UTF-8**.
+- When you press the **Send to Excel** button, Timeline-kun converts and saves the file as **UTF-8 with BOM** (`utf-8-sig`)
+  and then opens it in Excel.
 
 ### Newlines and empty lines
 - Both **LF (`\n`)** and **CRLF (`\r\n`)** are accepted.
@@ -24,7 +34,6 @@ This CSV behavior follows the implementation in `src/timeline_kun/csv_to_timetab
   - `"Task, with comma",Alice,0:00:00,0:01:00,start,`
 - Inside a quoted field, a literal double quote should be written as `""` (CSV-style escaping).
 - Leading and trailing whitespace in each cell is stripped after parsing.
-
 
 ## 2. Header (required / optional)
 
