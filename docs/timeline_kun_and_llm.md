@@ -48,11 +48,11 @@ In such cases, providing a schema helps improve the accuracy of the generated da
     "properties": {
       "title": {
         "type": "string",
-        "description": "Event name",
+        "description": "Event name"
       },
       "member": {
         "type": "string",
-        "description": "Person or group",
+        "description": "Person or group"
       },
       "start": {
         "type": "string",
@@ -71,7 +71,7 @@ In such cases, providing a schema helps improve the accuracy of the generated da
       },
       "instruction": {
         "type": "string",
-        "description": "Notes",
+        "description": "Notes"
       }
     },
     "required": ["title", "member", "fixed", "instruction"],
@@ -92,7 +92,7 @@ In such cases, providing a schema helps improve the accuracy of the generated da
     "instructionTrigger": "The instruction field triggers recording only if it contains the exact substring '(recording)' with matching case",
     "rowRules": [
       "All column values may be duplicated across rows",
-      "If duration is not specified, default to 0:00:05",
+      "If duration is not specified, default to 0:00:05"
     ]
   }
 }

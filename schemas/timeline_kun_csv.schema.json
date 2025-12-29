@@ -10,13 +10,11 @@
     "properties": {
       "title": {
         "type": "string",
-        "description": "Event name",
-        "pattern": "^[^\",\r\n]*$"
+        "description": "Event name"
       },
       "member": {
         "type": "string",
-        "description": "Person or group",
-        "pattern": "^[^\",\r\n]*$"
+        "description": "Person or group"
       },
       "start": {
         "type": "string",
@@ -35,8 +33,7 @@
       },
       "instruction": {
         "type": "string",
-        "description": "Notes",
-        "pattern": "^[^\",\r\n]*$"
+        "description": "Notes"
       }
     },
     "required": ["title", "member", "fixed", "instruction"],
@@ -57,8 +54,7 @@
     "instructionTrigger": "The instruction field triggers recording only if it contains the exact substring '(recording)' with matching case",
     "rowRules": [
       "All column values may be duplicated across rows",
-      "If duration is not specified, default to 0:00:05",
-      "Do not enclose each cell in double quotes in the CSV. Instead, do not include double quotes, commas, or line breaks in the values."
+      "If duration is not specified, default to 0:00:05"
     ]
   }
 }
