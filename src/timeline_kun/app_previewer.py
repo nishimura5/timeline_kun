@@ -466,13 +466,17 @@ class App(ttk.Frame):
             )
 
     def open_excel(self):
-        is_sjis = file_loader.utf8_to_sjis(self.csv_path, self.fallback_encoding)
-        if is_sjis:
-            self.csv_encoding = self.fallback_encoding
-        if IS_DARWIN:
-            os.system(f"open -a '/Applications/Microsoft Excel.app' {self.csv_path}")
+        ok = file_loader.utf8_to_utf8bom(self.csv_path, self.fallback_encoding)
+        # ok == True -> converted to utf-8-sig
+        #       False -> failed to convert or already utf-8-sig
+        if ok or self.fallback_encoding == "utf-8-sig":
+            self.csv_encoding = "utf-8-sig"
+            if IS_DARWIN:
+                os.system(f"open -a '/Applications/Microsoft Excel.app' {self.csv_path}")
+            else:
+                os.system(f'start excel "{self.csv_path}"')
         else:
-            os.system(f'start excel "{self.csv_path}"')
+            print("Failed to open Excel")
 
     def export_svg(self):
         init_file_name = os.path.basename(self.csv_path).split(".")[0]

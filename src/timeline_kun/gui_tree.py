@@ -68,6 +68,7 @@ class Tree(ttk.Frame):
 
     def set_write_encoding(self, encoding):
         self.write_encoding = encoding
+        print(f"Set write encoding: {encoding}")
 
     def get_selected_index(self):
         selected = self.tree.selection()

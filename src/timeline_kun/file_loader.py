@@ -113,27 +113,23 @@ class FileLoader:
     def clear(self):
         self.stage_list = []
 
-
-def utf8_to_sjis(tar_path: str, encoding: str) -> bool:
+def utf8_to_utf8bom(tar_path: str, fallback_encoding: str) -> bool:
+    """
+    Save as UTF-8 with BOM so it can be opened in Excel.
+    First, try reading as UTF-8; if that fails, read using fallback_encoding.
+    Then, write the content back as UTF-8 with BOM.
+    """
     try:
         with open(tar_path, "r", encoding="utf-8") as f:
             content = f.read()
     except UnicodeDecodeError as e:
-        print(f"Error converting {tar_path}: {e}")
-        return False
+        try:
+            with open(tar_path, "r", encoding=fallback_encoding) as f:
+                content = f.read()
+        except UnicodeDecodeError as e:
+            print(f"Error converting {tar_path}: {e}")
+            return False
 
-    if _can_encode_cp932(content, encoding):
-        with open(tar_path, "w", encoding=encoding, errors="replace") as f:
-            f.write(content)
-    else:
-        print(f"Content in {tar_path} cannot be encoded in {encoding}.")
-        return False
+    with open(tar_path, "w", encoding="utf-8-sig") as f:
+        f.write(content)
     return True
-
-
-def _can_encode_cp932(text: str, encoding: str) -> bool:
-    try:
-        text.encode(encoding)
-        return True
-    except UnicodeEncodeError:
-        return False
