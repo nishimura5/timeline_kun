@@ -14,7 +14,7 @@ Timeline-kun is an integrated graphical interface tool for planning and executin
 ### Option A: Windows (standalone)
 1. Download the latest `.exe` from the Releases page:
    https://github.com/nishimura5/timeline_kun/releases
-2. Double-click to launch.
+2. Double-click `TimelineKun.exe` to launch the Previewer.
 3. The Previewer can launch the timer (`TimelinekunTimer.exe`) via **Send to timer**.
 
 ### Option B: Python (PyPI)
@@ -115,8 +115,7 @@ make_events_json = true
 
 ### `[ble.<color>]` (GoPro control per timer color)
 - `ble_names`: list of BLE device names to control.
-Examples:
-- `ble_names` = ["GoPro 2700", "GoPro 4256"]
+Examples: `ble_names = ["GoPro 2700", "GoPro 4256"]`
 
 - `stop_delay_sec`: delay (seconds) before stopping recording after leaving a recording-marked stage
 
@@ -125,8 +124,7 @@ If `true`, writes a JSON sidecar for the generated `events.tsv`.
 
 ### `[excel] read_extra_encoding`
 Fallback encoding used when UTF-8 decoding fails (and also used for Excel conversion when needed).
-Examples:
-- `read_extra_encoding = "cp932"`
+Examples: `read_extra_encoding = "cp932"`
 
 ## Usage Procedure
 
