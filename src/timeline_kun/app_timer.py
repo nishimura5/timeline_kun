@@ -118,7 +118,7 @@ class App(ttk.Frame):
         ble_names = toml_dict.get("ble_names", [])
         if len(ble_names) > 0:
             self.enable_ble = True
-            self.stop_delay_sec = toml_dict.get("stop_delay_sec", 1)
+            self.stop_delay_sec = toml_dict.get("stop_delay_sec", 2)
             self.ble_manager = gui_ble_button.BleButtonManager(
                 buttons_frame,
                 self.master,

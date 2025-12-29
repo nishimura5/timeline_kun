@@ -7,7 +7,7 @@ class BleButtonManager:
     """BLEボタンとステータス表示を管理するクラス"""
 
     def __init__(
-        self, parent_frame, master_window, trigger_device, ble_names, stop_delay_sec=1
+        self, parent_frame, master_window, trigger_device, ble_names, stop_delay_sec=2
     ):
         """
         Args:
