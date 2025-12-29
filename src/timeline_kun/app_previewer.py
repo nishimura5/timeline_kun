@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import sys
 import tkinter as tk
+import tomllib
 from datetime import datetime, timedelta
 from tkinter import filedialog, ttk
 
@@ -16,7 +17,7 @@ IS_DARWIN = sys.platform.startswith("darwin")
 
 
 class App(ttk.Frame):
-    def __init__(self, master):
+    def __init__(self, master, toml_dict={}):
         super().__init__(master)
         master.title("Timeline-kun")
 
@@ -121,6 +122,8 @@ class App(ttk.Frame):
         self.reload_btn["state"] = "disabled"
         self.send_excel_btn["state"] = "disabled"
         self.export_svg_btn["state"] = "disabled"
+
+        self.fallback_encoding = toml_dict.get("file_fallback_encoding", "utf-8-sig")
 
         self.csv_path = None
         self.start_index = 0
@@ -344,7 +347,7 @@ class App(ttk.Frame):
         self.send_excel_btn["state"] = "normal"
         self.reload_btn["state"] = "normal"
 
-        fl = file_loader.FileLoader()
+        fl = file_loader.FileLoader(fallback_encoding=self.fallback_encoding)
         try:
             warn_msg, timetable = fl.load_file_for_preview(self.csv_path)
         except Exception as e:
@@ -462,9 +465,9 @@ class App(ttk.Frame):
             )
 
     def open_excel(self):
-        is_sjis = file_loader.utf8_to_sjis(self.csv_path)
+        is_sjis = file_loader.utf8_to_sjis(self.csv_path, self.fallback_encoding)
         if is_sjis:
-            self.csv_encoding = "shift-jis"
+            self.csv_encoding = self.fallback_encoding
         if IS_DARWIN:
             os.system(f"open -a '/Applications/Microsoft Excel.app' {self.csv_path}")
         else:
@@ -509,6 +512,21 @@ def main():
     s.configure(".", background=bg_color)
     app = App(root)
     root.protocol("WM_DELETE_WINDOW", lambda: quit(root))
+
+    # Load toml config
+    if getattr(sys, "frozen", False):
+        current_dir = os.path.dirname(sys.executable)
+    else:
+        current_dir = os.path.dirname(__file__)
+    ble_file_name = os.path.join(current_dir, "config.toml")
+    with open(ble_file_name, "rb") as f:
+        toml = tomllib.load(f)
+    # Construct toml_dict for App
+    excel_conf = toml.get("excel", {})
+    toml_dict = {**excel_conf}
+
+    print(f"TOML config: {toml_dict}")
+
     app.mainloop()
 
 

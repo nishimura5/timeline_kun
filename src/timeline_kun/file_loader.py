@@ -7,9 +7,11 @@ class FileLoader:
     def __init__(
         self,
         intermission_desc="Intermission",
+        fallback_encoding="utf-8-sig",
     ):
         self.stage_list = []
         self.intermission_desc = intermission_desc
+        self.fallback_encoding = fallback_encoding
         self.encoding = None
 
     def _read_file(self, tar_path):
@@ -25,15 +27,24 @@ class FileLoader:
             self.encoding = "utf-8"
             return content
         except UnicodeDecodeError:
-            print("UTF-8 decoding failed, falling back to Shift-JIS")
+            print(f"UTF-8 decoding failed, falling back to {self.fallback_encoding}")
             try:
-                with open(tar_path, "r", encoding="shift-jis") as f:
+                with open(tar_path, "r", encoding=self.fallback_encoding) as f:
                     content = f.read()
-                self.encoding = "shift-jis"
+                self.encoding = self.fallback_encoding
                 return content
             except UnicodeDecodeError:
-                self.encoding = None
-                raise ValueError("File encoding not supported (not UTF-8 or Shift-JIS)")
+                print(
+                    f"{self.fallback_encoding} decoding also failed, falling back to cp932"
+                )
+                try:
+                    with open(tar_path, "r", encoding="cp932") as f:
+                        content = f.read()
+                    self.encoding = "cp932"
+                    return content
+                except UnicodeDecodeError:
+                    self.encoding = None
+                    raise ValueError(f"File encoding not supported")
 
     def load_file_for_preview(self, csv_path):
         timetable_csv_str = self._read_file(csv_path)
@@ -103,7 +114,7 @@ class FileLoader:
         self.stage_list = []
 
 
-def utf8_to_sjis(tar_path: str) -> bool:
+def utf8_to_sjis(tar_path: str, encoding: str) -> bool:
     try:
         with open(tar_path, "r", encoding="utf-8") as f:
             content = f.read()
@@ -111,18 +122,18 @@ def utf8_to_sjis(tar_path: str) -> bool:
         print(f"Error converting {tar_path}: {e}")
         return False
 
-    if _can_encode_cp932(content):
-        with open(tar_path, "w", encoding="cp932", errors="replace") as f:
+    if _can_encode_cp932(content, encoding):
+        with open(tar_path, "w", encoding=encoding, errors="replace") as f:
             f.write(content)
     else:
-        print(f"Content in {tar_path} cannot be encoded in cp932.")
+        print(f"Content in {tar_path} cannot be encoded in {encoding}.")
         return False
     return True
 
 
-def _can_encode_cp932(text: str) -> bool:
+def _can_encode_cp932(text: str, encoding: str) -> bool:
     try:
-        text.encode("cp932")
+        text.encode(encoding)
         return True
     except UnicodeEncodeError:
         return False

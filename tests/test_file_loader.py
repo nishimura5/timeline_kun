@@ -79,12 +79,12 @@ TEXT_ENCODING_CASES = [
     # filename, expected_encoding, expected_warn_msg, expected_err_msg
     ("valid__encoding__utf8.csv", "utf-8", "", None),
     ("valid__encoding__utf8_bom.csv", "utf-8", "", None),
-    ("valid__encoding__shift_jis.csv", "shift-jis", "", None),
+    ("valid__encoding__shift_jis.csv", "cp932", "", None),
     (
         "invalid__encoding__unsupported.csv",
         "utf-8",
         "",
-        "File encoding not supported (not UTF-8 or Shift-JIS)",
+        "File encoding not supported",
     ),
 ]
 
@@ -96,7 +96,7 @@ def test_load_invalid_file_for_preview(
     expected_err_msg,
 ):
     file_path = _fixture_path(filename)
-    fl = FileLoader()
+    fl = FileLoader(fallback_encoding="shift-jis")
     if expected_err_msg is not None:
         with pytest.raises(ValueError) as e:
             _ = fl.load_file_for_preview(file_path)

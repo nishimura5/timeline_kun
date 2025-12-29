@@ -149,7 +149,8 @@ class App(ttk.Frame):
         if make_events_json:
             self.bids_log.make_events_json()
 
-        self.load_file(start_index)
+        fall_back_encoding = toml_dict.get("file_fallback_encoding", "utf-8-sig")
+        self.load_file(start_index, fallback_encoding=fall_back_encoding)
 
     def update_clock(self):
         now = datetime.datetime.now()
@@ -347,8 +348,8 @@ class App(ttk.Frame):
         else:
             self.current_stage_label["style"] = "Small.TLabel"
 
-    def load_file(self, start_index):
-        fl = file_loader.FileLoader(self.INTERMISSION)
+    def load_file(self, start_index, fallback_encoding="utf-8-sig"):
+        fl = file_loader.FileLoader(self.INTERMISSION, fallback_encoding=fallback_encoding)
         fl.load_file_for_timer(start_index, self.csv_path)
 
         self.stage_list = fl.get_stage_list()
@@ -429,7 +430,8 @@ def main(
     # Construct toml_dict for App
     ble_conf = toml.get("ble", {}).get(fg_color, {})
     log_conf = toml.get("log", {})
-    toml_dict = {**ble_conf, **log_conf}
+    excel_conf = toml.get("excel", {})
+    toml_dict = {**ble_conf, **log_conf, **excel_conf}
 
     print(f"TOML config: {toml_dict}")
 

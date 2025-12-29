@@ -13,3 +13,6 @@ stop_delay_sec = 2
 
 [log]
 make_events_json = true
+
+[excel]
+encoding = "utf-8-sig"
