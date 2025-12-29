@@ -188,6 +188,14 @@ Notes:
 - For `fixed=start`, you must provide `start`, and `end` is determined by duration, end, or “next row start”.
 
 ### 7.2 With the `end` column (when you want to directly specify end for some rows)
+
+```
 title,member,start,end,duration,fixed,instruction
 Task A,Alice,0:00:00,0:05:00,,start,
 Task B,Bob,,,2:00,duration,
+```
+
+| title  | member | start   | end     | duration | fixed    | instruction |
+| ------ | ------ | ------- | ------- | -------- | -------- | ----------- |
+| Task A | Alice  | 0:00:00 | 0:05:00 |          | start    |             |
+| Task B | Bob    |         |         | 2:00     | duration |             |

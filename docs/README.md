@@ -95,7 +95,7 @@ Timeline-kun reads a *simple* comma-separated file (not a fully compliant CSV pa
 
 See the full specification and examples in:
 - [`timeline_csv_format.md`](https://github.com/nishimura5/timeline_kun/blob/main/docs/timeline_csv_format.md)
-- (LLM generation) [`schemas/timeline_kun_csv.schema.json`](https://github.com/nishimura5/timeline_kun/blob/main/docs/schemas/timeline_kun_csv.schema.json) and [`timeline_kun_and_llm.md`](https://github.com/nishimura5/timeline_kun/blob/main/docs/timeline_kun_and_llm.md)
+- (LLM generation) [`schemas/timeline_kun_csv.schema.json`](https://github.com/nishimura5/timeline_kun/blob/main/schemas/timeline_kun_csv.schema.json) and [`timeline_kun_and_llm.md`](https://github.com/nishimura5/timeline_kun/blob/main/docs/timeline_kun_and_llm.md)
 
 Minimal example:
 
@@ -165,7 +165,7 @@ log/<timeline_csv_name>_scans.tsv.
 
 Each time the timer is started, the number (00) is incremented and saved.
 
-If [log].make_events_json is set to true in config.toml, an events JSON sidecar will also be generated in the log/ directory (current implementation writes: log/<timeline_csv_name>_events.json_events.json).
+If [log].make_events_json is set to true in config.toml, an events JSON sidecar will also be generated in the log/ directory.
 
 A sample log is shown below:
 
