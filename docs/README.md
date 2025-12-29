@@ -12,8 +12,7 @@ Timeline-kun is an integrated graphical interface tool for planning and executin
 ## Quick start
 
 ### Option A: Windows (standalone)
-1. Download the latest `.exe` from the Releases page:
-   https://github.com/nishimura5/timeline_kun/releases
+1. Download the latest `.exe` from [TimelineKun101.zip](https://github.com/nishimura5/timeline_kun/releases/download/v1.0.1/TimelineKun101.zip).
 2. Double-click `TimelineKun.exe` to launch the Previewer.
 3. The Previewer can launch the timer (`TimelinekunTimer.exe`) via **Send to timer**.
 
