@@ -2,7 +2,7 @@
 
 When you run experiments or workshops, you often have to manage sequences such as a 5-minute session, a 1-minute changeover, and then a 10-minute discussion. It is easy to stumble during both planning and execution when you try to handle this kind of time management by hand. Timeline-kun is a tool designed to support this sort of scheduling.
 
-Timeline-kun is a desktop application that generates timers based on a schedule defined in a CSV file. You can download the Windows version here: [TimelineKun100.zip](https://github.com/nishimura5/timeline_kun/releases/download/v.1.0.0/TimelineKun100.zip). Unzip the archive and run the application.
+Timeline-kun is a desktop application that generates timers based on a schedule defined in a CSV file. You can download the Windows version here: [TimelineKun101.zip](https://github.com/nishimura5/timeline_kun/releases/download/v1.0.1/TimelineKun101.zip). Unzip the archive and run the application.
 
 ## Example CSV Format
 
