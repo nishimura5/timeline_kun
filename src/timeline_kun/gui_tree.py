@@ -1,10 +1,10 @@
+import csv
 import datetime
 import re
 import sys
 import tkinter as tk
 from tkinter import ttk
 from typing import Literal
-import csv
 
 from . import time_format, timetable_to_csv
 
@@ -73,7 +73,7 @@ class Tree(ttk.Frame):
     def get_selected_index(self):
         selected = self.tree.selection()
         if len(selected) == 0:
-            return None
+            return -1
         selected = selected[0]
         return self.tree.index(selected)
 
@@ -93,14 +93,20 @@ class Tree(ttk.Frame):
         selected = self.tree.selection()
         if len(selected) == 0 or len(selected) > 1:
             return False
-        default_row = self.tree.item(selected)["values"]
+
+        values = self.tree.item(selected[0]).get("values", None)
+        if values is None or len(values) < 7:
+            return False
+        values = list(values)
 
         x = self.winfo_rootx()
         y = self.winfo_rooty()
         dialog = TimelineTreeDialog(self, x, y)
-        dialog.set_row_contents(default_row)
+        dialog.set_row_contents(values)
 
         idx = self.get_selected_index()
+        if idx == -1:
+            return False
         start = time_format.timedelta_to_str(self.stage_list[idx]["start_dt"])
         end = time_format.timedelta_to_str(self.stage_list[idx]["end_dt"])
         dialog.set_current_time_range(start, end)
@@ -109,27 +115,24 @@ class Tree(ttk.Frame):
 
         new_title = dialog.selected_title
         new_member = dialog.selected_member
-        if new_title is None:
+        if new_title == None or new_member == None:
             return False
-        for item in selected:
-            values = self.tree.item(item)["values"]
-            if new_title != "":
-                values[0] = new_title
-            if new_member != "":
-                values[1] = new_member
-            if dialog.selected_fixed != "":
-                values[5] = dialog.selected_fixed
-            values[2] = dialog.selected_start
-            values[3] = dialog.selected_end
-            values[4] = dialog.selected_duration
-            if dialog.selected_instruction != "":
-                values[6] = dialog.selected_instruction
-            elif (
-                dialog.selected_instruction == " " or dialog.selected_instruction == ""
-            ):
-                values[6] = ""
 
-            self.tree.item(item, values=values)
+        if new_title != "":
+            values[0] = new_title
+        if new_member != "":
+            values[1] = new_member
+        if dialog.selected_fixed != "":
+            values[5] = dialog.selected_fixed
+        values[2] = dialog.selected_start
+        values[3] = dialog.selected_end
+        values[4] = dialog.selected_duration
+        if dialog.selected_instruction != "":
+            values[6] = dialog.selected_instruction
+        elif dialog.selected_instruction == " " or dialog.selected_instruction == "":
+            values[6] = ""
+
+        self.tree.item(selected[0], values=values)
         return True
 
     def insert(self):
@@ -196,7 +199,7 @@ class Tree(ttk.Frame):
             writer.writerow(header.split(","))
 
             for item in self.tree.get_children():
-                values = self.tree.item(item)["values"]
+                values = list(self.tree.item(item).get("values", ()))
                 if no_end:
                     values.pop(end_col_num)
 
@@ -275,10 +278,10 @@ class TimelineTreeDialog(tk.Frame):
         self.dialog = dialog
         self.selected_title = None
         self.selected_member = None
-        self.selected_duration = None
-        self.selected_start = None
-        self.selected_end = None
-        self.selected_fixed = None
+        self.selected_duration = ""
+        self.selected_start = ""
+        self.selected_end = ""
+        self.selected_fixed = ""
 
         dialog.protocol("WM_DELETE_WINDOW", self.on_close)
 
