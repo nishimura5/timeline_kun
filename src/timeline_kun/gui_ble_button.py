@@ -4,23 +4,23 @@ from tkinter import ttk
 
 
 class BleButtonManager:
-    """BLEボタンとステータス表示を管理するクラス"""
+    """Manages the BLE button and status display."""
 
     def __init__(
         self, parent_frame, master_window, trigger_device, ble_names, stop_delay_sec=2
     ):
         """
         Args:
-            parent_frame: ボタンとラベルを配置する親フレーム
-            master_window: UIの更新をスケジュールするためのメインウィンドウ
-            trigger_device: BLE制御用のTriggerインスタンス
+            parent_frame: Parent frame where the button and label are placed
+            master_window: Main window used to schedule UI updates
+            trigger_device: Trigger instance used for BLE control
         """
         self.master_window = master_window
         self.trigger_device = trigger_device
         self.stop_delay_sec = stop_delay_sec
         self.trigger_device.set_delay_sec(self.stop_delay_sec)
 
-        # BLE UI要素を作成
+        # Create BLE UI elements
         self.ble_frame = ttk.Frame(parent_frame)
         self.ble_frame.pack(side=tk.RIGHT)
 
@@ -44,7 +44,7 @@ class BleButtonManager:
             self.ble_status_label.config(foreground="gray")
 
     def connect_ble(self):
-        """BLE接続を開始"""
+        """Start BLE connection"""
         self.set_disabled()
         self.trigger_device.set_status("Connecting...")
 
@@ -66,16 +66,16 @@ class BleButtonManager:
         self.ble_btn.config(state="normal")
 
     def _on_ble_connect_complete(self):
-        """BLE接続完了時にメインスレッドで呼ばれる"""
+        """Called on the main thread when BLE connection completes."""
         self.ble_btn.config(state="normal")
         self.ble_status_label.config(text=self.trigger_device.get_status())
 
     def _on_ble_connect_error(self):
-        """BLE接続エラー時にメインスレッドで呼ばれる"""
+        """Called on the main thread when a BLE connection error occurs."""
         self.ble_btn.config(state="normal")
         self.trigger_device.set_status("Connection Error")
 
     def update_ble_status(self):
-        """BLEステータスラベルを更新"""
+        """Update the BLE status label."""
         status = self.trigger_device.update_status()
         self.ble_status_label.config(text=status)
