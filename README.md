@@ -7,15 +7,14 @@
 [![CI](https://github.com/nishimura5/timeline_kun/actions/workflows/ci.yml/badge.svg)](https://github.com/nishimura5/timeline_kun/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/timeline-kun.svg)](https://pypi.org/project/timeline-kun/)
 
-
 Timeline-kun is an integrated graphical interface tool for planning and executing experimental protocols.
 
 ## Quick start
 
 ### Option A: Windows (standalone)
-1. Download the latest `.exe` from the Releases page:
-   https://github.com/nishimura5/timeline_kun/releases
-2. Double-click to launch.
+1. Download the latest `.exe` from [TimelineKun101.zip](https://github.com/nishimura5/timeline_kun/releases/download/v1.0.1/TimelineKun101.zip).
+2. Double-click `TimelineKun.exe` to launch the Previewer.
+3. The Previewer can launch the timer (`TimelinekunTimer.exe`) via **Send to timer**.
 
 ### Option B: Python (PyPI)
 ```bash
@@ -40,57 +39,39 @@ Timeline-kun integrates four primary functionalities:
 1. **Simplifying the planning of complex experimental schedules**
    - Visually represents experimental schedules
    - Stores schedule data in CSV format
-   - Allows intuitive insertion, deletion, and reordering of events using Excel
+   - Edit schedules with Excel *or* the built-in table editor (Insert/Edit/Remove)
 
 2. **Integrating schedule planning and execution in a single tool**
-   - Experimental schedules created with this tool can be directly used as timers
+   - Schedules created with this tool can be directly used as timers
    - Timer can be started from any point, allowing test executions or real-time schedule modifications
    - Supports custom alarm sounds using 3-second WAV files
 
 3. **Controlling GoPro devices**
-   - Start and stop recording based on schedules via BLE
+   - Start/stop recording based on schedules via BLE
    - Simultaneous control of multiple devices
-   - Support for long standby times through keep-alive signals sent every 3 seconds
-   
+   - Keep-alive is sent periodically while connected (for long standby)
+  
 4. **Improving methodological transparency and reproducibility**
-   - TSV log records in BIDS compliant events.tsv format
-   - Deviations due to interruptions or running ahead can be reviewed later
-   - Provides SVG export function suitable for experimental planning discussions and record-keeping
+   - TSV logs in BIDS `events.tsv` format
+   - Deviations (skip, intermission, recording triggers) can be reviewed later
+   - SVG export for planning discussions and record-keeping
 
-## Installation and Execution
+---
 
-### Windows
-1. Download and extract the ZIP file from the [latest release](https://github.com/nishimura5/timeline_kun/releases)
-2. Double-click "TimelineKun.exe" to run the application
+## Applications overview
 
-### From PyPI
-```
-uv add timeline-kun
-uv run timeline-kun
-```
-or
-```
-pip install timeline-kun
-python -m timeline_kun
-```
+- **Previewer**: Create/Load/Edit/Validate CSV, visualize timeline, export SVG, launch Timer.
+- **Timer**: Execute the schedule, play alarms, log `events.tsv`, optionally control GoPro via BLE.
 
-### Running from development environment
-1. Clone the repository: `git clone https://github.com/nishimura5/timeline_kun.git`
-2. Set up the environment using uv (simply run "uv sync" in the directory containing pyproject.toml)
-3. Run below in the directory containing pyproject.toml to launch
-
-```
-uv run python -m timeline_kun
-```
-
-*Note: macOS users will need to install tcl-tk and configure appropriate environment variables before installation as this tool relies on tkinter.*
+---
 
 ## Timeline CSV
 
 Timeline-kun reads a simple comma-separated file.
 
-- **Required columns**: `title,member,start,duration,fixed,instruction` (optional: `end`)
-- **Encoding**: UTF-8 (falls back to Shift-JIS when UTF-8 decoding fails)
+- **Required columns**: `title,member,start,duration,fixed,instruction`
+- **Optional column**: `end`  
+  If any row uses `end`, the file should include an `end` column.
 
 See the full specification and examples in:
 - [`timeline_csv_format.md`](https://github.com/nishimura5/timeline_kun/blob/main/docs/timeline_csv_format.md)
@@ -100,10 +81,49 @@ Minimal example:
 
 ```csv
 title,member,start,duration,fixed,instruction
-TASK A,MEMBER1,0:00:00,,start,
+TASK A,MEMBER1,0:00:00,0:01:00,start,
 TASK B,MEMBER1,,0:05:00,duration,(recording)
 ```
 
+## Config file (`config.toml`)
+
+`config.toml` is loaded from the application directory:
+- Windows standalone: the folder containing the `.exe`
+- Python module: the package directory where `timeline_kun` is installed
+
+Current default config:
+```toml
+[ble.orange]
+ble_names = []
+stop_delay_sec = 2
+
+[ble.cyan]
+ble_names = []
+stop_delay_sec = 2
+
+[ble.lightgreen]
+ble_names = []
+stop_delay_sec = 2
+
+[log]
+make_events_json = true
+
+[excel]
+#read_extra_encoding = "your_encoding"
+```
+
+### `[ble.<color>]` (GoPro control per timer color)
+- `ble_names`: list of BLE device names to control.
+Examples: `ble_names = ["GoPro 2700", "GoPro 4256"]`
+
+- `stop_delay_sec`: delay (seconds) before stopping recording after leaving a recording-marked stage
+
+### `[log] make_events_json`
+If `true`, writes a JSON sidecar for the generated `events.tsv`.
+
+### `[excel] read_extra_encoding`
+Fallback encoding used when UTF-8 decoding fails (and also used for Excel conversion when needed).
+Examples: `read_extra_encoding = "cp932"`
 
 ## Usage Procedure
 
@@ -122,6 +142,15 @@ TASK B,MEMBER1,,0:05:00,duration,(recording)
 3. Press the "Skip" button to skip the current event
 4. To end the timer, simply close the window
 
+### Running from development environment
+1. Clone the repository: `git clone https://github.com/nishimura5/timeline_kun.git`
+2. Set up the environment using uv (simply run "uv sync" in the directory containing pyproject.toml)
+3. Run below in the directory containing pyproject.toml to launch
+
+```
+uv run python -m timeline_kun
+```
+
 ## Tips
 
 - Time display format can be selected between "MM:SS" (like 90:00) and "H:MM:SS" (like 1:30:00)
@@ -131,40 +160,28 @@ TASK B,MEMBER1,,0:05:00,duration,(recording)
 
 ## GoPro Control
 
-For GoPro models starting from HERO11 that support BLE communication, recording can be automatically started shortly before a specified event begins (5 seconds before the next event starts). For the first event, recording starts at the beginning of the event. By entering "(recording)" in the event instruction, that event will be marked for recording. It is possible to send commands to start and stop recording on multiple GoPro devices.
+To mark a stage for recording, include `"(recording)"` in the **instruction** field.
+- Recording starts when the timer is close to a recording-marked stage (and for the first stage, at stage start).
+- Recording stops (after `stop_delay_sec`) when the timer enters a stage **without** `"(recording)"`.
 
-The target GoPro devices for control are specified in config.toml (loaded from the application directory). Below is an example configuration where each of the three timers (orange/cyan/lightgreen) is assigned to a different GoPro. The parameter stop_delay_sec specifies the delay time (in seconds) between the end of an event and stopping the recording (default: 2).
+To enable BLE UI in the timer:
+1. Put GoPro names into `ble_names` for the corresponding timer color in `config.toml`.
+2. Launch the timer in that color.
+3. Click **BLE Connect** before starting the timer.
 
-```
-[ble.orange]
-ble_names = ["GoPro 2700", "GoPro 4256"]
-stop_delay_sec = 2
-
-[ble.cyan]
-ble_names = ["GoPro 1320"]
-stop_delay_sec = 2
-
-[ble.lightgreen]
-ble_names = []
-stop_delay_sec = 2
-
-[log]
-make_events_json = true
-```
+For GoPro models starting from HERO11 that support BLE communication, recording can be automatically started shortly before a specified event begins (5 seconds before the next event starts). For the first event, recording starts at the beginning of the event. It is possible to send commands to start and stop recording on multiple GoPro devices.
 
 ## Log File Format
 
-Timer execution logs conform to the BIDS (Brain Imaging Data Structure) events.tsv format. The log files are stored in the same directory as the Timeline CSV file, with file names in the format:
+Timer logs conform to the BIDS (Brain Imaging Data Structure) `events.tsv` format.
 
-log/<timeline_csv_name>_00_events.tsv.
+Files are created under the same directory as the Timeline CSV:
+- `log/<timeline_csv_name>_00_events.tsv`
+- `log/<timeline_csv_name>_scans.tsv`
 
-Additionally, a scans file is written to:
+Each time the timer is started, the number (`00`) increments.
 
-log/<timeline_csv_name>_scans.tsv.
-
-Each time the timer is started, the number (00) is incremented and saved.
-
-If [log].make_events_json is set to true in config.toml, an events JSON sidecar will also be generated in the log/ directory.
+If `[log].make_events_json = true`, an events JSON sidecar is also generated in `log/`.
 
 A sample log is shown below:
 
@@ -184,11 +201,14 @@ onset	duration	trial_type
 
 ## Sound File
 
-The timer application will load a 3-second wav file and play it as an alarm. The wav file will be stored in the "sound" folder with the following file names:
+The timer loads a 3-second WAV file from the `sound/` folder.
 
-- countdown3_orange.wav
-- countdown3_cyan.wav
-- countdown3_lightgreen.wav
+File names:
+- `countdown3_orange.wav`
+- `countdown3_cyan.wav`
+- `countdown3_lightgreen.wav`
+
+Replace these files to use custom alarm sounds (keep duration ~3 seconds).
 
 MMCV: ずんだもん
 
