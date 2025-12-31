@@ -529,8 +529,6 @@ def main():
     excel_conf = toml.get("excel", {})
     toml_dict = {**excel_conf}
 
-    print(f"TOML config: {toml_dict}")
-
     app = App(root, toml_dict=toml_dict)
     root.protocol("WM_DELETE_WINDOW", lambda: quit(root))
     app.mainloop()
