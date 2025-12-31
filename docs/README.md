@@ -132,15 +132,17 @@ Examples: `read_extra_encoding = "cp932"`
 1. Press the "Create CSV" button to create timeline data
 2. Press the "Send to Excel" button to edit the timeline data in Excel
 3. Press the "Reload" button to visualize the timeline data and check for any input errors
-4. If you wish to start timing from the middle of the timeline, select the desired event from the table, right-click, and select the "Set start point" menu
-5. Press the "Send to Timer" button to launch the timer
+4. Press the "Export SVG" button to export the visualized timeline as an SVG file
+5. you wish to start timing from the middle of the timeline, select the desired event from the table, right-click, and select the "Set start point" menu
+6. Press the "Send to timer" button to launch the timer
 
 ### Timer operation:
 
 1. Press the "Sound test" button to check the speaker volume
-2. Press the "Start" button to begin the timer
-3. Press the "Skip" button to skip the current event
-4. To end the timer, simply close the window
+2. If you use GoPro control, press the "BLE Connect" button to attempt to connect to the GoPro devices listed in `config.toml` (`ble_names`)
+3. Press the "Start" button to begin the timer
+4. Press the "Skip" button to skip the current event
+5. To end the timer, simply close the window or press the "Reset" button
 
 ### Running from development environment
 1. Clone the repository: `git clone https://github.com/nishimura5/timeline_kun.git`
