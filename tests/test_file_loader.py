@@ -44,6 +44,11 @@ INVALID_CASES = [
         "",
         "[line 1] Duration must be set in fixed==duration",
     ),
+    (
+        "invalid__duration_zero.csv",
+        "",
+        "[line 1] Duration must be set in fixed==duration",
+    ),
     ("invalid__last_row__cannot_infer_end_time.csv", "", "[line 2] No next line"),
     (
         "warn__time__overlap_with_previous.csv",

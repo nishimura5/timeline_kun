@@ -18,7 +18,7 @@ If a UTF-8 **BOM (`\ufeff`)** exists at the beginning of the decoded text, it is
 (including the case where multiple BOMs are repeated at the start).
 
 ### Text encoding (write / export behavior)
-- When you edit and save a CSV **inside Timeline-kun**, it is saved as **UTF-8**.
+- When you edit and save a CSV inside Timeline-kun, it is saved using the same encoding as the loaded CSV (detected on load; default is UTF-8).
 - When you press the **Send to Excel** button, Timeline-kun converts and saves the file as **UTF-8 with BOM** (`utf-8-sig`)
   and then opens it in Excel.
 
