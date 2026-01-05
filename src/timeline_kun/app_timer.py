@@ -169,7 +169,10 @@ class App(ttk.Frame):
 
         # If the timer is stopped, reset the timer
         if self.is_running is False:
-            self.count_up_label.config(text="00:00:00")
+            if self.hmmss == True:
+                self.count_up_label.config(text="0:00:00")
+            else:
+                self.count_up_label.config(text="0:00")
             self.now_stage = 0
             self.progress_bar.config(value=0)
             self.reset_time = datetime.datetime.now()
