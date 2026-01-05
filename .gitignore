@@ -167,3 +167,6 @@ cython_debug/
 #.idea/
 
 */config.toml
+
+# Track the default config shipped with this repo
+src/timeline_kun/config.toml
