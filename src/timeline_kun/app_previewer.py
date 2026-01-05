@@ -10,7 +10,15 @@ from tkinter import filedialog, ttk
 
 import ttkthemes
 
-from . import config_toml, file_loader, gui_canvas, gui_tree, icon_data, svg_writer, time_format
+from . import (
+    config_toml,
+    file_loader,
+    gui_canvas,
+    gui_tree,
+    icon_data,
+    svg_writer,
+    time_format,
+)
 from .gui_parts import Combobox
 
 IS_DARWIN = sys.platform.startswith("darwin")
