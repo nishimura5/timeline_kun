@@ -41,19 +41,25 @@ class App(ttk.Frame):
         self.trigger_device = trigger.Trigger(offset_sec=5)
 
         # header
-        head_frame = ttk.Frame(self.master)
+        head_frame = ttk.Frame(self.master, height=80)
         head_frame.pack(fill=tk.X, pady=10, padx=10)
+        head_frame.propagate(False)
 
         title_frame = ttk.Frame(head_frame)
-        title_frame.pack(side=tk.LEFT, fill=tk.X)
+        title_frame.pack(side=tk.LEFT, anchor=tk.NW, fill=tk.X)
         clock_frame = ttk.Frame(head_frame)
         clock_frame.pack(side=tk.RIGHT, fill=tk.X)
 
         self.title_label = ttk.Label(title_frame, text="", font=("Helvetica", 28))
         self.title_label.pack(anchor=tk.W)
 
-        self.main_clock_label = ttk.Label(clock_frame, font=("Helvetica", 12))
+        self._main_clock_font_size = 12
+        self.main_clock_label = ttk.Label(
+            clock_frame, font=("Helvetica", self._main_clock_font_size)
+        )
         self.main_clock_label.pack(anchor=tk.E, pady=1)
+        self.main_clock_label.bind("<Button-1>", self._toggle_main_clock_font_size)
+
         self.count_up_label = ttk.Label(clock_frame, font=("Helvetica", 18))
         self.count_up_label.pack(anchor=tk.E)
 
@@ -151,6 +157,10 @@ class App(ttk.Frame):
 
         fall_back_encoding = toml_dict.get("read_extra_encoding", "utf-8-sig")
         self.load_file(start_index, fallback_encoding=fall_back_encoding)
+
+    def _toggle_main_clock_font_size(self, _event=None):
+        self._main_clock_font_size = 28 if self._main_clock_font_size == 12 else 12
+        self.main_clock_label.config(font=("Helvetica", self._main_clock_font_size))
 
     def update_clock(self):
         now = datetime.datetime.now()
@@ -349,7 +359,9 @@ class App(ttk.Frame):
             self.current_stage_label["style"] = "Small.TLabel"
 
     def load_file(self, start_index, fallback_encoding="utf-8-sig"):
-        fl = file_loader.FileLoader(self.INTERMISSION, fallback_encoding=fallback_encoding)
+        fl = file_loader.FileLoader(
+            self.INTERMISSION, fallback_encoding=fallback_encoding
+        )
         fl.load_file_for_timer(start_index, self.csv_path)
 
         self.stage_list = fl.get_stage_list()
