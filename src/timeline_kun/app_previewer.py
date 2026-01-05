@@ -10,7 +10,7 @@ from tkinter import filedialog, ttk
 
 import ttkthemes
 
-from . import file_loader, gui_canvas, gui_tree, icon_data, svg_writer, time_format
+from . import config_toml, file_loader, gui_canvas, gui_tree, icon_data, svg_writer, time_format
 from .gui_parts import Combobox
 
 IS_DARWIN = sys.platform.startswith("darwin")
@@ -521,8 +521,9 @@ def main():
         current_dir = os.path.dirname(sys.executable)
     else:
         current_dir = os.path.dirname(__file__)
-    ble_file_name = os.path.join(current_dir, "config.toml")
-    with open(ble_file_name, "rb") as f:
+    config_path = os.path.join(current_dir, "config.toml")
+    config_toml.make_events_json(config_path)
+    with open(config_path, "rb") as f:
         toml = tomllib.load(f)
     # Construct toml_dict for App
     excel_conf = toml.get("excel", {})
