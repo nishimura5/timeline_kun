@@ -19,11 +19,7 @@ Create a CSV file in the following format:
 
 When you load this CSV file into Timeline-kun, the application will display the schedule and the total required time. This makes it easy to grasp the overall duration and time allocation for each session at a glance.
 
-![Screenshot of Timeline-kun main screen](./image/lecture/timeline_kun_chatgpt_1.webp)
-
 If you click the **Send to timer** button in the upper-right corner, the timer screen appears and the countdown begins.
-
-![Screenshot of Timeline-kun timer screen](./image/lecture/timeline_kun_chatgpt_2.webp)
 
 ## Preparing a Schema for ChatGPT
 
@@ -115,8 +111,6 @@ Please provide the result as a CSV file.
 ### Example ChatGPT Response
 
 An example response from ChatGPT might look like this (visualized here as a table):
-
-![Screenshot of a ChatGPT response](./image/lecture/timeline_kun_chatgpt_3.webp)
 
 ```csv
 title,member,start,duration,fixed,instruction
