@@ -8,7 +8,7 @@ This deposit provides test evidence (timeline CSV, config, and full-session vide
 - `tests/fixtures/valid__recording__example_1.csv`
 - `tests/fixtures/valid__recording__example_3hour.csv`
 
-### Archived on Zenodo (DOI): `[DOI here]`
+### Archived on QIR (DOI): `[DOI here]`
 - `recording__example_1.mp4` (full test video)
 - `recording__example_3hour.mp4` (full test video)
 
@@ -29,7 +29,6 @@ Verify that Timeline-kun automatically recovers BLE connectivity after the camer
 - Camera: GoPro HERO12  
 - Power: battery removed, USB power only  
 - Timeline CSV: `tests/fixtures/valid__recording__example_1.csv`  
-- Config: `config.toml`
 
 ### Procedure
 1. Start Timeline-kun and begin the timer/schedule.
@@ -68,7 +67,6 @@ Verify practical performance of scheduled start/stop control over a 3-hour conti
 - OS: Raspberry Pi Desktop  
 - Cameras: GoPro HERO11 (Camera 1) and GoPro HERO12 (Camera 2)  
 - Timeline CSV: `tests/fixtures/valid__recording__example_3hour.csv`  
-- Config: `config.toml`
 
 ### Schedule summary
 - 5-minute recordings × 12 sets  
