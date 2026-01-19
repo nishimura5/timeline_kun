@@ -171,7 +171,9 @@ To enable BLE UI in the timer:
 2. Launch the timer in that color.
 3. Click **BLE Connect** before starting the timer.
 
-For GoPro models starting from HERO11 that support BLE communication, recording can be automatically started shortly before a specified event begins (5 seconds before the next event starts). For the first event, recording starts at the beginning of the event. It is possible to send commands to start and stop recording on multiple GoPro devices.
+For GoPro models starting from HERO11 that support BLE communication, recording can be automatically started shortly before a specified event begins (3-4 seconds before the next event starts). For the first event, recording starts at the beginning of the event. It is possible to send commands to start and stop recording on multiple GoPro devices.
+
++ Test evidence: [`docs/test_evidence_gopro.md`](https://github.com/nishimura5/timeline_kun/blob/main/docs/test_evidence_gopro.md)
 
 ## Log File Format
 
