@@ -8,7 +8,7 @@ This deposit provides test evidence (timeline CSV, config, and full-session vide
 - `tests/fixtures/valid__recording__example_1.csv`
 - `tests/fixtures/valid__recording__example_3hour.csv`
 
-### Archived on QIR (DOI): `[DOI here]`
+### Archived on QIR (DOI): [https://doi.org/10.48708/7325764](https://doi.org/10.48708/7325764)
 - `recording__example_1.mp4` (full test video)
 - `recording__example_3hour.mp4` (full test video)
 
