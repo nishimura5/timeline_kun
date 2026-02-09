@@ -77,12 +77,15 @@ See the full specification and examples in:
 - [`timeline_csv_format.md`](https://github.com/nishimura5/timeline_kun/blob/main/docs/timeline_csv_format.md)
 - (LLM generation) If you want to generate a Timeline CSV using an LLM (e.g., ChatGPT), see [`timeline_kun_and_llm.md`](https://github.com/nishimura5/timeline_kun/blob/main/docs/timeline_kun_and_llm.md).
 
-Minimal example:
+Example (Clicking `Create CSV` button creates a CSV with the following content):
 
 ```csv
 title,member,start,duration,fixed,instruction
-TASK A,MEMBER1,0:00:00,0:01:00,start,
-TASK B,MEMBER1,,0:05:00,duration,(recording)
+TASK A,MEMBER1,,0:01:00,duration,The first task.
+TASK B,MEMBER1,0:01:10,0:01:30,start,The second task.
+TASK C,MEMBER1,,0:01:00,duration,The third task.
+TASK D,MEMBER1,,0:01:00,duration,The 4th task.
+TASK E,MEMBER1,0:05:00,0:01:00,start,The final task.
 ```
 
 ## Config file (`config.toml`)
