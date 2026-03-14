@@ -113,6 +113,7 @@ class App(ttk.Frame):
         self.tree = gui_tree.Tree(tree_frame, columns=cols)
         self.tree.pack(fill=tk.BOTH, expand=True)
         self.tree.tree.bind("<<TreeviewSelect>>", lambda e: self.select_row())
+        self.tree.tree.bind("<Double-1>", lambda e: self.edit_row())
         self.tree.add_menu("Set start point", self.draw_start_line)
         self.tree.add_menu("Insert", self.insert_row)
         self.tree.add_menu("Edit", self.edit_row)
