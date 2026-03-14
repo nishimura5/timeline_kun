@@ -1,4 +1,4 @@
-# Timeline-kun 1.0.1
+# Timeline-kun 1.0.2
 
 [![Release](https://img.shields.io/github/v/release/nishimura5/timeline_kun)](https://github.com/nishimura5/timeline_kun/releases)
 [![DOI](https://zenodo.org/badge/DOI/10.48708/7325764.svg)](https://doi.org/10.48708/7325764)
@@ -12,7 +12,7 @@ Timeline-kun is an integrated graphical interface tool for planning and executin
 ## Quick start
 
 ### Option A: Windows (standalone)
-1. Download the latest `.exe` from [TimelineKun101.zip](https://github.com/nishimura5/timeline_kun/releases/download/v1.0.1/TimelineKun101.zip).
+1. Download the latest `.exe` from [TimelineKun102.zip](https://github.com/nishimura5/timeline_kun/releases/download/v1.0.2/TimelineKun102.zip).
 2. Double-click `TimelineKun.exe` to launch the Previewer.
 3. The Previewer can launch the timer (`TimelinekunTimer.exe`) via **Send to timer**.
 
@@ -224,7 +224,7 @@ MMCV: ずんだもん
 Please acknowledge and cite the use of this software and its authors when results are used in publications or published elsewhere.
 
 ```
-Nishimura, E. (2026). Timeline-kun (Version 1.0.1) [Computer software]. Kyushu University, https://doi.org/10.48708/7325764
+Nishimura, E. (2026). Timeline-kun (Version 1.0.2) [Computer software]. Kyushu University, https://doi.org/10.48708/7325764
 ```
 
 ```

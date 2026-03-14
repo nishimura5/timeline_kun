@@ -13,8 +13,8 @@ This deposit provides test evidence (timeline CSV, config, and full-session vide
 - `recording__example_3hour.mp4` (full test video)
 
 ## Software version
-- Timeline-kun version: v1.0.1
-- Release URL: https://github.com/nishimura5/timeline_kun/releases/tag/v1.0.1
+- Timeline-kun version: v1.0.2
+- Release URL: https://github.com/nishimura5/timeline_kun/releases/tag/v1.0.2
 - Repository URL: https://github.com/nishimura5/timeline_kun
 
 ---
