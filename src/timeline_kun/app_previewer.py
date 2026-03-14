@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tkinter as tk
 import tomllib
+import webbrowser
 from datetime import datetime, timedelta
 from tkinter import filedialog, ttk
 
@@ -28,6 +29,18 @@ class App(ttk.Frame):
     def __init__(self, master, toml_dict={}):
         super().__init__(master)
         master.title("Timeline-kun")
+
+        # menu bar
+        menubar = tk.Menu(master)
+        master.config(menu=menubar)
+        help_menu = tk.Menu(menubar, tearoff=0)
+        help_menu.add_command(
+            label="README (online)",
+            command=lambda: webbrowser.open(
+                "https://www.design.kyushu-u.ac.jp/~eigo/timeline_kun.html"
+            ),
+        )
+        menubar.add_cascade(label="Help", menu=help_menu)
 
         head_frame = ttk.Frame(master)
         head_frame.pack(padx=10, pady=(15, 5), fill=tk.X)
