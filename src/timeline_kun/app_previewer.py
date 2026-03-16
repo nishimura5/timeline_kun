@@ -33,11 +33,27 @@ class App(ttk.Frame):
         # menu bar
         menubar = tk.Menu(master)
         master.config(menu=menubar)
+        self.file_menu = tk.Menu(menubar, tearoff=0)
+        self.file_menu.add_command(label="Create CSV", command=self.create_file)
+        self.file_menu.add_command(label="Load CSV", command=self.select_file)
+        self.file_menu.add_command(
+            label="Export SVG", command=self.export_svg, state="disabled"
+        )
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label="Exit", command=lambda: quit(master))
+        menubar.add_cascade(label="File", menu=self.file_menu)
+
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(
-            label="README (online)",
+            label="Readme (online)",
             command=lambda: webbrowser.open(
                 "https://www.design.kyushu-u.ac.jp/~eigo/timeline_kun.html"
+            ),
+        )
+        help_menu.add_command(
+            label="GitHub repository",
+            command=lambda: webbrowser.open(
+                "https://github.com/nishimura5/timeline_kun"
             ),
         )
         menubar.add_cascade(label="Help", menu=help_menu)
@@ -98,7 +114,10 @@ class App(ttk.Frame):
         self.direction_combobox.set_selected_bind(lambda e: self.draw_stages())
 
         self.export_svg_btn = ttk.Button(
-            send_timer_frame, text="Export SVG", command=self.export_svg
+            send_timer_frame,
+            text="Export SVG",
+            command=self.export_svg,
+            state="disabled",
         )
         self.export_svg_btn.pack(padx=5, side=tk.LEFT)
 
@@ -403,10 +422,12 @@ class App(ttk.Frame):
             self.msg_label.config(text=f"[ERROR]{warn_msg}")
             self.timer_btn["state"] = "disabled"
             self.export_svg_btn["state"] = "disabled"
+            self.file_menu.entryconfig("Export SVG", state="disabled")
         else:
             self.msg_label.config(text="Successfully loaded.")
             self.timer_btn["state"] = "normal"
             self.export_svg_btn["state"] = "normal"
+            self.file_menu.entryconfig("Export SVG", state="normal")
 
         self.csv_encoding = fl.get_encoding()
         if self.csv_encoding is not None:
@@ -419,6 +440,7 @@ class App(ttk.Frame):
         self.reload_btn["state"] = "disabled"
         self.timer_btn["state"] = "disabled"
         self.export_svg_btn["state"] = "disabled"
+        self.file_menu.entryconfig("Export SVG", state="disabled")
 
     def asign_rect_color(self):
         title_list = list(set([s["title"] for s in self.stage_list]))
