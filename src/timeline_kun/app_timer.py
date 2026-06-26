@@ -19,6 +19,7 @@ from . import (
 
 class App(ttk.Frame):
     INTERMISSION = "Intermission"
+    STAGE_FLASH_INTERVAL_MS = 100
 
     def __init__(
         self,
@@ -28,12 +29,18 @@ class App(ttk.Frame):
         is_hmmss=True,
         sound_file_name="countdown3_orange.wav",
         toml_dict={},
+        bg_color="#202020",
     ):
         super().__init__(master)
         master.title("Timer")
         self.sound_file_name = sound_file_name
         self.hmmss = is_hmmss
         self.master = master
+        self.bg_color = bg_color
+        self._style = ttk.Style(master)
+        self._stage_flash_after_id = None
+        self._label_fg_color = self._style.lookup("TLabel", "foreground") or "black"
+        self._last_member_text = ""
 
         self.ap = sound.AudioPlayer()
         self.ap.load_audio(sound_file_name)
@@ -50,8 +57,8 @@ class App(ttk.Frame):
         clock_frame = ttk.Frame(head_frame)
         clock_frame.pack(side=tk.RIGHT, fill=tk.X)
 
-        self.title_label = ttk.Label(title_frame, text="", font=("Helvetica", 28))
-        self.title_label.pack(anchor=tk.W)
+        self.member_label = ttk.Label(title_frame, text="", font=("Helvetica", 28))
+        self.member_label.pack(anchor=tk.W)
 
         self._main_clock_font_size = 12
         self.main_clock_label = ttk.Label(
@@ -196,6 +203,7 @@ class App(ttk.Frame):
         if cnt_up > current_end_dt:
             self.now_stage += 1
             if self.now_stage < len(self.stage_list):
+                self.start_stage_flash()
                 print(
                     f"stage change {self.now_stage} (/{len(self.stage_list)}) {cnt_up}"
                 )
@@ -224,7 +232,7 @@ class App(ttk.Frame):
             return
 
         self.current_stage_label.config(text=current_stage["title"])
-        self.title_label.config(text=current_stage["member"])
+        self._set_member_label_for_stage(current_stage)
         self.update_next_stage_label(end_text="End")
         self.update_instruction_label(current_stage, current_start_dt, current_end_dt)
 
@@ -238,6 +246,66 @@ class App(ttk.Frame):
         self.update_remaining_time_label(remaining_dt)
         self.update_progress_bar(cnt_up, current_end_dt)
         self.update_skip(remaining_dt, offset_sec=4)
+
+    def start_stage_flash(self):
+        if self._stage_flash_after_id is not None:
+            self.after_cancel(self._stage_flash_after_id)
+            self._stage_flash_after_id = None
+        self._update_stage_flash(0)
+
+    def _update_stage_flash(self, step):
+        flash_colors = ("white", self.bg_color, "white", self.bg_color)
+        self.apply_background_color(flash_colors[step])
+
+        next_step = step + 1
+        if next_step < len(flash_colors):
+            self._stage_flash_after_id = self.after(
+                self.STAGE_FLASH_INTERVAL_MS,
+                self._update_stage_flash,
+                next_step,
+            )
+        else:
+            self._stage_flash_after_id = None
+
+    def apply_background_color(self, color):
+        label_fg_color = self._label_foreground_for_background(color)
+        self._apply_master_background(color)
+        self._style.configure("TFrame", background=color)
+        self._style.configure("TLabel", background=color, foreground=label_fg_color)
+        self._style.configure(
+            "Tiny.TLabel", background=color, foreground=label_fg_color
+        )
+        self._style.configure(
+            "Small.TLabel", background=color, foreground=label_fg_color
+        )
+        self._style.configure(
+            "Large.TLabel", background=color, foreground=label_fg_color
+        )
+        self._style.configure("TButton", background=color)
+        self._style.map(
+            "Horizontal.TProgressbar",
+            troughcolor=[("active", color), ("!active", color)],
+        )
+        self._style.configure("Horizontal.TProgressbar", troughcolor=color)
+
+    def _label_foreground_for_background(self, color):
+        if color.lower() in ("white", "#fff", "#ffffff"):
+            return "black"
+        return self._label_fg_color
+
+    def _apply_master_background(self, color):
+        self.master.configure(background=color)
+
+    def _member_text_for_stage(self, stage):
+        member = stage["member"]
+        if member:
+            self._last_member_text = member
+        return self._last_member_text
+
+    def _set_member_label_for_stage(self, stage, reset=False):
+        if reset:
+            self._last_member_text = ""
+        self.member_label.config(text=self._member_text_for_stage(stage))
 
     def update_instruction_label(self, current_stage, start_dt, end_dt):
         # Display instruction if it exists, otherwise display start and end time
@@ -319,12 +387,17 @@ class App(ttk.Frame):
 
     def reset_all(self):
         self.is_running = False
+        if self._stage_flash_after_id is not None:
+            self.after_cancel(self._stage_flash_after_id)
+            self._stage_flash_after_id = None
+        self.apply_background_color(self.bg_color)
         #        self.tlog.reset_log(self.disp_time)
         self.start_btn.config(state="normal")
         self.sound_test_btn.config(state="normal")
         self.reset_btn.config(state="disabled")
         self.current_stage_label.config(text="")
         self.current_instruction_label.config(text="")
+        self._set_member_label_for_stage(self.stage_list[0], reset=True)
         self.next_stage_label.config(text=self.stage_list[0]["title"])
         self.remaining_time_label.config(text="")
 
@@ -369,7 +442,7 @@ class App(ttk.Frame):
 
         self.stage_list = fl.get_stage_list()
 
-        self.title_label.config(text=self.stage_list[0]["member"])
+        self._set_member_label_for_stage(self.stage_list[0], reset=True)
         self.next_stage_label.config(text=self.stage_list[0]["title"])
         self.now_stage = 0
         self.is_running = False
@@ -457,6 +530,7 @@ def main(
         is_hmmss,
         sound_file_name=color_and_sound[fg_color],
         toml_dict=toml_dict,
+        bg_color=bg_color,
     )
     app.mainloop()
 

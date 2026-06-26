@@ -79,3 +79,46 @@ def test_valid_minimal_args_do_not_launch_gui(monkeypatch):
     assert hasattr(ns, "file_path")
     assert ns.file_path == "dummy.csv"
     assert created["tk"] is False
+
+
+def test_member_text_keeps_previous_value_when_stage_member_is_empty():
+    import importlib
+
+    mod = importlib.import_module("timeline_kun.app_timer")
+    app = mod.App.__new__(mod.App)
+    app._last_member_text = ""
+
+    assert app._member_text_for_stage({"member": "Alice"}) == "Alice"
+    assert app._member_text_for_stage({"member": ""}) == "Alice"
+    assert app._member_text_for_stage({"member": "Bob"}) == "Bob"
+
+
+def test_flash_background_uses_visible_label_foreground():
+    import importlib
+
+    mod = importlib.import_module("timeline_kun.app_timer")
+    app = mod.App.__new__(mod.App)
+    app._label_fg_color = "lightgreen"
+
+    assert app._label_foreground_for_background("white") == "black"
+    assert app._label_foreground_for_background("#ffffff") == "black"
+    assert app._label_foreground_for_background("#202020") == "lightgreen"
+
+
+def test_flash_background_updates_master_background():
+    import importlib
+
+    class FakeMaster:
+        def __init__(self):
+            self.background = None
+
+        def configure(self, **kwargs):
+            self.background = kwargs["background"]
+
+    mod = importlib.import_module("timeline_kun.app_timer")
+    app = mod.App.__new__(mod.App)
+    app.master = FakeMaster()
+
+    app._apply_master_background("white")
+
+    assert app.master.background == "white"
