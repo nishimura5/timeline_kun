@@ -30,6 +30,9 @@ class App(ttk.Frame):
         sound_file_name="countdown3_orange.wav",
         toml_dict={},
         bg_color="#202020",
+        flush_enabled=False,
+        flush_width=36,
+        flush_height=36,
     ):
         super().__init__(master)
         master.title("Timer")
@@ -37,6 +40,9 @@ class App(ttk.Frame):
         self.hmmss = is_hmmss
         self.master = master
         self.bg_color = bg_color
+        self.flush_enabled = flush_enabled
+        self.flush_width = flush_width
+        self.flush_height = flush_height
         self._style = ttk.Style(master)
         self._stage_flash_after_id = None
         self._label_fg_color = self._style.lookup("TLabel", "foreground") or "black"
@@ -59,13 +65,14 @@ class App(ttk.Frame):
 
         self.flush_rectangle = tk.Canvas(
             title_frame,
-            width=36,
-            height=36,
+            width=self.flush_width,
+            height=self.flush_height,
             highlightthickness=0,
             borderwidth=0,
             background="black",
         )
-        self.flush_rectangle.pack(side=tk.LEFT, anchor=tk.W, padx=(0, 10))
+        if self.flush_enabled:
+            self.flush_rectangle.pack(side=tk.LEFT, anchor=tk.W, padx=(0, 10))
         self.member_label = ttk.Label(title_frame, text="", font=("Helvetica", 28))
         self.member_label.pack(side=tk.LEFT, anchor=tk.W)
 
@@ -257,6 +264,8 @@ class App(ttk.Frame):
         self.update_skip(remaining_dt, offset_sec=4)
 
     def start_stage_flash(self):
+        if not self.flush_enabled:
+            return
         if self._stage_flash_after_id is not None:
             self.after_cancel(self._stage_flash_after_id)
             self._stage_flash_after_id = None
@@ -502,7 +511,12 @@ def main(
     ble_conf = toml.get("ble", {}).get(fg_color, {})
     log_conf = toml.get("log", {})
     excel_conf = toml.get("excel", {})
-    toml_dict = {**ble_conf, **log_conf, **excel_conf}
+    flush_conf = {
+        "flush": _get_flush_enabled(toml),
+        "flush_width": _get_flush_dimension(toml, "flush_width"),
+        "flush_height": _get_flush_dimension(toml, "flush_height"),
+    }
+    toml_dict = {**ble_conf, **log_conf, **excel_conf, **flush_conf}
 
     print(f"TOML config: {toml_dict}")
 
@@ -514,8 +528,25 @@ def main(
         sound_file_name=color_and_sound[fg_color],
         toml_dict=toml_dict,
         bg_color=bg_color,
+        flush_enabled=toml_dict["flush"],
+        flush_width=toml_dict["flush_width"],
+        flush_height=toml_dict["flush_height"],
     )
     app.mainloop()
+
+
+def _get_flush_enabled(toml):
+    flush_enabled = toml.get("flush", False)
+    if not isinstance(flush_enabled, bool):
+        raise ValueError("Config value 'flush' must be true or false")
+    return flush_enabled
+
+
+def _get_flush_dimension(toml, key):
+    dimension = toml.get(key, 36)
+    if isinstance(dimension, bool) or not isinstance(dimension, int) or dimension <= 0:
+        raise ValueError(f"Config value '{key}' must be a positive integer")
+    return dimension
 
 
 def build_parser() -> argparse.ArgumentParser:

@@ -1,3 +1,5 @@
+import inspect
+
 import pytest
 
 
@@ -79,6 +81,94 @@ def test_valid_minimal_args_do_not_launch_gui(monkeypatch):
     assert hasattr(ns, "file_path")
     assert ns.file_path == "dummy.csv"
     assert created["tk"] is False
+
+
+def test_app_flush_enabled_defaults_to_false():
+    import importlib
+
+    mod = importlib.import_module("timeline_kun.app_timer")
+    signature = inspect.signature(mod.App.__init__)
+
+    assert signature.parameters["flush_enabled"].default is False
+
+
+def test_app_flush_dimensions_default_to_36():
+    import importlib
+
+    mod = importlib.import_module("timeline_kun.app_timer")
+    signature = inspect.signature(mod.App.__init__)
+
+    assert signature.parameters["flush_width"].default == 36
+    assert signature.parameters["flush_height"].default == 36
+
+
+def test_stage_flash_is_noop_when_flush_disabled():
+    import importlib
+
+    mod = importlib.import_module("timeline_kun.app_timer")
+    app = mod.App.__new__(mod.App)
+    app.flush_enabled = False
+    app._stage_flash_after_id = None
+
+    app.start_stage_flash()
+
+    assert app._stage_flash_after_id is None
+
+
+def test_config_flush_defaults_to_false():
+    import importlib
+
+    mod = importlib.import_module("timeline_kun.app_timer")
+
+    assert mod._get_flush_enabled({}) is False
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_config_flush_accepts_bool(value):
+    import importlib
+
+    mod = importlib.import_module("timeline_kun.app_timer")
+
+    assert mod._get_flush_enabled({"flush": value}) is value
+
+
+@pytest.mark.parametrize("value", ["true", 1, None])
+def test_config_flush_rejects_non_bool(value):
+    import importlib
+
+    mod = importlib.import_module("timeline_kun.app_timer")
+
+    with pytest.raises(ValueError, match="flush"):
+        mod._get_flush_enabled({"flush": value})
+
+
+@pytest.mark.parametrize("key", ["flush_width", "flush_height"])
+def test_config_flush_dimension_defaults_to_36(key):
+    import importlib
+
+    mod = importlib.import_module("timeline_kun.app_timer")
+
+    assert mod._get_flush_dimension({}, key) == 36
+
+
+@pytest.mark.parametrize("key", ["flush_width", "flush_height"])
+def test_config_flush_dimension_accepts_positive_int(key):
+    import importlib
+
+    mod = importlib.import_module("timeline_kun.app_timer")
+
+    assert mod._get_flush_dimension({key: 72}, key) == 72
+
+
+@pytest.mark.parametrize("value", [0, -1, 1.5, "36", True])
+@pytest.mark.parametrize("key", ["flush_width", "flush_height"])
+def test_config_flush_dimension_rejects_invalid_values(key, value):
+    import importlib
+
+    mod = importlib.import_module("timeline_kun.app_timer")
+
+    with pytest.raises(ValueError, match=key):
+        mod._get_flush_dimension({key: value}, key)
 
 
 def test_member_text_keeps_previous_value_when_stage_member_is_empty():

@@ -96,6 +96,10 @@ TASK E,MEMBER1,0:05:00,0:01:00,start,The final task.
 
 Current default config:
 ```toml
+flush = false
+flush_width = 36
+flush_height = 36
+
 [ble.orange]
 ble_names = []
 stop_delay_sec = 2
@@ -114,6 +118,12 @@ make_events_json = true
 [excel]
 #read_extra_encoding = "your_encoding"
 ```
+
+### `flush`
+If `true`, enables the flush rectangle for photodiode/photoelectric sensor triggers.
+
+### `flush_width`, `flush_height`
+Size in pixels for the flush rectangle. Defaults to `36`.
 
 ### `[ble.<color>]` (GoPro control per timer color)
 - `ble_names`: list of BLE device names to control.

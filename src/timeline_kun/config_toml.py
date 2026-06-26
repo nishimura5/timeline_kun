@@ -2,7 +2,11 @@ import os
 
 
 def make_events_json(tar_path):
-    toml_content = """[ble.orange]
+    toml_content = """flush = false
+flush_width = 36
+flush_height = 36
+
+[ble.orange]
 ble_names = []
 stop_delay_sec = 2
 
