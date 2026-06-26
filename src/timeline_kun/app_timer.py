@@ -57,8 +57,17 @@ class App(ttk.Frame):
         clock_frame = ttk.Frame(head_frame)
         clock_frame.pack(side=tk.RIGHT, fill=tk.X)
 
+        self.flush_rectangle = tk.Canvas(
+            title_frame,
+            width=36,
+            height=36,
+            highlightthickness=0,
+            borderwidth=0,
+            background="black",
+        )
+        self.flush_rectangle.pack(side=tk.LEFT, anchor=tk.W, padx=(0, 10))
         self.member_label = ttk.Label(title_frame, text="", font=("Helvetica", 28))
-        self.member_label.pack(anchor=tk.W)
+        self.member_label.pack(side=tk.LEFT, anchor=tk.W)
 
         self._main_clock_font_size = 12
         self.main_clock_label = ttk.Label(
@@ -254,8 +263,8 @@ class App(ttk.Frame):
         self._update_stage_flash(0)
 
     def _update_stage_flash(self, step):
-        flash_colors = ("white", self.bg_color, "white", self.bg_color)
-        self.apply_background_color(flash_colors[step])
+        flash_colors = ("white", "black", "white", "black")
+        self._set_flush_rectangle_color(flash_colors[step])
 
         next_step = step + 1
         if next_step < len(flash_colors):
@@ -267,34 +276,8 @@ class App(ttk.Frame):
         else:
             self._stage_flash_after_id = None
 
-    def apply_background_color(self, color):
-        label_fg_color = self._label_foreground_for_background(color)
-        self._apply_master_background(color)
-        self._style.configure("TFrame", background=color)
-        self._style.configure("TLabel", background=color, foreground=label_fg_color)
-        self._style.configure(
-            "Tiny.TLabel", background=color, foreground=label_fg_color
-        )
-        self._style.configure(
-            "Small.TLabel", background=color, foreground=label_fg_color
-        )
-        self._style.configure(
-            "Large.TLabel", background=color, foreground=label_fg_color
-        )
-        self._style.configure("TButton", background=color)
-        self._style.map(
-            "Horizontal.TProgressbar",
-            troughcolor=[("active", color), ("!active", color)],
-        )
-        self._style.configure("Horizontal.TProgressbar", troughcolor=color)
-
-    def _label_foreground_for_background(self, color):
-        if color.lower() in ("white", "#fff", "#ffffff"):
-            return "black"
-        return self._label_fg_color
-
-    def _apply_master_background(self, color):
-        self.master.configure(background=color)
+    def _set_flush_rectangle_color(self, color):
+        self.flush_rectangle.configure(background=color)
 
     def _member_text_for_stage(self, stage):
         member = stage["member"]
@@ -390,7 +373,7 @@ class App(ttk.Frame):
         if self._stage_flash_after_id is not None:
             self.after_cancel(self._stage_flash_after_id)
             self._stage_flash_after_id = None
-        self.apply_background_color(self.bg_color)
+        self._set_flush_rectangle_color("black")
         #        self.tlog.reset_log(self.disp_time)
         self.start_btn.config(state="normal")
         self.sound_test_btn.config(state="normal")

@@ -93,22 +93,10 @@ def test_member_text_keeps_previous_value_when_stage_member_is_empty():
     assert app._member_text_for_stage({"member": "Bob"}) == "Bob"
 
 
-def test_flash_background_uses_visible_label_foreground():
+def test_flash_background_updates_only_flush_rectangle():
     import importlib
 
-    mod = importlib.import_module("timeline_kun.app_timer")
-    app = mod.App.__new__(mod.App)
-    app._label_fg_color = "lightgreen"
-
-    assert app._label_foreground_for_background("white") == "black"
-    assert app._label_foreground_for_background("#ffffff") == "black"
-    assert app._label_foreground_for_background("#202020") == "lightgreen"
-
-
-def test_flash_background_updates_master_background():
-    import importlib
-
-    class FakeMaster:
+    class FakeFlushRectangle:
         def __init__(self):
             self.background = None
 
@@ -117,8 +105,8 @@ def test_flash_background_updates_master_background():
 
     mod = importlib.import_module("timeline_kun.app_timer")
     app = mod.App.__new__(mod.App)
-    app.master = FakeMaster()
+    app.flush_rectangle = FakeFlushRectangle()
 
-    app._apply_master_background("white")
+    app._set_flush_rectangle_color("white")
 
-    assert app.master.background == "white"
+    assert app.flush_rectangle.background == "white"
