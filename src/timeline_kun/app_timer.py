@@ -19,7 +19,7 @@ from . import (
 
 class App(ttk.Frame):
     INTERMISSION = "Intermission"
-    STAGE_FLASH_INTERVAL_MS = 100
+    STAGE_FLASH_INTERVAL_MS = 200
 
     def __init__(
         self,
@@ -218,8 +218,8 @@ class App(ttk.Frame):
         # stage change if end time is reached
         if cnt_up > current_end_dt:
             self.now_stage += 1
+            self.start_stage_flash()
             if self.now_stage < len(self.stage_list):
-                self.start_stage_flash()
                 print(
                     f"stage change {self.now_stage} (/{len(self.stage_list)}) {cnt_up}"
                 )
