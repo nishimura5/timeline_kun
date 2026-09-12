@@ -22,7 +22,7 @@ from . import (
 )
 from .gui_parts import Combobox
 from .actions.config import parse_action_configs
-from .actions.window import find_window
+from .actions.window import WINDOWS_ONLY_MESSAGE, find_window
 
 IS_DARWIN = sys.platform.startswith("darwin")
 
@@ -464,6 +464,9 @@ class App(ttk.Frame):
 
     def check_windows(self):
         self.window_check_performed = True
+        if sys.platform != "win32":
+            messagebox.showinfo("Check Windows", WINDOWS_ONLY_MESSAGE)
+            return
         try:
             if not isinstance(self.actions_config, dict):
                 raise ValueError("Config value 'actions' must be a table")

@@ -19,7 +19,8 @@ def settings():
     }
 
 
-def test_multiple_actions_preserve_values_and_do_not_register_runtime_actions(settings):
+def test_multiple_actions_preserve_values_and_do_not_register_runtime_actions(settings, monkeypatch):
+    monkeypatch.setattr("sys.platform", "win32")
     settings.update(start_hotkey=["CTRL", "SHIFT", "R"], stop_hotkey=["CTRL", "SHIFT", "R"])
     settings.update(keyword=" (Pose) ", window_title=" カメラ位置確認 ", start_lead_sec=0, stop_delay_sec=0.5)
     configs = parse_action_configs({"pose": settings, "other": settings})

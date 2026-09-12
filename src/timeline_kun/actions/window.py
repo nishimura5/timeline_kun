@@ -1,8 +1,28 @@
 """Side-effect-free window lookup shared by preflight and future actions."""
 
-import ctypes
 import sys
-from ctypes import wintypes
+
+
+WINDOWS_ONLY_MESSAGE = "WindowKey actions are supported on Windows only."
+
+
+class UnsupportedWindowKeyAction:
+    """Non-Windows fallback: report unsupported without operating on windows."""
+
+    def connect(self) -> bool:
+        return False
+
+    def start(self) -> bool:
+        return False
+
+    def stop(self) -> bool:
+        return False
+
+    def get_status(self) -> str:
+        return WINDOWS_ONLY_MESSAGE
+
+    def update_status(self) -> str:
+        return self.get_status()
 
 
 def find_window(window_title: str) -> int | None:
@@ -11,7 +31,10 @@ def find_window(window_title: str) -> int | None:
     Matching preserves case and whitespace. No window is activated or modified.
     """
     if sys.platform != "win32":
-        raise OSError("Window checking is supported only on Windows.")
+        raise OSError(WINDOWS_ONLY_MESSAGE)
+
+    import ctypes
+    from ctypes import wintypes
 
     user32 = ctypes.WinDLL("user32", use_last_error=True)
     callback_type = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)

@@ -1,8 +1,10 @@
 from collections.abc import Mapping
+import sys
 from types import MappingProxyType
 from typing import Protocol
 
-from .config import ActionConfig
+from .config import ActionConfig, WindowKeyActionConfig
+from .window import UnsupportedWindowKeyAction
 
 
 class Action(Protocol):
@@ -37,6 +39,10 @@ class ActionManager:
         self._actions[name] = action
 
     def get(self, name: str) -> Action:
+        if sys.platform != "win32" and isinstance(
+            self.action_configs.get(name), WindowKeyActionConfig
+        ):
+            return UnsupportedWindowKeyAction()
         return self._actions[name]
 
     def connect(self, name: str) -> bool:

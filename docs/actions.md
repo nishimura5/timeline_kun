@@ -15,7 +15,10 @@ BLE Connect UI ────────────────────→ G
   return a boolean success result; status methods return display strings.
   `start` and `stop` refer to the action's operation, not its worker lifecycle.
 - `ActionManager` delegates these operations by name. It contains no GoPro
-  commands, status parsing, or action-type branches.
+  commands or status parsing. On non-Windows platforms, configured `window_key`
+  actions resolve to an unsupported fallback, even if a runtime action was registered:
+  `connect()`, `start()`, and `stop()` return `False`, and status methods return
+  `WindowKey actions are supported on Windows only.` Other actions are unaffected.
 - `Trigger(manager, name, keyword, offset_sec=5, delay_sec=1)` handles keyword
   entry/exit and delayed stopping. The app supplies the existing `(recording)`
   keyword and configured `stop_delay_sec` (default 2 seconds). Consecutive
@@ -92,7 +95,10 @@ Previewerの `Check Windows` はCSV未ロードでも実行できます。起動
 Action ID、`window_title`、Found / Not foundを表示します。全件見つかった場合は
 成功を表示し、対象Actionがなければその旨を通知します。`[ble.*]` は対象外です。
 
-検索はWindows専用で、非Windowsでは確認できない旨を表示します。
+検索はWindows専用です。非Windowsでは探索や設定検証を行わず、
+`WindowKey actions are supported on Windows only.` と表示します。
+Windows APIの読み込みはplatform判定後に行います。WindowKeyAction設定があっても
+macOS/Linuxでのimportや通常機能の起動を妨げません。
 共用関数 `actions.window.find_window()` は、タイトルが完全一致するトップレベル
 Windowのハンドルを返します。大文字小文字や前後の空白も区別します。
 [FindWindowWは大文字小文字を区別しない](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-findwindoww)

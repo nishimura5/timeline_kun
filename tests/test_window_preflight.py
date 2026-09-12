@@ -23,6 +23,7 @@ def test_previewer_starts_unchecked_and_retains_actions(monkeypatch):
 
 @pytest.fixture
 def app(monkeypatch):
+    monkeypatch.setattr(app_previewer.sys, "platform", "win32")
     app = app_previewer.App.__new__(app_previewer.App)
     app.actions_config = {
         name: {
@@ -125,7 +126,55 @@ def test_lookup_matches_exact_title(monkeypatch, target, expected):
     assert window.find_window(target) == expected
 
 
-def test_non_windows_lookup_is_explicit(monkeypatch):
-    monkeypatch.setattr(window.sys, "platform", "darwin")
-    with pytest.raises(OSError, match="only on Windows"):
+@pytest.mark.parametrize("platform", ["darwin", "linux"])
+def test_non_windows_lookup_is_explicit(monkeypatch, platform):
+    monkeypatch.setattr(window.sys, "platform", platform)
+    with pytest.raises(OSError, match="supported on Windows only"):
         window.find_window("Recorder")
+
+
+@pytest.mark.parametrize("platform", ["darwin", "linux"])
+def test_non_windows_check_skips_lookup_and_allows_timer(app, monkeypatch, platform):
+    monkeypatch.setattr(app_previewer.sys, "platform", platform)
+    lookup = Mock(side_effect=AssertionError("Must not search windows"))
+    monkeypatch.setattr(app_previewer, "find_window", lookup)
+    app.check_windows()
+    lookup.assert_not_called()
+    app_previewer.messagebox.showinfo.assert_called_once_with(
+        "Check Windows", "WindowKey actions are supported on Windows only."
+    )
+    assert app.window_check_performed
+    app.stage_list = [{"has_error": False}]
+    app.time_format_combobox = Mock(get=Mock(return_value="mm:ss"))
+    app.timer_color_combobox = Mock(get=Mock(return_value="orange"))
+    app.csv_path = "schedule.csv"
+    app.start_index = 0
+    monkeypatch.setattr(app_previewer.sys, "frozen", False, raising=False)
+    monkeypatch.setattr(app_previewer.importlib.util, "find_spec", Mock(return_value=object()))
+    launch = Mock()
+    monkeypatch.setattr(app_previewer.subprocess, "Popen", launch)
+    app.open_timer()
+    app_previewer.messagebox.askyesno.assert_not_called()
+    launch.assert_called_once()
+
+
+@pytest.mark.parametrize("platform", ["darwin", "linux"])
+def test_non_windows_action_requests_fail_without_execution(app, monkeypatch, platform):
+    from timeline_kun.actions import ActionManager
+    from timeline_kun.actions.config import parse_action_configs
+
+    monkeypatch.setattr(window.sys, "platform", platform)
+    manager = ActionManager(parse_action_configs(app.actions_config))
+    runtime = Mock()
+    manager.register("one", runtime)
+    for operation in (manager.connect, manager.start, manager.stop):
+        assert operation("one") is False
+        assert operation("two") is False
+    assert manager.get_status("one") == window.WINDOWS_ONLY_MESSAGE
+    assert manager.update_status("two") == window.WINDOWS_ONLY_MESSAGE
+    assert not runtime.mock_calls
+    manager.register("gopro", runtime)
+    manager.start("gopro")
+    runtime.start.assert_called_once()
+    with pytest.raises(KeyError):
+        manager.start("unknown")
