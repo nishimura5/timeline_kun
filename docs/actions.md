@@ -37,7 +37,7 @@ Automated regression tests use a fake BLE worker and do not require hardware.
 Actual BLE connection, keep-alive, and recording should also be checked with
 GoPro hardware using the existing workflow in `test_evidence_gopro.md`.
 
-## 汎用Action設定（設定読み込みのみ実装済み）
+## 汎用Action設定
 
 既存の `[ble.orange]`、`[ble.cyan]`、`[ble.lightgreen]` は変更しません。
 選択したtimer colorのBLE設定から、従来通りGoProActionを構成します。
@@ -82,8 +82,34 @@ ActionManager(action_configs=...)` です。設定は不変のdataclassに変換
 Window固有の設定を置いています。新しいtypeは設定型とパーサーを追加して拡張します。
 
 **今回、汎用設定から実行Actionの生成・登録やTriggerの作成は行いません。**
-設定を有効にしてもWindow検索やキー送信は発生しません。
+設定を有効にしただけではWindow検索やキー送信は発生しません。
 設定の保持と、`register()` による実行Actionの登録は別です。
+
+## PreviewerのWindow存在確認
+
+Previewerの `Check Windows` はCSV未ロードでも実行できます。起動時に読み込んだ
+`config.toml` の `[actions]` のうち `type = "window_key"` だけを確認し、
+Action ID、`window_title`、Found / Not foundを表示します。全件見つかった場合は
+成功を表示し、対象Actionがなければその旨を通知します。`[ble.*]` は対象外です。
+
+検索はWindows専用で、非Windowsでは確認できない旨を表示します。
+共用関数 `actions.window.find_window()` は、タイトルが完全一致するトップレベル
+Windowのハンドルを返します。大文字小文字や前後の空白も区別します。
+[FindWindowWは大文字小文字を区別しない](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-findwindoww)
+ため、EnumWindowsで列挙したタイトルを比較しています。
+foreground化、キー送信、アプリ起動は行いません。
+
+Previewer起動時は未確認です。未確認のまま `Send to timer` を押すと
+`Window check has not been performed` と表示し、続行かキャンセルを選択できます。
+確認ボタンを実行した後は、未検出や確認エラーがあってもこの追加警告を表示しません。
+存在確認は実行時点の結果であり、Timer起動を禁止するものではありません。
+設定変更後はPreviewerを再起動して再確認してください。CSVの `Reload` は
+設定の再読み込みではありません。
+
+手動確認には `python tools/action_manager_test_app.py` を使い、設定の
+`window_title` を `timeline_kun action manager test` にします。
+アプリの起動・終了に応じてFound / Not foundが変わり、確認操作によって
+テストアプリの状態がIdleから変わらないことを確認できます。
 
 ## 今後の実行実装で満たす仕様（今回未実装）
 

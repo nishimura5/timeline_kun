@@ -7,7 +7,7 @@ import tkinter as tk
 import tomllib
 import webbrowser
 from datetime import datetime, timedelta
-from tkinter import filedialog, ttk
+from tkinter import filedialog, messagebox, ttk
 
 import ttkthemes
 
@@ -21,6 +21,8 @@ from . import (
     time_format,
 )
 from .gui_parts import Combobox
+from .actions.config import parse_action_configs
+from .actions.window import find_window
 
 IS_DARWIN = sys.platform.startswith("darwin")
 
@@ -29,6 +31,8 @@ class App(ttk.Frame):
     def __init__(self, master, toml_dict={}):
         super().__init__(master)
         master.title("Timeline-kun")
+        self.actions_config = toml_dict.get("actions", {})
+        self.window_check_performed = False
 
         # menu bar
         menubar = tk.Menu(master)
@@ -79,6 +83,11 @@ class App(ttk.Frame):
         values = ["orange", "cyan", "lightgreen"]
         self.timer_color_combobox = Combobox(head_frame, "Color:", values, width=12)
         self.timer_color_combobox.pack_horizontal(padx=5, side=tk.RIGHT)
+
+        self.check_windows_btn = ttk.Button(
+            head_frame, text="Check Windows", command=self.check_windows
+        )
+        self.check_windows_btn.pack(padx=5, side=tk.RIGHT)
 
         send_timer_frame = ttk.Frame(master)
         send_timer_frame.pack(padx=10, pady=(5, 10), fill=tk.X)
@@ -453,11 +462,47 @@ class App(ttk.Frame):
                     else:
                         stage["color"] = gui_canvas.rect_colors[i]
 
+    def check_windows(self):
+        self.window_check_performed = True
+        try:
+            if not isinstance(self.actions_config, dict):
+                raise ValueError("Config value 'actions' must be a table")
+            configs = parse_action_configs({
+                name: values for name, values in self.actions_config.items()
+                if isinstance(values, dict) and values.get("type") == "window_key"
+            })
+            if not configs:
+                messagebox.showinfo("Check Windows", "No window_key actions configured.")
+                return
+            results = [
+                (name, config.window_title, find_window(config.window_title) is not None)
+                for name, config in configs.items()
+            ]
+        except (ValueError, OSError) as exc:
+            messagebox.showerror("Check Windows", f"Window check could not complete:\n{exc}")
+            return
+
+        details = "\n".join(
+            f"{name} | {title!r} | {'Found' if found else 'Not found'}"
+            for name, title, found in results
+        )
+        if all(found for _, _, found in results):
+            messagebox.showinfo("Check Windows", f"All target windows found.\n\n{details}")
+        else:
+            messagebox.showwarning("Check Windows", f"Some target windows were not found.\n\n{details}")
+
     def open_timer(self):
         # has_error check
         has_error_list = [s["has_error"] for s in self.stage_list]
         if True in has_error_list:
             tk.messagebox.showinfo("Error", "Timer can't start because of error.")
+            return
+
+        if not self.window_check_performed and not messagebox.askyesno(
+            "Window check",
+            "Window check has not been performed.\nStart the timer anyway?",
+            icon="warning",
+        ):
             return
 
         if self.time_format_combobox.get() == "h:mm:ss":
@@ -572,7 +617,7 @@ def main():
         toml = tomllib.load(f)
     # Construct toml_dict for App
     excel_conf = toml.get("excel", {})
-    toml_dict = {**excel_conf}
+    toml_dict = {**excel_conf, "actions": toml.get("actions", {})}
 
     app = App(root, toml_dict=toml_dict)
     root.protocol("WM_DELETE_WINDOW", lambda: quit(root))
