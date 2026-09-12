@@ -16,6 +16,7 @@ from . import (
     trigger,
 )
 from .actions import ActionManager
+from .actions.config import parse_action_configs
 from .actions.gopro import GoProAction
 
 
@@ -53,7 +54,9 @@ class App(ttk.Frame):
         self.ap = sound.AudioPlayer()
         self.ap.load_audio(sound_file_name)
 
-        self.action_manager = ActionManager()
+        self.action_manager = ActionManager(
+            action_configs=parse_action_configs(toml_dict.get("actions", {}))
+        )
         gopro_action = GoProAction()
         self.action_manager.register("gopro", gopro_action)
         self.trigger_device = trigger.Trigger(
@@ -516,16 +519,7 @@ def main(
     ble_file_name = os.path.join(current_dir, "config.toml")
     with open(ble_file_name, "rb") as f:
         toml = tomllib.load(f)
-    # Construct toml_dict for App
-    ble_conf = toml.get("ble", {}).get(fg_color, {})
-    log_conf = toml.get("log", {})
-    excel_conf = toml.get("excel", {})
-    flush_conf = {
-        "flush": _get_flush_enabled(toml),
-        "flush_width": _get_flush_dimension(toml, "flush_width"),
-        "flush_height": _get_flush_dimension(toml, "flush_height"),
-    }
-    toml_dict = {**ble_conf, **log_conf, **excel_conf, **flush_conf}
+    toml_dict = _build_timer_config(toml, fg_color)
 
     print(f"TOML config: {toml_dict}")
 
@@ -542,6 +536,19 @@ def main(
         flush_height=toml_dict["flush_height"],
     )
     app.mainloop()
+
+
+def _build_timer_config(toml, fg_color):
+    """Keep legacy color-specific BLE settings and global action settings."""
+    return {
+        **toml.get("ble", {}).get(fg_color, {}),
+        **toml.get("log", {}),
+        **toml.get("excel", {}),
+        "flush": _get_flush_enabled(toml),
+        "flush_width": _get_flush_dimension(toml, "flush_width"),
+        "flush_height": _get_flush_dimension(toml, "flush_height"),
+        "actions": toml.get("actions", {}),
+    }
 
 
 def _get_flush_enabled(toml):

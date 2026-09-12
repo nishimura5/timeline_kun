@@ -1,4 +1,8 @@
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Protocol
+
+from .config import ActionConfig
 
 
 class Action(Protocol):
@@ -18,7 +22,11 @@ class Action(Protocol):
 class ActionManager:
     """Registry and operation dispatch, without device-specific knowledge."""
 
-    def __init__(self) -> None:
+    def __init__(self, action_configs: Mapping[str, ActionConfig] | None = None) -> None:
+        # Settings are retained for future action construction, not executed.
+        self.action_configs: Mapping[str, ActionConfig] = MappingProxyType(
+            dict(action_configs or {})
+        )
         self._actions: dict[str, Action] = {}
 
     def register(self, name: str, action: Action) -> None:

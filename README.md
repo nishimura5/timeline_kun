@@ -131,6 +131,14 @@ Examples: `ble_names = ["GoPro 2700", "GoPro 4256"]`
 
 - `stop_delay_sec`: delay (seconds) before stopping recording after leaving a recording-marked stage
 
+### `[actions.<action_id>]` (global action settings)
+Settings are independent of timer color. The `window_key` configuration format
+is supported; Window search, key sending, and generic trigger scheduling are
+not implemented yet. Omitting `[actions]` preserves existing behavior.
+GoPro continues to use `[ble.<color>]`.
+See [Action settings and planned execution behavior](docs/actions.md) for the
+commented example, required fields, and validation rules.
+
 ### `[log] make_events_json`
 If `true`, writes a JSON sidecar for the generated `events.tsv`.
 
