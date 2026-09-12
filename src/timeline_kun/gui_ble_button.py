@@ -6,19 +6,15 @@ from tkinter import ttk
 class BleButtonManager:
     """Manages the BLE button and status display."""
 
-    def __init__(
-        self, parent_frame, master_window, trigger_device, ble_names, stop_delay_sec=2
-    ):
+    def __init__(self, parent_frame, master_window, gopro_action, ble_names):
         """
         Args:
             parent_frame: Parent frame where the button and label are placed
             master_window: Main window used to schedule UI updates
-            trigger_device: Trigger instance used for BLE control
+            gopro_action: Registered GoProAction used for BLE control
         """
         self.master_window = master_window
-        self.trigger_device = trigger_device
-        self.stop_delay_sec = stop_delay_sec
-        self.trigger_device.set_delay_sec(self.stop_delay_sec)
+        self.gopro_action = gopro_action
 
         # Create BLE UI elements
         self.ble_frame = ttk.Frame(parent_frame)
@@ -35,22 +31,22 @@ class BleButtonManager:
         self.default_fg_color = self.ble_status_label.cget("foreground")
 
         if ble_names and len(ble_names) > 0:
-            self.trigger_device.set_device_names(ble_names)
-            dev_names = ", ".join(self.trigger_device.target_device_names)
-            self.trigger_device.set_status(dev_names)
+            self.gopro_action.set_device_names(ble_names)
+            dev_names = ", ".join(self.gopro_action.target_device_names)
+            self.gopro_action.set_status(dev_names)
         else:
-            self.trigger_device.set_status("No devices configured")
+            self.gopro_action.set_status("No devices configured")
             self.ble_btn.config(state="disabled")
             self.ble_status_label.config(foreground="gray")
 
     def connect_ble(self):
         """Start BLE connection"""
         self.set_disabled()
-        self.trigger_device.set_status("Connecting...")
+        self.gopro_action.set_status("Connecting...")
 
         def connect_thread():
             try:
-                self.trigger_device.ble_connect()
+                self.gopro_action.connect()
                 self.master_window.after(0, self._on_ble_connect_complete)
             except Exception as e:
                 print(f"BLE connection error: {e}")
@@ -68,14 +64,14 @@ class BleButtonManager:
     def _on_ble_connect_complete(self):
         """Called on the main thread when BLE connection completes."""
         self.ble_btn.config(state="normal")
-        self.ble_status_label.config(text=self.trigger_device.get_status())
+        self.ble_status_label.config(text=self.gopro_action.get_status())
 
     def _on_ble_connect_error(self):
         """Called on the main thread when a BLE connection error occurs."""
         self.ble_btn.config(state="normal")
-        self.trigger_device.set_status("Connection Error")
+        self.gopro_action.set_status("Connection Error")
 
     def update_ble_status(self):
         """Update the BLE status label."""
-        status = self.trigger_device.update_status()
+        status = self.gopro_action.update_status()
         self.ble_status_label.config(text=status)

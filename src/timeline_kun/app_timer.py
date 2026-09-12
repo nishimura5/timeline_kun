@@ -15,6 +15,8 @@ from . import (
     timer_log,
     trigger,
 )
+from .actions import ActionManager
+from .actions.gopro import GoProAction
 
 
 class App(ttk.Frame):
@@ -51,7 +53,16 @@ class App(ttk.Frame):
         self.ap = sound.AudioPlayer()
         self.ap.load_audio(sound_file_name)
 
-        self.trigger_device = trigger.Trigger(offset_sec=5)
+        self.action_manager = ActionManager()
+        gopro_action = GoProAction()
+        self.action_manager.register("gopro", gopro_action)
+        self.trigger_device = trigger.Trigger(
+            self.action_manager,
+            "gopro",
+            keyword="(recording)",
+            offset_sec=5,
+            delay_sec=toml_dict.get("stop_delay_sec", 2),
+        )
 
         # header
         head_frame = ttk.Frame(self.master, height=80)
@@ -147,13 +158,11 @@ class App(ttk.Frame):
         ble_names = toml_dict.get("ble_names", [])
         if len(ble_names) > 0:
             self.enable_ble = True
-            self.stop_delay_sec = toml_dict.get("stop_delay_sec", 2)
             self.ble_manager = gui_ble_button.BleButtonManager(
                 buttons_frame,
                 self.master,
-                self.trigger_device,
+                gopro_action,
                 ble_names,
-                self.stop_delay_sec,
             )
         else:
             self.enable_ble = False
