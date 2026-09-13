@@ -1,4 +1,4 @@
-# Timeline-kun 1.0.2
+# Timeline-kun 1.1.0
 
 [![Release](https://img.shields.io/github/v/release/nishimura5/timeline_kun)](https://github.com/nishimura5/timeline_kun/releases)
 [![DOI](https://zenodo.org/badge/DOI/10.48708/7325764.svg)](https://doi.org/10.48708/7325764)
@@ -46,10 +46,11 @@ Timeline-kun integrates four primary functionalities:
    - Timer can be started from any point, allowing test executions or real-time schedule modifications
    - Supports custom alarm sounds using 3-second WAV files
 
-3. **Controlling GoPro devices**
+3. **Controlling recording devices and applications**
    - Start/stop recording based on schedules via BLE
    - Simultaneous control of multiple devices
    - Keep-alive is sent periodically while connected (for long standby)
+   - On Windows, automatically send start/stop shortcuts to another application using [Action settings](#actionsaction_id-automatic-keyboard-control-on-windows)
   
 4. **Improving methodological transparency and reproducibility**
    - TSV logs in BIDS `events.tsv` format
@@ -60,8 +61,8 @@ Timeline-kun integrates four primary functionalities:
 
 ## Applications overview
 
-- **Previewer**: Create/Load/Edit/Validate CSV, visualize timeline, export SVG, launch Timer.
-- **Timer**: Execute the schedule, play alarms, log `events.tsv`, optionally control GoPro via BLE.
+- **Previewer**: Create/Load/Edit/Validate CSV, visualize timeline, export SVG, check target windows, launch Timer.
+- **Timer**: Execute the schedule, play alarms, log `events.tsv`, optionally control GoPro via BLE or send shortcuts to Windows applications.
 
 ---
 
@@ -130,6 +131,50 @@ Size in pixels for the flush rectangle. Defaults to `36`.
 Examples: `ble_names = ["GoPro 2700", "GoPro 4256"]`
 
 - `stop_delay_sec`: delay (seconds) before stopping recording after leaving a recording-marked stage
+
+### `[actions.<action_id>]` (automatic keyboard control on Windows)
+
+The Timer can control another application's start/stop shortcuts automatically.
+Add a keyword to the target stages' CSV `instruction` fields, then configure
+the window title and shortcuts in `config.toml`. This works without BLE and
+uses the same settings for every timer color. GoPro still uses `[ble.<color>]`.
+
+For example, append this section to `config.toml` to control the test window:
+
+```toml
+[actions.pose_streamer]
+type = "window_key"
+keyword = "(pose_recording)"
+start_lead_sec = 5
+stop_delay_sec = 2
+window_title = "timeline_kun action manager test"
+start_hotkey = ["F9"]
+stop_hotkey = ["F10"]
+```
+
+1. Open the target application. For this example, run
+   `python tools/action_manager_test_app.py` from the repository.
+2. Add `(pose_recording)` to the `instruction` field of each stage to record.
+   For another application, use its exact window title and start/stop shortcuts.
+3. Restart the Previewer after editing the configuration, click **Check Windows**,
+   then **Send to timer** and **Start**. Check Windows only verifies that the
+   window exists; it does not send keys.
+
+With this example, the Timer focuses the window and sends F9 five seconds before
+the matching stages, then F10 two seconds after they end. Consecutive matching
+stages keep recording without repeated key presses. If the first stage matches,
+recording starts immediately. Reset, session completion, and closing the Timer
+stop active window actions immediately.
+
+Window actions are optional and disabled in newly generated configurations.
+Keep the target application open during the run. If focusing the window or
+sending keys fails, the Timer continues and records the result in
+`log/<timeline_csv_name>_actions.jsonl` beside the CSV.
+
+For complete field definitions, validation rules, timing edge cases, Windows
+limitations, and implementation details, see [the detailed Action reference](actions.md).
+That document is intended primarily as context for LLMs helping configure or
+modify Timeline-kun, and for developers who need the full specification.
 
 ### `[log] make_events_json`
 If `true`, writes a JSON sidecar for the generated `events.tsv`.
@@ -234,7 +279,7 @@ MMCV: ずんだもん
 Please acknowledge and cite the use of this software and its authors when results are used in publications or published elsewhere.
 
 ```
-Nishimura, E. (2026). Timeline-kun (Version 1.0.2) [Computer software]. Kyushu University, https://doi.org/10.48708/7325764
+Nishimura, E. (2026). Timeline-kun (Version 1.1.0) [Computer software]. Kyushu University, https://doi.org/10.48708/7325764
 ```
 
 ```
