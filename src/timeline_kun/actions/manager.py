@@ -25,11 +25,19 @@ class ActionManager:
     """Registry and operation dispatch, without device-specific knowledge."""
 
     def __init__(self, action_configs: Mapping[str, ActionConfig] | None = None) -> None:
-        # Settings are retained for future action construction, not executed.
+        # Runtime construction is explicit; configuration stays side-effect free.
         self.action_configs: Mapping[str, ActionConfig] = MappingProxyType(
             dict(action_configs or {})
         )
         self._actions: dict[str, Action] = {}
+
+    def register_configured(self) -> None:
+        from .window_key import WindowKeyAction
+
+        for name, config in self.action_configs.items():
+            if isinstance(config, WindowKeyActionConfig):
+                self.register(name, WindowKeyAction(config) if sys.platform == "win32"
+                              else UnsupportedWindowKeyAction())
 
     def register(self, name: str, action: Action) -> None:
         if not name:

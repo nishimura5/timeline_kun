@@ -33,19 +33,20 @@ To add another action, implement the protocol and register an instance under a
 new name. Bind a `Trigger` to that name and the desired keyword where needed;
 no changes to `ActionManager` or `Trigger` are required. Actions that need no
 connection can implement `connect()` as a successful no-op. Device-specific
-configuration and UI belong alongside the concrete action. Only GoPro is
-implemented as an executable action; generic settings are described below.
+configuration and UI belong alongside the concrete action. GoPro and Windows
+keyboard actions are executable; generic settings are described below.
 
 Automated regression tests use a fake BLE worker and do not require hardware.
 Actual BLE connection, keep-alive, and recording should also be checked with
 GoPro hardware using the existing workflow in `test_evidence_gopro.md`.
 
-## 汎用Action設定
+## Generic action configuration
 
-既存の `[ble.orange]`、`[ble.cyan]`、`[ble.lightgreen]` は変更しません。
-選択したtimer colorのBLE設定から、従来通りGoProActionを構成します。
-`[log]`、`[excel]` の読み込みも従来通りです。GoProの汎用設定への統合は
-将来のメジャーバージョンで行う予定で、今回は移行しません。
+The existing `[ble.orange]`, `[ble.cyan]`, and `[ble.lightgreen]` sections
+remain unchanged. GoProAction is still configured from the BLE settings for
+the selected timer color. Loading `[log]` and `[excel]` also works as before.
+Moving GoPro settings into the generic action configuration is planned for a
+future major version; this implementation does not migrate them.
 
 ```toml
 [actions.pose_streamer]
@@ -53,80 +54,159 @@ type = "window_key"
 keyword = "(pose_recording)"
 start_lead_sec = 5
 stop_delay_sec = 2
-window_title = "カメラ位置確認"
+window_title = "timeline_kun action manager test"
 start_hotkey = ["F9"]
 stop_hotkey = ["F10"]
 ```
 
-`[actions.<action_id>]` は色に依存しないグローバル設定です。
-異なるIDで複数定義でき、同じkeywordを共有できます。IDは空でない文字列で、
-重複したTOMLテーブルはTOML読み込み時にエラーになります。
-`[actions]` がなければ空の設定として扱い、従来の環境で動作します。
-配布用configと新規生成configの例は全行コメントアウトしてあります。
+`[actions.<action_id>]` defines global settings independent of timer color.
+You can define multiple actions with different IDs, and they may share a
+keyword. IDs must be non-empty strings. Duplicate TOML tables cause an error
+when the TOML file is loaded.
+If `[actions]` is absent, the configuration is treated as empty, preserving
+compatibility with existing setups. The example in newly generated configuration
+files is fully commented out. You may enable it in your local `config.toml`
+for testing.
 
-| 項目 | 仕様 |
+| Field | Specification |
 | --- | --- |
-| `type` | 現在の設定型は `"window_key"` のみ。将来 `command`、`http` などを追加予定 |
-| `keyword` | 空でない文字列。CSVの `instruction` に対するcase-sensitiveな部分文字列一致 |
-| `start_lead_sec` | 開始の何秒前にstartするか。0以上の有限数（小数可） |
-| `stop_delay_sec` | active区間終了からstopまでの秒数。0以上の有限数（小数可） |
-| `window_title` | 空でない文字列。常に完全一致。`window_match` は設けない |
-| `start_hotkey` | 空でない文字列配列。配列内のキーは同時押し（例：`["CTRL", "SHIFT", "R"]`） |
-| `stop_hotkey` | 同上。startと同じキーも指定可能 |
+| `type` | Currently only `"window_key"` is supported. Types such as `command` and `http` are planned for the future. |
+| `keyword` | A non-empty string matched as a case-sensitive substring of the CSV `instruction` field. |
+| `start_lead_sec` | How many seconds before the active interval to start. A finite, non-negative number; fractional values are allowed. |
+| `stop_delay_sec` | How many seconds to wait after the active interval ends before stopping. A finite, non-negative number; fractional values are allowed. |
+| `window_title` | A non-empty string requiring an exact match. There is no `window_match` option. |
+| `start_hotkey` | A non-empty array of key names to press together, such as `["CTRL", "SHIFT", "R"]`. |
+| `stop_hotkey` | The same format as `start_hotkey`. The start and stop combinations may be identical. |
 
-全項目を必須とし、未指定・型不正・未知の項目・未対応typeは項目のパス付きの
-`ValueError` にします。文字列の大文字小文字や前後の空白は変換しません。
-キー名のOS別サポート検証は、今後の送信実装で扱います。
+All fields are required. Missing fields, invalid types, unknown fields, and
+unsupported action types raise a `ValueError` that includes the field path.
+Parsing preserves string case and leading or trailing whitespace.
 
-読み込み経路は `config.toml → App用設定のactions → parse_action_configs →
-ActionManager(action_configs=...)` です。設定は不変のdataclassに変換され、
-`manager.action_configs[action_id]` から参照できます。ホットキーはtupleとして
-保持します。ActionConfigに共通のトリガー設定を置き、WindowKeyActionConfigに
-Window固有の設定を置いています。新しいtypeは設定型とパーサーを追加して拡張します。
+Key names are validated at runtime on Windows. Supported keys are letters,
+digits, F1 through F24, CTRL/CONTROL, SHIFT, ALT, WIN, ENTER/RETURN, TAB,
+ESC/ESCAPE, SPACE, BACKSPACE, DELETE, INSERT, HOME, END, PAGEUP, PAGEDOWN,
+and LEFT/UP/RIGHT/DOWN. Key names are case-insensitive. Unknown or duplicate
+keys are logged as failures, and no keys are sent.
 
-**今回、汎用設定から実行Actionの生成・登録やTriggerの作成は行いません。**
-設定を有効にしただけではWindow検索やキー送信は発生しません。
-設定の保持と、`register()` による実行Actionの登録は別です。
+The configuration loading path is:
 
-## PreviewerのWindow存在確認
+```text
+config.toml -> actions in the App configuration -> parse_action_configs
+            -> ActionManager(action_configs=...)
+```
 
-Previewerの `Check Windows` はCSV未ロードでも実行できます。起動時に読み込んだ
-`config.toml` の `[actions]` のうち `type = "window_key"` だけを確認し、
-Action ID、`window_title`、Found / Not foundを表示します。全件見つかった場合は
-成功を表示し、対象Actionがなければその旨を通知します。`[ble.*]` は対象外です。
+Settings are converted to immutable dataclasses and can be accessed through
+`manager.action_configs[action_id]`. Hotkeys are stored as tuples.
+`ActionConfig` contains the shared trigger settings, while
+`WindowKeyActionConfig` contains the window-specific settings. New action types
+can be supported by adding configuration types and extending the parser.
 
-検索はWindows専用です。非Windowsでは探索や設定検証を行わず、
-`WindowKey actions are supported on Windows only.` と表示します。
-Windows APIの読み込みはplatform判定後に行います。WindowKeyAction設定があっても
-macOS/Linuxでのimportや通常機能の起動を妨げません。
-共用関数 `actions.window.find_window()` は、タイトルが完全一致するトップレベル
-Windowのハンドルを返します。大文字小文字や前後の空白も区別します。
-[FindWindowWは大文字小文字を区別しない](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-findwindoww)
-ため、EnumWindowsで列挙したタイトルを比較しています。
-foreground化、キー送信、アプリ起動は行いません。
+The Timer registers WindowKeyAction instances with `register_configured()`
+and runs them through `ActionTimeline`. Registration does not operate on
+windows. After Start, keys are sent according to the CSV instructions and
+configured keywords, regardless of whether BLE is configured or connected.
 
-Previewer起動時は未確認です。未確認のまま `Send to timer` を押すと
-`Window check has not been performed` と表示し、続行かキャンセルを選択できます。
-確認ボタンを実行した後は、未検出や確認エラーがあってもこの追加警告を表示しません。
-存在確認は実行時点の結果であり、Timer起動を禁止するものではありません。
-設定変更後はPreviewerを再起動して再確認してください。CSVの `Reload` は
-設定の再読み込みではありません。
+## Window checks in the Previewer
 
-手動確認には `python tools/action_manager_test_app.py` を使い、設定の
-`window_title` を `timeline_kun action manager test` にします。
-アプリの起動・終了に応じてFound / Not foundが変わり、確認操作によって
-テストアプリの状態がIdleから変わらないことを確認できます。
+The Previewer's `Check Windows` button works even before a CSV file is loaded.
+It checks only entries with `type = "window_key"` in the `[actions]` section
+of the `config.toml` loaded at startup. It displays each action ID,
+`window_title`, and Found / Not found result. It reports success if all target
+windows are found, or indicates that no applicable actions are configured.
+The `[ble.*]` sections are not checked.
 
-## 今後の実行実装で満たす仕様（今回未実装）
+Window lookup is supported only on Windows. On other platforms, the check
+displays `WindowKey actions are supported on Windows only.` without searching
+for windows or validating the configuration. Windows APIs are loaded only
+after checking the platform, so WindowKeyAction settings do not prevent imports
+or normal application startup on macOS or Linux.
 
-- Actionごとにactive状態を独立して管理する。
-- keywordなしからありへの遷移でstartし、連続するkeyword付きStage群は1つの
-  active区間として扱う。途中でstartを繰り返さない。
-- 区間開始の `start_lead_sec` 秒前にstartする。途中StageからのTimer開始などで
-  先行実行できない場合は即時実行する。
-- keywordありからなしへの遷移で、`stop_delay_sec` 秒後にstopする。
-- Timer終了・Reset時はactiveなActionを遅延なしで即時stopする。
-- Windowタイトルは完全一致で検索する。Window未検出やキー送信失敗を記録し、
-  外部Actionの失敗によってTimer本体を終了させない。
+The shared `actions.window.find_window()` function returns the handle of a
+top-level window whose title matches exactly, including case and leading or
+trailing whitespace. It compares titles enumerated by EnumWindows because
+[FindWindowW is case-insensitive](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-findwindoww).
+The check does not bring windows to the foreground, send keys, or launch
+applications.
 
-今回の設定追加では既存GoPro Triggerの終了・Reset時を含む挙動は変更しません。
+The window check is initially marked as not performed when the Previewer
+starts. Clicking `Send to timer` before checking displays
+`Window check has not been performed` and lets you continue or cancel.
+After the check button has been used, this additional warning is no longer
+shown, even if windows were missing or the check failed.
+The result reflects window availability at the time of the check and does not
+block the Timer from launching. After changing the configuration, restart the
+Previewer and check again. The CSV `Reload` button does not reload configuration.
+
+For manual checks, run `python tools/action_manager_test_app.py` and set
+`window_title` to `timeline_kun action manager test`. Verify that the result
+changes between Found and Not found as the test application opens and closes,
+and that checking windows leaves the test application's state at Idle.
+
+## Timer execution behavior
+
+- Each action's active state is managed independently.
+- An action starts when its keyword becomes present. Consecutive stages
+  containing the keyword form one active interval; the action is not started
+  again between those stages.
+- An action starts `start_lead_sec` seconds before the interval begins.
+  If starting in advance is not possible, such as when the Timer starts from
+  a stage inside a matching interval, it starts immediately.
+- When the keyword is no longer present, the action stops after
+  `stop_delay_sec` seconds.
+- Timer completion and Reset stop active actions immediately, without a delay.
+- Window titles require an exact match. Missing windows and key transmission
+  failures are logged. External action failures do not terminate the Timer.
+
+The existing GoPro Trigger behavior, including completion and Reset, remains
+unchanged.
+
+If intervals overlap because of their start lead times, or an action enters
+another matching interval while waiting to stop, it remains active without
+sending duplicate start or stop keys. Skip affects the start lead calculation,
+but stop delays use a monotonic clock. Conditions are evaluated on Timer updates,
+approximately every 100 ms. A failed start is not retried within the same
+interval; it is retried on entry into the next matching interval.
+Reset, session completion, and closing the Timer cancel pending stop delays
+and stop active actions immediately.
+
+Before each key transmission, the action searches for an exact window title
+match and restores the window if it is minimized. It calls
+`SetForegroundWindow`, confirms that the target is in the foreground, and then
+uses `SendInput` to press the configured keys together and release them in
+reverse order. If Windows refuses foreground activation, no keys are sent.
+Because of
+[Windows foreground activation restrictions](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setforegroundwindow),
+start the Timer by clicking its Start button. Interacting with another application
+during execution may cause later foreground activation requests to be rejected.
+Sending input may also fail if the target application runs with higher privileges,
+as described in the
+[SendInput restrictions](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendinput).
+
+Successes and failures are appended to `log/<CSV name>_actions.jsonl` under the
+directory containing the CSV file. Each entry records the timestamp, action ID,
+start/stop operation, success flag, and result or failure details.
+Success means that input was sent successfully; the action does not query
+the target application's recording state.
+
+### Verification
+
+1. Run `python tools/action_manager_test_app.py`.
+2. In the configuration read by the Timer, set `window_title` to
+   `timeline_kun action manager test`, the start key to F9, the stop key to F10,
+   and `keyword` to `(pose_recording)`.
+3. Add `(pose_recording)` to the `instruction` field of the target CSV stages.
+4. Use Check Windows in the Previewer, then click Start in the Timer.
+5. Verify that the test window shows Focused / Recording at the configured
+   lead time, and Stopped after the matching interval ends and the configured
+   stop delay has elapsed.
+6. Verify that Reset and Timer completion or closure also produce Stopped
+   while recording is active.
+
+The Windows integration test opens a dedicated Timer and target window and
+sends mouse input to the Start button. Run it without interacting with the
+desktop:
+
+```powershell
+$env:TIMELINE_KUN_GUI_TEST = "1"
+python -m pytest tests/test_action_runtime_windows.py -q
+```

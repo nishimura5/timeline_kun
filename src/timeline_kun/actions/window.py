@@ -1,4 +1,4 @@
-"""Side-effect-free window lookup shared by preflight and future actions."""
+"""Side-effect-free window lookup shared by preflight and runtime actions."""
 
 import sys
 

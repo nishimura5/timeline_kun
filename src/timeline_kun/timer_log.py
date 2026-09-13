@@ -1,7 +1,26 @@
 import os
+import json
 from datetime import datetime
 
 from . import events_json, time_format
+
+
+class ActionLog:
+    """Append action results separately from BIDS task/control events."""
+
+    def __init__(self, csv_file_path):
+        directory = os.path.join(os.path.dirname(csv_file_path), "log")
+        os.makedirs(directory, exist_ok=True)
+        name = os.path.splitext(os.path.basename(csv_file_path))[0]
+        self.file_path = os.path.join(directory, f"{name}_actions.jsonl")
+
+    def add_log(self, action, operation, success, detail):
+        with open(self.file_path, "a", encoding="utf-8") as stream:
+            stream.write(json.dumps({
+                "timestamp": datetime.now().astimezone().isoformat(),
+                "action": action, "operation": operation,
+                "success": success, "detail": detail,
+            }, ensure_ascii=False) + "\n")
 
 
 class TimerLog:

@@ -18,6 +18,7 @@ from . import (
 from .actions import ActionManager
 from .actions.config import parse_action_configs
 from .actions.gopro import GoProAction
+from .actions.timeline import ActionTimeline
 
 
 class App(ttk.Frame):
@@ -57,11 +58,16 @@ class App(ttk.Frame):
         self.action_manager = ActionManager(
             action_configs=parse_action_configs(toml_dict.get("actions", {}))
         )
+        self.action_manager.register_configured()
+        self.action_timeline = None
         gopro_action = GoProAction()
-        self.action_manager.register("gopro", gopro_action)
+        gopro_name = "gopro"
+        while gopro_name in self.action_manager.action_configs:
+            gopro_name = "_" + gopro_name
+        self.action_manager.register(gopro_name, gopro_action)
         self.trigger_device = trigger.Trigger(
             self.action_manager,
-            "gopro",
+            gopro_name,
             keyword="(recording)",
             offset_sec=5,
             delay_sec=toml_dict.get("stop_delay_sec", 2),
@@ -186,12 +192,16 @@ class App(ttk.Frame):
 
         # Make events.tsv
         self.bids_log = timer_log.BIDSLog(self.csv_path)
+        self.action_log = timer_log.ActionLog(self.csv_path)
         make_events_json = toml_dict.get("make_events_json", False)
         if make_events_json:
             self.bids_log.make_events_json()
 
         fall_back_encoding = toml_dict.get("read_extra_encoding", "utf-8-sig")
         self.load_file(start_index, fallback_encoding=fall_back_encoding)
+        self.action_timeline = ActionTimeline(
+            self.action_manager, self.stage_list, report=self.action_log.add_log
+        )
 
     def _toggle_main_clock_font_size(self, _event=None):
         self._main_clock_font_size = 28 if self._main_clock_font_size == 12 else 12
@@ -249,6 +259,7 @@ class App(ttk.Frame):
 
         # If the last stage is reached, stop the timer
         if self.now_stage >= len(self.stage_list):
+            self.action_timeline.stop_all()
             self.current_stage_label.config(text="End")
             self.current_instruction_label.config(text="")
             self.next_stage_label.config(text="---")
@@ -265,6 +276,7 @@ class App(ttk.Frame):
         self.update_instruction_label(current_stage, current_start_dt, current_end_dt)
 
         remaining_dt = self.calc_remaining_time_next(cnt_up, current_end_dt)
+        self.action_timeline.update(cnt_up.total_seconds())
         self.sound(remaining_dt, offset_sec=3)
         # BLE
         if self.enable_ble:
@@ -391,6 +403,7 @@ class App(ttk.Frame):
 
     def reset_all(self):
         self.is_running = False
+        self.action_timeline.stop_all()
         if self._stage_flash_after_id is not None:
             self.after_cancel(self._stage_flash_after_id)
             self._stage_flash_after_id = None
@@ -419,6 +432,7 @@ class App(ttk.Frame):
         self.reset_btn.config(state="normal")
         if self.enable_ble:
             self.ble_manager.set_disabled()
+        self.reset_time = datetime.datetime.now()
         self.is_running = True
 
         # initial event log
@@ -426,6 +440,7 @@ class App(ttk.Frame):
         msg = f"{current_stage['title']}({current_stage['start_dt']}-{current_stage['end_dt']})"
         #        self.tlog.add_log(self.disp_time, msg)
         self.bids_log.set_task_log(current_stage["title"])
+        self.action_timeline.update(0)
 
     def skip(self):
         self.is_skip = True
@@ -458,6 +473,8 @@ class App(ttk.Frame):
             )
 
     def _on_closing(self):
+        if self.action_timeline is not None:
+            self.action_timeline.stop_all()
         self.trigger_device.trigger_out("")
         #        self.tlog.close_log(self.disp_time)
         self.master.quit()
@@ -477,7 +494,7 @@ def main(
     root = tk.Tk()
     root.geometry("900x420+0+0")
     root.configure(background=bg_color)
-    root.tk.call("wm", "iconphoto", root._w, tk.PhotoImage(data=icon_data.icon_data))
+    root.tk.call("wm", "iconphoto", str(root), tk.PhotoImage(data=icon_data.icon_data))
     s = ttk.Style(root)
     s.theme_use("default")
     s.configure("TFrame", background=bg_color)

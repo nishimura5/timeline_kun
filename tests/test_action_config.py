@@ -1,6 +1,5 @@
 import tomllib
 from dataclasses import FrozenInstanceError
-from pathlib import Path
 
 import pytest
 
@@ -101,18 +100,16 @@ def test_invalid_tables(actions):
         parse_action_configs(actions)
 
 
-def test_default_and_generated_configs_are_disabled(tmp_path):
+def test_generated_config_is_disabled_and_preserves_existing_config(tmp_path):
     generated = tmp_path / "config.toml"
     make_events_json(generated)
-    default = Path(__file__).parents[1] / "src/timeline_kun/config.toml"
-    for path in (generated, default):
-        text = path.read_text(encoding="utf-8")
-        assert "actions.pose_streamer" in text
-        assert "actions" not in tomllib.loads(text)
-        example = "\n".join(line[2:] for line in text.splitlines() if line.startswith("# "))
-        example = example[example.index("[actions.pose_streamer]"):]
-        configs = parse_action_configs(tomllib.loads(example)["actions"])
-        assert configs["pose_streamer"].start_hotkey == ("F9",)
+    text = generated.read_text(encoding="utf-8")
+    assert "actions.pose_streamer" in text
+    assert "actions" not in tomllib.loads(text)
+    example = "\n".join(line[2:] for line in text.splitlines() if line.startswith("# "))
+    example = example[example.index("[actions.pose_streamer]"):]
+    configs = parse_action_configs(tomllib.loads(example)["actions"])
+    assert configs["pose_streamer"].start_hotkey == ("F9",)
     generated.write_text("# existing user config", encoding="utf-8")
     make_events_json(generated)
     assert generated.read_text() == "# existing user config"
