@@ -113,12 +113,17 @@ configured keywords, regardless of whether BLE is configured or connected.
 
 ## Window checks in the Previewer
 
-The Previewer's `Check Windows` button works even before a CSV file is loaded.
-It checks only entries with `type = "window_key"` in the `[actions]` section
-of the `config.toml` loaded at startup. It displays each action ID,
-`window_title`, and Found / Not found result. It reports success if all target
-windows are found, or indicates that no applicable actions are configured.
-The `[ble.*]` sections are not checked.
+The Previewer's `Action setting` button opens an editor even before a CSV file
+is loaded. Each action has its own tab; use Add action / Remove action to manage
+entries. Save updates `[actions]` in `config.toml`, preserving other settings and
+comments. Cancel discards edits. The type is currently fixed to `window_key`.
+The start and stop sliders allow whole seconds in the ranges 3–5 and 2–5,
+respectively. Hotkey entries accept single keys or `+`-separated combinations.
+
+The `Check Window` button checks the title currently entered in that tab,
+including unsaved edits, and displays Found / Not found. It sends no keys and
+does not check `[ble.*]`. Save retains the check state for saved window titles;
+unchecked titles cause the usual warning before sending to the Timer.
 
 Window lookup is supported only on Windows. On other platforms, the check
 displays `WindowKey actions are supported on Windows only.` without searching

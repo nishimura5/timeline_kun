@@ -12,6 +12,7 @@ authors = [{ name = "Eigo Nishimura" }]
 license = { file = "LICENSE" }
 keywords = ["experiment", "protocol", "timer", "GUI", "timeline"]
 dependencies = [
+    "tomlkit>=0.13",
     "soundfile>=0.13.1",
     "sounddevice>=0.5.1",
     "ttkthemes>=3.2.2",

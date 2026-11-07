@@ -23,15 +23,17 @@ from . import (
 from .gui_parts import Combobox
 from .actions.config import parse_action_configs
 from .actions.window import WINDOWS_ONLY_MESSAGE, find_window
+from .action_settings import ActionSettingsDialog
 
 IS_DARWIN = sys.platform.startswith("darwin")
 
 
 class App(ttk.Frame):
-    def __init__(self, master, toml_dict={}):
+    def __init__(self, master, toml_dict={}, config_path=None):
         super().__init__(master)
         master.title("Timeline-kun")
         self.actions_config = toml_dict.get("actions", {})
+        self.config_path = config_path
         self.window_check_performed = False
 
         # menu bar
@@ -84,10 +86,10 @@ class App(ttk.Frame):
         self.timer_color_combobox = Combobox(head_frame, "Color:", values, width=12)
         self.timer_color_combobox.pack_horizontal(padx=5, side=tk.RIGHT)
 
-        self.check_windows_btn = ttk.Button(
-            head_frame, text="Check Windows", command=self.check_windows
+        self.action_settings_btn = ttk.Button(
+            head_frame, text="Action setting", command=self.open_action_settings
         )
-        self.check_windows_btn.pack(padx=5, side=tk.RIGHT)
+        self.action_settings_btn.pack(padx=5, side=tk.RIGHT)
 
         send_timer_frame = ttk.Frame(master)
         send_timer_frame.pack(padx=10, pady=(5, 10), fill=tk.X)
@@ -484,6 +486,15 @@ class App(ttk.Frame):
                     else:
                         stage["color"] = gui_canvas.rect_colors[i]
 
+    def open_action_settings(self):
+        def saved(actions, checked_titles):
+            self.actions_config = actions
+            self.window_check_performed = bool(actions) and all(
+                values["window_title"] in checked_titles for values in actions.values()
+            )
+
+        ActionSettingsDialog(self.winfo_toplevel(), self.config_path, saved)
+
     def check_windows(self):
         self.window_check_performed = True
         if sys.platform != "win32":
@@ -644,7 +655,7 @@ def main():
     excel_conf = toml.get("excel", {})
     toml_dict = {**excel_conf, "actions": toml.get("actions", {})}
 
-    app = App(root, toml_dict=toml_dict)
+    app = App(root, toml_dict=toml_dict, config_path=config_path)
     root.protocol("WM_DELETE_WINDOW", lambda: quit(root))
     app.mainloop()
 

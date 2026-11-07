@@ -156,9 +156,12 @@ stop_hotkey = ["F10"]
    `python tools/action_manager_test_app.py` from the repository.
 2. Add `(pose_recording)` to the `instruction` field of each stage to record.
    For another application, use its exact window title and start/stop shortcuts.
-3. Restart the Previewer after editing the configuration, click **Check Windows**,
-   then **Send to timer** and **Start**. Check Windows only verifies that the
-   window exists; it does not send keys.
+3. Open **Action setting** in the Previewer to edit and save the configuration.
+   Set `type` to `window_key`, enter the keyword and exact window title, and use
+   the sliders for `start_lead_sec` (3–5 seconds) and `stop_delay_sec` (2–5 seconds).
+   Hotkeys default to F9 / F10; combinations such as `Ctrl+Shift+R` are supported.
+   Click **Check Window** and **Save**, then **Send to timer** and **Start**.
+   The check only verifies that the window exists; it does not send keys.
 
 With this example, the Timer focuses the window and sends F9 five seconds before
 the matching stages, then F10 two seconds after they end. Consecutive matching
