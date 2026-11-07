@@ -178,3 +178,26 @@ def test_non_windows_action_requests_fail_without_execution(app, monkeypatch, pl
     runtime.start.assert_called_once()
     with pytest.raises(KeyError):
         manager.start("unknown")
+
+
+@pytest.mark.parametrize("platform", ["darwin", "linux"])
+def test_non_windows_registration_and_direct_calls_never_operate_windows(app, monkeypatch, platform):
+    from timeline_kun.actions import ActionManager, window_key
+    from timeline_kun.actions.config import parse_action_configs
+
+    monkeypatch.setattr(window.sys, "platform", platform)
+    lookup = Mock(side_effect=AssertionError("Must not search windows"))
+    keyboard = Mock(side_effect=AssertionError("Must not create keyboard backend"))
+    monkeypatch.setattr(window_key, "find_window", lookup)
+    monkeypatch.setattr(window_key, "WindowsKeyboard", keyboard)
+    configs = parse_action_configs(app.actions_config)
+    manager = ActionManager(configs)
+    manager.register_configured()
+    assert isinstance(manager.get("one"), window.UnsupportedWindowKeyAction)
+    direct = window_key.WindowKeyAction(configs["one"])
+    for action in (manager.get("one"), direct):
+        for operation in (action.connect, action.start, action.stop):
+            assert operation() is False
+            assert action.get_status() == window.WINDOWS_ONLY_MESSAGE
+    lookup.assert_not_called()
+    keyboard.assert_not_called()

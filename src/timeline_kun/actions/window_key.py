@@ -105,6 +105,9 @@ class WindowKeyAction:
         self.status = "Idle"
 
     def connect(self):
+        if sys.platform != "win32":
+            self.status = WINDOWS_ONLY_MESSAGE
+            return False
         try:
             found = find_window(self.config.window_title)
             self.status = "Found" if found else "Window not found"
@@ -114,6 +117,9 @@ class WindowKeyAction:
             return False
 
     def _send(self, hotkey, status):
+        if sys.platform != "win32":
+            self.status = WINDOWS_ONLY_MESSAGE
+            return False
         try:
             keys = tuple(virtual_key(key) for key in hotkey)
             if len(set(keys)) != len(keys):

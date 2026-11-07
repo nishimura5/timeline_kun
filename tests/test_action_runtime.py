@@ -9,6 +9,13 @@ from timeline_kun.actions.timeline import ActionTimeline
 from timeline_kun.actions import window_key
 
 
+@pytest.fixture
+def windows_platform(monkeypatch):
+    # These tests exercise mocked Windows actions, including timeline dispatch.
+    # The real non-Windows rejection is covered in test_window_preflight.py.
+    monkeypatch.setattr(window_key.sys, "platform", "win32")
+
+
 def config(**changes):
     values = dict(keyword="(pose)", start_lead_sec=5, stop_delay_sec=2,
                   window_title="Recorder", start_hotkey=("F9",), stop_hotkey=("F10",))
@@ -35,7 +42,7 @@ def setup_timeline(stages, configs=None):
     return timeline, actions, now, report
 
 
-def test_lead_contiguous_stages_delay_and_reentry():
+def test_lead_contiguous_stages_delay_and_reentry(windows_platform):
     timeline, actions, now, _ = setup_timeline([
         stage(0, 10), stage(10, 20, "(pose)"), stage(20, 30, "(pose)"),
         stage(30, 40), stage(40, 50, "(pose)"),
@@ -59,7 +66,7 @@ def test_lead_contiguous_stages_delay_and_reentry():
     assert action.start.call_count == 2
 
 
-def test_reentry_cancels_pending_stop_and_shutdown_is_immediate():
+def test_reentry_cancels_pending_stop_and_shutdown_is_immediate(windows_platform):
     timeline, actions, now, _ = setup_timeline(
         [stage(0, 2, "(pose)"), stage(2, 3), stage(3, 8, "(pose)")],
         {"pose": config(start_lead_sec=0, stop_delay_sec=5)},
@@ -79,7 +86,7 @@ def test_reentry_cancels_pending_stop_and_shutdown_is_immediate():
     assert actions["pose"].start.call_count == 2
 
 
-def test_pending_stop_is_flushed_on_reset():
+def test_pending_stop_is_flushed_on_reset(windows_platform):
     timeline, actions, now, _ = setup_timeline([stage(0, 2, "(pose)"), stage(2, 8)])
     timeline.update(0)
     timeline.update(2)
@@ -90,7 +97,7 @@ def test_pending_stop_is_flushed_on_reset():
     actions["pose"].stop.assert_called_once()
 
 
-def test_actions_are_independent_and_failures_do_not_stop_other_actions():
+def test_actions_are_independent_and_failures_do_not_stop_other_actions(windows_platform):
     timeline, actions, _, report = setup_timeline(
         [stage(0, 10, "(pose)"), stage(10, 20, "(other)")],
         {"one": config(), "two": config(keyword="(other)", start_lead_sec=0)},
@@ -107,7 +114,7 @@ def test_actions_are_independent_and_failures_do_not_stop_other_actions():
     actions["two"].stop.assert_called_once()
 
 
-def test_skip_uses_timeline_time_but_delay_uses_real_time():
+def test_skip_uses_timeline_time_but_delay_uses_real_time(windows_platform):
     timeline, actions, now, _ = setup_timeline([
         stage(0, 100), stage(100, 110, "(pose)"), stage(110, 200),
     ])
@@ -122,7 +129,7 @@ def test_skip_uses_timeline_time_but_delay_uses_real_time():
     actions["pose"].stop.assert_called_once()
 
 
-def test_overlap_of_lead_windows_does_not_toggle_action():
+def test_overlap_of_lead_windows_does_not_toggle_action(windows_platform):
     timeline, actions, _, _ = setup_timeline([
         stage(0, 10, "(pose)"), stage(10, 12), stage(12, 20, "(pose)"),
     ])
@@ -133,7 +140,7 @@ def test_overlap_of_lead_windows_does_not_toggle_action():
 
 
 @pytest.mark.parametrize("operation, keys", [("start", (0x78,)), ("stop", (0x79,))])
-def test_window_action_finds_focuses_then_sends(monkeypatch, operation, keys):
+def test_window_action_finds_focuses_then_sends(monkeypatch, operation, keys, windows_platform):
     lookup = Mock(return_value=123)
     backend = Mock()
     monkeypatch.setattr(window_key, "find_window", lookup)
@@ -145,7 +152,7 @@ def test_window_action_finds_focuses_then_sends(monkeypatch, operation, keys):
 
 
 @pytest.mark.parametrize("failure", ["missing", "focus", "input", "key"])
-def test_window_failure_reports_reason_without_sending_to_wrong_window(monkeypatch, failure):
+def test_window_failure_reports_reason_without_sending_to_wrong_window(monkeypatch, failure, windows_platform):
     monkeypatch.setattr(window_key, "find_window", Mock(return_value=None if failure == "missing" else 123))
     backend = Mock()
     monkeypatch.setattr(window_key, "WindowsKeyboard", Mock(return_value=backend))

@@ -1,5 +1,10 @@
 # Actions
 
+For the macOS feasibility assessment, current platform behavior, and proposed
+support requirements, see [macOS shortcut specification](macos_window_key.md).
+macOS key transmission is not implemented; non-Windows actions fail without
+window operations, including direct `WindowKeyAction` calls.
+
 `App` registers a `GoProAction` as `gopro` in an `ActionManager` and binds
 `(recording)` to that name through `Trigger`.
 
