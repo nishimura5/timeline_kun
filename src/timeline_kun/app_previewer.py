@@ -164,6 +164,8 @@ class App(ttk.Frame):
         canvas_frame.pack(fill=tk.BOTH, expand=True)
         self.canvas = gui_canvas.Canvas(canvas_frame, bg="white")
         self.canvas.pack(fill=tk.BOTH, expand=True)
+        self.canvas.bind("<Button-1>", self.select_canvas_row)
+        self.canvas.bind("<Double-1>", self.edit_canvas_row)
 
         # ctrl+z shortcut control
         master.bind("<Control-z>", self.undo)
@@ -226,6 +228,24 @@ class App(ttk.Frame):
             return True
         return False
 
+    def select_canvas_row(self, event):
+        for tag in self.canvas.gettags("current"):
+            if tag.startswith("stage:"):
+                idx = int(tag.removeprefix("stage:"))
+                item = self.tree.tree.get_children()[idx]
+                self.tree.tree.selection_set(item)
+                self.tree.tree.focus(item)
+                self.tree.tree.see(item)
+                self.tree.tree.focus_set()
+                return True
+        return False
+
+    def edit_canvas_row(self, event):
+        if self.select_canvas_row(event):
+            # Update the edit constraints before opening the modal dialog.
+            self.select_row()
+            self.edit_row()
+
     def select_row(self):
         idx = self.tree.get_selected_index()
         if idx is None:
@@ -279,7 +299,9 @@ class App(ttk.Frame):
         start = self.stage_list[idx]["start_dt"]
         duration = self.stage_list[idx]["duration"]
         self.canvas.delete("highlight")
-        self.canvas.create_rect(start, duration, "#dd7777", tag="highlight")
+        self.canvas.create_rect(
+            start, duration, "#dd7777", tag=("highlight", f"stage:{idx}")
+        )
 
     def _get_prev_next_fixed_code(self, index):
         if index == 0:
@@ -336,13 +358,13 @@ class App(ttk.Frame):
         include_hour = self.time_format_combobox.get() == "h:mm:ss"
 
         past_start_dt = timedelta(seconds=0)
-        for stage in self.stage_list:
+        for idx, stage in enumerate(self.stage_list):
             if stage["start_dt"].total_seconds() == 0:
                 start_dt = past_start_dt
             else:
                 start_dt = stage["start_dt"]
             rect_height = self.canvas.create_rect(
-                start_dt, stage["duration"], stage["color"]
+                start_dt, stage["duration"], stage["color"], tag=("rect", f"stage:{idx}")
             )
             label_title = f"{stage['title']}"
             label_time = (
