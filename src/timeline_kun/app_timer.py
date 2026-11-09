@@ -53,7 +53,7 @@ class App(ttk.Frame):
         self._last_member_text = ""
 
         self.ap = sound.AudioPlayer()
-        self.ap.load_audio(sound_file_name)
+        self.ap.prepare(sound_file_name)
 
         self.action_manager = ActionManager(
             action_configs=parse_action_configs(toml_dict.get("actions", {}))
@@ -473,6 +473,7 @@ class App(ttk.Frame):
             )
 
     def _on_closing(self):
+        self.ap.close()
         if self.action_timeline is not None:
             self.action_timeline.stop_all()
         self.trigger_device.trigger_out("")
